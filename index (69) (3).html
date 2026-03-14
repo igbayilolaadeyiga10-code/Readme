@@ -1,0 +1,688 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>EarnHub Cyber - Android Optimized</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --bg-deep: #080d0c;
+            --card-base: #111b1a;
+            --text-primary: #e0f2f1;
+            --accent-glow: #ff9f1c;
+            --accent-muted: #b36e0d;
+        }
+
+        body {
+            background-color: var(--bg-deep);
+            color: var(--text-primary);
+            font-family: 'Space Grotesk', sans-serif;
+            margin: 0; padding: 0;
+            overflow-x: hidden;
+            font-size: 10px;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        
+        .nav-bar {
+            background: rgba(17, 27, 26, 0.98);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 159, 28, 0.1);
+        }
+
+        .cyber-card {
+            background: var(--card-base);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 159, 28, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cyber-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 3px; height: 100%;
+            background: var(--accent-glow);
+            opacity: 0.2;
+        }
+
+        .btn-action {
+            background: var(--accent-glow);
+            color: var(--bg-deep);
+            font-weight: 800;
+            border-radius: 6px;
+            padding: 10px;
+            text-transform: uppercase;
+            font-size: 9px;
+            letter-spacing: 0.5px;
+            width: 100%;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            box-shadow: 0 4px 12px rgba(255, 159, 28, 0.15);
+        }
+        .btn-action:active { transform: scale(0.96); filter: brightness(1.1); }
+        .btn-action:disabled { opacity: 0.3; filter: grayscale(1); }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            font-weight: 700;
+            border-radius: 6px;
+            padding: 8px;
+            font-size: 8px;
+            text-transform: uppercase;
+            width: 100%;
+        }
+
+        .input-cyber {
+            background: rgba(8, 13, 12, 0.9);
+            border: 1px solid rgba(255, 159, 28, 0.15);
+            border-radius: 6px;
+            padding: 8px 12px;
+            color: var(--accent-glow);
+            outline: none;
+            width: 100%;
+            font-size: 10px;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade { animation: fadeIn 0.3s ease-out forwards; }
+
+        .status-badge {
+            font-size: 7px;
+            font-weight: 900;
+            padding: 2px 6px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .status-pending { background: rgba(255, 159, 28, 0.1); color: #ff9f1c; border: 1px solid rgba(255, 159, 28, 0.2); }
+        .status-approved { background: rgba(0, 255, 127, 0.1); color: #00ff7f; border: 1px solid rgba(0, 255, 127, 0.2); }
+        .status-declined { background: rgba(255, 51, 51, 0.1); color: #ff3333; border: 1px solid rgba(255, 51, 51, 0.2); }
+    </style>
+</head>
+<body>
+    <div id="toast-layer"></div>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useCallback, useRef } = React;
+
+        const tg = window.Telegram?.WebApp;
+        if(tg) { tg.ready(); tg.expand(); }
+
+        const showToast = (msg, icon = "⚡") => {
+            const container = document.getElementById('toast-layer');
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-24 left-1/2 -translate-x-1/2 w-[90%] bg-[#ff9f1c] text-[#080d0c] p-2.5 rounded flex items-center gap-3 shadow-2xl z-[10000] font-bold text-[9px] uppercase border-l-4 border-[#b36e0d]';
+            toast.innerHTML = `<span>${icon}</span> <span>${msg}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = '0.5s'; setTimeout(() => toast.remove(), 500); }, 2000);
+        };
+
+        const createSupabase = (url, key) => ({
+            get: async (table, query = '') => {
+                try {
+                    const res = await fetch(`${url}/rest/v1/${table}?${query}`, {
+                        headers: { 'apikey': key, 'Authorization': `Bearer ${key}` }
+                    });
+                    return res.ok ? await res.json() : [];
+                } catch(e) { return []; }
+            },
+            upsert: async (table, data) => {
+                return await fetch(`${url}/rest/v1/${table}`, {
+                    method: 'POST',
+                    headers: { 'apikey': key, 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
+                    body: JSON.stringify(data)
+                });
+            },
+            update: async (table, data, query) => {
+                return await fetch(`${url}/rest/v1/${table}?${query}`, {
+                    method: 'PATCH',
+                    headers: { 'apikey': key, 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+            },
+            delete: async (table, query) => {
+                return await fetch(`${url}/rest/v1/${table}?${query}`, {
+                    method: 'DELETE',
+                    headers: { 'apikey': key, 'Authorization': `Bearer ${key}` }
+                });
+            }
+        });
+
+        const App = () => {
+            const [sb, setSb] = useState(null);
+            const [user, setUser] = useState({ uid: '0', username: 'Guest', points: 0, joined: false, referrals: 0 });
+            const [config, setConfig] = useState({ 
+                appName: 'CyberEarn', 
+                currency: 'USDT', 
+                minWithdrawal: 10, 
+                adminPin: '0000', 
+                devPin: '1111',
+                referralReward: 1,
+                botToken: '',
+                proofChannelId: '',
+                withdrawalChannelId: '',
+                adminUids: '',
+                devUids: '',
+                approverId: '', 
+                c1: '', c2: '', c3: '',
+                botUsername: '', // Added
+                appShortName: ''  // Added
+            });
+            const [tasks, setTasks] = useState([]);
+            const [userSubmissions, setUserSubmissions] = useState([]);
+            const [tab, setTab] = useState('command');
+            const [loading, setLoading] = useState(true);
+            const [adminTaps, setAdminTaps] = useState(0);
+            const [devTaps, setDevTaps] = useState(0);
+            const [showPin, setShowPin] = useState(null);
+            const [showAdmin, setShowAdmin] = useState(false);
+            const [showDev, setShowDev] = useState(false);
+            const [activeTask, setActiveTask] = useState(null);
+
+            const uid = tg?.initDataUnsafe?.user?.id?.toString() || localStorage.getItem('eh_cyber_uid') || 'u_guest';
+            localStorage.setItem('eh_cyber_uid', uid);
+
+            const init = async () => {
+                const url = localStorage.getItem('sb_url');
+                const key = localStorage.getItem('sb_key');
+                if (url && key) {
+                    const client = createSupabase(url, key);
+                    setSb(client);
+                    try {
+                        const cfgRes = await client.get('config', 'key=eq.app');
+                        if (cfgRes[0]) setConfig(cfgRes[0].data);
+                        
+                        const usrRes = await client.get('users', `uid=eq.${uid}`);
+                        if (usrRes[0]) setUser(usrRes[0]);
+                        else {
+                            const newUser = { uid, username: tg?.initDataUnsafe?.user?.username || 'Guest', points: 0, joined: false, referrals: 0 };
+                            await client.upsert('users', [newUser]);
+                            setUser(newUser);
+                        }
+                        
+                        const tks = await client.get('tasks');
+                        setTasks(tks || []);
+                        
+                        const subs = await client.get('submissions', `uid=eq.${uid}`);
+                        setUserSubmissions(subs || []);
+                    } catch(e) {}
+                }
+                setLoading(false);
+            };
+
+            useEffect(() => { init(); }, []);
+
+            const sendTelegram = async (channelId, message) => {
+                if(!config.botToken) return showToast("Bot Token Missing", "⚠️");
+                try {
+                    const res = await fetch(`https://api.telegram.org/bot${config.botToken}/sendMessage`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ chat_id: channelId, text: message, parse_mode: 'HTML' })
+                    });
+                    return res.ok;
+                } catch(e) { return false; }
+            };
+
+            const submitProof = async (proofText) => {
+                if(!proofText.trim()) return showToast("Proof required", "⚠️");
+                
+                const existing = userSubmissions.find(s => s.task_id === activeTask.id);
+                if(existing && existing.status === 'pending') return showToast("Already pending", "⏳");
+                if(existing && existing.status === 'approved') return showToast("Already approved", "✅");
+
+                const submissionId = `sub_${Date.now()}`;
+                const msg = `<b>[${submissionId}] NEW TASK PROOF</b>\n<b>User:</b> @${user.username}\n<b>UID:</b> ${user.uid}\n<b>Task:</b> ${activeTask.title}\n<b>Reward:</b> ${activeTask.reward} ${config.currency}\n<b>Proof:</b> ${proofText}\n\n<i>Admin: Use the ID ${submissionId} to approve/decline in the app panel.</i>`;
+                
+                const success = await sendTelegram(config.proofChannelId, msg);
+                if(success) {
+                    const newSub = { id: submissionId, uid: user.uid, task_id: activeTask.id, status: 'pending', proof: proofText, task_title: activeTask.title, reward: activeTask.reward };
+                    await sb.upsert('submissions', [newSub]);
+                    setUserSubmissions([...userSubmissions.filter(s => s.task_id !== activeTask.id), newSub]);
+                    showToast("Proof submitted", "📡");
+                    setActiveTask(null);
+                } else {
+                    showToast("Submission failed", "❌");
+                }
+            };
+
+            const submitWithdrawal = async (data) => {
+                if(!data.amount || !data.address) return showToast("Fill all fields", "⚠️");
+                if(parseFloat(data.amount) < parseFloat(config.minWithdrawal)) return showToast(`Min: ${config.minWithdrawal}`, "⚠️");
+                if(parseFloat(data.amount) > user.points) return showToast("Insufficient funds", "❌");
+
+                const requestId = `wd_${Date.now()}`;
+                const msg = `<b>[${requestId}] WITHDRAWAL REQUEST</b>\n<b>User:</b> @${user.username}\n<b>UID:</b> ${user.uid}\n<b>Amount:</b> ${data.amount} ${config.currency}\n<b>Network:</b> ${data.network}\n<b>Address:</b> <code>${data.address}</code>\n\n<i>Admin: Check UID ${user.uid} in the vault interface.</i>`;
+                
+                const success = await sendTelegram(config.withdrawalChannelId, msg);
+                if(success) {
+                    const req = { id: requestId, uid: user.uid, amount: data.amount, network: data.network, address: data.address, status: 'pending' };
+                    await sb.upsert('withdrawals', [req]);
+                    showToast("Request sent", "💸");
+                } else {
+                    showToast("Request failed", "❌");
+                }
+            };
+
+            const handleCounter = (type) => {
+                const isDev = (config.devUids || '').includes(uid) || !sb;
+                const isAdmin = (config.adminUids || '').includes(uid) || isDev;
+                if(type === 'admin' && isAdmin) {
+                    const next = adminTaps + 1;
+                    if(next >= 20) { setAdminTaps(0); setShowPin('admin'); }
+                    else setAdminTaps(next);
+                }
+                if(type === 'dev' && isDev) {
+                    const next = devTaps + 1;
+                    if(next >= 50) { setDevTaps(0); setShowPin('dev'); }
+                    else setDevTaps(next);
+                }
+            };
+
+            const getTaskStatus = (taskId) => {
+                const sub = userSubmissions.find(s => s.task_id === taskId);
+                return sub ? sub.status : null;
+            };
+
+            const handleTaskClick = (t) => {
+                const status = getTaskStatus(t.id);
+                if(status === 'approved') return showToast("Bounty already claimed", "✅");
+                if(status === 'pending') return showToast("Validation in progress", "⏳");
+                setActiveTask(t);
+            };
+
+            if (loading) return <div className="fixed inset-0 flex items-center justify-center bg-[#080d0c] text-amber-500 font-bold animate-pulse text-[10px] tracking-[4px]">CONNECTING...</div>;
+
+            if (!user.joined && sb) {
+                return (
+                    <div className="fixed inset-0 bg-[#080d0c] z-[10000] p-6 flex flex-col items-center justify-center text-center space-y-6">
+                        <div className="w-16 h-16 bg-amber-500/10 rounded-full flex items-center justify-center text-2xl border border-amber-500/20">📡</div>
+                        <div>
+                            <h2 className="text-sm font-black text-amber-500 italic uppercase">Kernel Lockdown</h2>
+                            <p className="text-[9px] opacity-40 uppercase tracking-widest mt-1">Mandatory Join Required</p>
+                        </div>
+                        <div className="w-full space-y-2">
+                            <button onClick={() => window.open('https://t.me/tokenxtreasures', '_blank')} className="btn-action bg-amber-500/20 border border-amber-500/30 text-amber-500">Join: @tokenxtreasures</button>
+                            {config.c1 && <button onClick={() => window.open(`https://t.me/${config.c1.replace('@','')}`, '_blank')} className="btn-action bg-amber-500/10 border border-white/5">Join: @{config.c1.replace('@','')}</button>}
+                            {config.c2 && <button onClick={() => window.open(`https://t.me/${config.c2.replace('@','')}`, '_blank')} className="btn-action bg-amber-500/10 border border-white/5">Join: @{config.c2.replace('@','')}</button>}
+                            {config.c3 && <button onClick={() => window.open(`https://t.me/${config.c3.replace('@','')}`, '_blank')} className="btn-action bg-amber-500/10 border border-white/5">Join: @{config.c3.replace('@','')}</button>}
+                        </div>
+                        <button onClick={async () => { const next = { ...user, joined: true }; setUser(next); await sb.update('users', next, `uid=eq.${uid}`); }} className="btn-action h-12 italic mt-4">I HAVE JOINED ALL</button>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="max-w-md mx-auto min-h-screen pb-24">
+                    {showPin && <PinModal title={showPin.toUpperCase() + " AUTH"} onConfirm={(p) => {
+                        if(showPin === 'admin' && p === config.adminPin) setShowAdmin(true);
+                        else if(showPin === 'dev' && p === config.devPin) setShowDev(true);
+                        else showToast("DENIED", "🚫");
+                        setShowPin(null);
+                    }} onCancel={() => setShowPin(null)} />}
+
+                    {showAdmin && <AdminPanel config={config} tasks={tasks} sb={sb} onClose={() => setShowAdmin(false)} onSave={async (c) => { 
+                        setConfig(c); await sb.update('config', { data: c }, 'key=eq.app'); showToast("SYNCED", "💾");
+                    }} onRefresh={async () => {
+                        setTasks(await sb.get('tasks'));
+                    }} />}
+                    
+                    {showDev && <DevPanel config={config} sb={sb} onClose={() => setShowDev(false)} onSave={async (c) => {
+                        localStorage.setItem('sb_url', c.sbUrl || ''); localStorage.setItem('sb_key', c.sbKey || '');
+                        if(sb) await sb.update('config', { data: c }, 'key=eq.app'); showToast("CORE UPDATED", "⚙️"); setTimeout(() => window.location.reload(), 800);
+                    }} />}
+
+                    {activeTask && (
+                        <div className="fixed inset-0 bg-black/90 z-[8000] p-6 flex items-center justify-center">
+                            <div className="cyber-card w-full p-4 space-y-4">
+                                <h3 className="text-xs font-bold uppercase text-amber-500">{activeTask.title}</h3>
+                                <p className="text-[9px] opacity-60 leading-relaxed">{activeTask.description}</p>
+                                <button onClick={() => window.open(activeTask.link, '_blank')} className="btn-action h-10 border border-amber-500/20">Go to Target</button>
+                                <div className="space-y-1">
+                                    <p className="text-[8px] uppercase font-bold opacity-30">Submission Proof (Username/ID)</p>
+                                    <textarea id="proof-area" className="input-cyber h-16" placeholder="Enter proof details here..." defaultValue={userSubmissions.find(s => s.task_id === activeTask.id)?.proof || ''} />
+                                </div>
+                                <div className="grid grid-cols-2 gap-2 pt-2">
+                                    <button onClick={() => setActiveTask(null)} className="btn-action bg-white/5 border border-white/10 text-white/40">Cancel</button>
+                                    <button onClick={() => submitProof(document.getElementById('proof-area').value)} className="btn-action">Submit</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <header className="px-5 py-5 flex justify-between items-center sticky top-0 bg-[#080d0c]/95 backdrop-blur-md z-50">
+                        <div className="flex items-center gap-2.5" onClick={() => handleCounter('admin')}>
+                            <div className="w-8 h-8 bg-amber-500 rounded flex items-center justify-center text-[#080d0c] font-black text-sm">
+                                {user.username[0].toUpperCase()}
+                            </div>
+                            <div>
+                                <h1 className="text-[10px] font-bold text-amber-500 uppercase tracking-tighter italic">@{user.username}</h1>
+                                <p className="text-[7px] text-teal-200/20 uppercase font-black tracking-[1px]">Operator</p>
+                            </div>
+                        </div>
+                        <div className="text-[8px] font-black text-amber-500/30 uppercase tracking-[2px] bg-white/5 px-2 py-0.5 rounded" onClick={() => handleCounter('dev')}>
+                            ID: {user.uid.slice(-6)}
+                        </div>
+                    </header>
+
+                    <main className="px-5 space-y-4 animate-fade">
+                        {tab === 'command' && (
+                            <div className="space-y-4">
+                                <div className="cyber-card p-6 text-center border-amber-500/10 shadow-lg">
+                                    <p className="text-[8px] font-black text-teal-200/20 uppercase tracking-[2px] mb-2">Vault Balance</p>
+                                    <h2 className="text-4xl font-black text-amber-500 tracking-tighter italic">
+                                        {user.points.toLocaleString()} <span className="text-[10px] opacity-20 font-normal ml-0.5">{config.currency}</span>
+                                    </h2>
+                                    <div className="flex justify-center gap-10 mt-6 pt-4 border-t border-white/5">
+                                        <div><p className="text-base font-bold text-amber-500/60">{tasks.length}</p><p className="text-[7px] uppercase opacity-40">Bounties</p></div>
+                                        <div><p className="text-base font-bold text-amber-500/60">{user.referrals || 0}</p><p className="text-[7px] uppercase opacity-40">Nodes</p></div>
+                                    </div>
+                                </div>
+                                <div className="cyber-card p-3 flex justify-between items-center bg-amber-500/5">
+                                    <div className="flex items-center gap-2">
+                                        <div className="text-lg">💎</div>
+                                        <span className="text-[9px] font-bold uppercase tracking-widest">Daily Log</span>
+                                    </div>
+                                    <button onClick={() => showToast("Logged +0.01", "💎")} className="btn-action w-auto px-4 h-8 text-[8px]">Sync</button>
+                                </div>
+                                <button onClick={() => setTab('bounties')} className="btn-action h-12 italic text-sm">Access Contracts</button>
+                            </div>
+                        )}
+
+                        {tab === 'bounties' && (
+                            <div className="space-y-2">
+                                <h3 className="text-[8px] font-black text-amber-500/30 uppercase tracking-[3px] ml-1">Live Feed</h3>
+                                {tasks.length === 0 ? <p className="text-center py-20 opacity-10 uppercase font-black text-[8px]">No feed detected</p> : 
+                                 tasks.map(t => {
+                                    const status = getTaskStatus(t.id);
+                                    return (
+                                        <div key={t.id} className={`cyber-card p-3 flex justify-between items-center transition-all active:bg-white/5 ${status === 'approved' ? 'opacity-40' : ''}`} onClick={() => handleTaskClick(t)}>
+                                            <div className="flex items-center gap-3">
+                                                <div className="text-lg">{t.icon || '🎯'}</div>
+                                                <div>
+                                                    <h5 className="font-bold text-[9px] uppercase">{t.title}</h5>
+                                                    <p className="text-[8px] text-amber-500 font-bold">+{t.reward} {config.currency}</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex flex-col items-end gap-1">
+                                                {status === 'pending' && <span className="status-badge status-pending">Pending</span>}
+                                                {status === 'approved' && <span className="status-badge status-approved">Completed</span>}
+                                                {status === 'declined' && <span className="status-badge status-declined">Retry</span>}
+                                                {!status && <button className="text-[8px] text-amber-500/50 uppercase font-black tracking-widest border border-amber-500/10 px-2 py-1 rounded">Unlock</button>}
+                                            </div>
+                                        </div>
+                                    );
+                                 })}
+                            </div>
+                        )}
+
+                        {tab === 'terminal' && (
+                            <div className="text-center pt-8 space-y-6">
+                                <div className="w-14 h-14 bg-amber-500/5 rounded-full border border-amber-500/10 flex items-center justify-center mx-auto">📡</div>
+                                <div className="space-y-2">
+                                    <h3 className="text-lg font-black text-amber-500 italic uppercase">Uplink Code</h3>
+                                    <p className="text-[9px] opacity-40 px-8 leading-relaxed">Broadcast to your sector. Secure <span className="text-amber-500">+{config.referralReward} {config.currency}</span> per successful peer entry.</p>
+                                </div>
+                                <button onClick={() => { 
+                                    const link = `https://t.me/${config.botUsername || 'Bot'}/${config.appShortName || 'app'}?startapp=u_${user.uid}`;
+                                    navigator.clipboard.writeText(link); 
+                                    showToast("Copied to chip", "📡"); 
+                                }} className="btn-action h-12 italic">Copy Signal</button>
+                            </div>
+                        )}
+
+                        {tab === 'secure' && (
+                            <div className="space-y-4">
+                                <div className="cyber-card p-5 text-center border-amber-500/20">
+                                    <p className="text-[7px] opacity-30 uppercase tracking-widest mb-1">Extraction Level</p>
+                                    <h2 className="text-2xl font-black text-amber-500 italic">{user.points.toLocaleString()} {config.currency}</h2>
+                                </div>
+                                <div className="space-y-3">
+                                    <div className="space-y-1">
+                                        <p className="text-[7px] uppercase font-bold opacity-30 ml-1">Volume</p>
+                                        <input id="w-amount" type="number" className="input-cyber" placeholder={`Min: ${config.minWithdrawal}`} />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p className="text-[7px] uppercase font-bold opacity-30 ml-1">Protocol</p>
+                                        <select id="w-net" className="input-cyber appearance-none">
+                                            <option>USDT (BEP20)</option>
+                                            <option>USDT (TRC20)</option>
+                                            <option>USDT (TON)</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p className="text-[7px] uppercase font-bold opacity-30 ml-1">Wallet Address</p>
+                                        <input id="w-addr" className="input-cyber" placeholder="Ox... or T..." />
+                                    </div>
+                                    <button onClick={() => submitWithdrawal({ 
+                                        amount: document.getElementById('w-amount').value, 
+                                        network: document.getElementById('w-net').value, 
+                                        address: document.getElementById('w-addr').value 
+                                    })} className="btn-action h-12 italic mt-2">Request Transfer</button>
+                                </div>
+                            </div>
+                        )}
+                    </main>
+
+                    <nav className="fixed bottom-4 left-4 right-4 h-14 nav-bar rounded-xl flex items-center justify-around z-50">
+                        {[
+                            { id: 'command', icon: '📡', label: 'Home' },
+                            { id: 'bounties', icon: '🎯', label: 'Task' },
+                            { id: 'terminal', icon: '🛰️', label: 'Ref' },
+                            { id: 'secure', icon: '🔐', label: 'Vault' }
+                        ].map(t => (
+                            <button key={t.id} onClick={() => setTab(t.id)} className={`flex flex-col items-center gap-0.5 transition-all ${tab === t.id ? 'text-amber-500 scale-105' : 'text-white/10'}`}>
+                                <span className="text-lg">{t.icon}</span>
+                                <span className="text-[6px] font-black uppercase tracking-widest italic">{t.label}</span>
+                            </button>
+                        ))}
+                    </nav>
+                </div>
+            );
+        };
+
+        const PinModal = ({ title, onConfirm, onCancel }) => (
+            <div className="fixed inset-0 bg-[#080d0c]/98 z-[10000] flex items-center justify-center p-10">
+                <div className="cyber-card w-full p-6 space-y-6">
+                    <div className="text-center">
+                        <h3 className="text-[10px] font-black text-amber-500 uppercase tracking-[4px]">{title}</h3>
+                    </div>
+                    <input type="password" autoFocus className="input-cyber text-center text-2xl tracking-[0.6em] h-12" maxLength={4} onChange={e => { if(e.target.value.length === 4) onConfirm(e.target.value); }} />
+                    <button onClick={onCancel} className="w-full text-[8px] font-black opacity-20 uppercase">Cancel</button>
+                </div>
+            </div>
+        );
+
+        const AdminPanel = ({ config, tasks, sb, onClose, onSave, onRefresh }) => {
+            const [local, setLocal] = useState({ ...config });
+            const [activeSub, setActiveSub] = useState('params');
+            const [allSubmissions, setAllSubmissions] = useState([]);
+            const [newTask, setNewTask] = useState({ title: '', reward: 0, icon: '🎯', description: '', link: '' });
+
+            useEffect(() => {
+                const fetchSubmissions = async () => {
+                    if(sb) {
+                        const res = await sb.get('submissions', 'status=eq.pending');
+                        setAllSubmissions(res || []);
+                    }
+                };
+                if(activeSub === 'review') fetchSubmissions();
+            }, [activeSub, sb]);
+
+            const updateSubmission = async (sub, status) => {
+                if(!sb) return;
+                await sb.update('submissions', { status }, `id=eq.${sub.id}`);
+                
+                if(status === 'approved') {
+                    const usr = await sb.get('users', `uid=eq.${sub.uid}`);
+                    if(usr[0]) {
+                        const nextPoints = (usr[0].points || 0) + parseFloat(sub.reward);
+                        await sb.update('users', { points: nextPoints }, `uid=eq.${sub.uid}`);
+                    }
+                }
+                
+                setAllSubmissions(allSubmissions.filter(s => s.id !== sub.id));
+                showToast(`Task ${status}`, status === 'approved' ? '✅' : '❌');
+            };
+
+            return (
+                <div className="fixed inset-0 bg-[#080d0c] z-[9000] flex flex-col">
+                    <div className="flex justify-between items-center p-5 border-b border-white/5">
+                        <h2 className="text-[10px] font-black text-amber-500 uppercase italic">Admin Terminal</h2>
+                        <button onClick={onClose} className="text-lg opacity-40">✕</button>
+                    </div>
+                    <div className="flex bg-white/5 overflow-x-auto no-scrollbar">
+                        {['params', 'tasks', 'review', 'channels'].map(t => (
+                            <button key={t} onClick={() => setActiveSub(t)} className={`flex-none px-6 py-3 text-[8px] font-black uppercase tracking-widest ${activeSub === t ? 'text-amber-500 bg-amber-500/5 border-b border-amber-500' : 'opacity-30'}`}>{t}</button>
+                        ))}
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-5 space-y-5 pb-24">
+                        {activeSub === 'params' && (
+                            <div className="space-y-3">
+                                <div className="space-y-1"><p className="text-[7px] uppercase opacity-40">App Name</p><input className="input-cyber" value={local.appName} onChange={e => setLocal({...local, appName: e.target.value})} /></div>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div className="space-y-1"><p className="text-[7px] uppercase opacity-40">Currency</p><input className="input-cyber" value={local.currency} onChange={e => setLocal({...local, currency: e.target.value})} /></div>
+                                    <div className="space-y-1"><p className="text-[7px] uppercase opacity-40">Min Pay</p><input className="input-cyber" type="number" value={local.minWithdrawal} onChange={e => setLocal({...local, minWithdrawal: e.target.value})} /></div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div className="space-y-1"><p className="text-[7px] uppercase opacity-40">Bot @Username</p><input className="input-cyber" value={local.botUsername} onChange={e => setLocal({...local, botUsername: e.target.value})} placeholder="CyberEarnBot" /></div>
+                                    <div className="space-y-1"><p className="text-[7px] uppercase opacity-40">App Shortname</p><input className="input-cyber" value={local.appShortName} onChange={e => setLocal({...local, appShortName: e.target.value})} placeholder="app" /></div>
+                                </div>
+                                <div className="space-y-1"><p className="text-[7px] uppercase opacity-40">Admin PIN</p><input className="input-cyber" value={local.adminPin} onChange={e => setLocal({...local, adminPin: e.target.value})} /></div>
+                                <div className="space-y-1"><p className="text-[7px] uppercase opacity-40">Whitelisted Admins (csv)</p><textarea className="input-cyber text-[8px]" value={local.adminUids} onChange={e => setLocal({...local, adminUids: e.target.value})} /></div>
+                            </div>
+                        )}
+                        {activeSub === 'tasks' && (
+                            <div className="space-y-4">
+                                <div className="cyber-card p-3 space-y-2 border-amber-500/20">
+                                    <input className="input-cyber" placeholder="Title" value={newTask.title} onChange={e => setNewTask({...newTask, title: e.target.value})} />
+                                    <input className="input-cyber" placeholder="Reward" type="number" value={newTask.reward} onChange={e => setNewTask({...newTask, reward: e.target.value})} />
+                                    <input className="input-cyber" placeholder="Link" value={newTask.link} onChange={e => setNewTask({...newTask, link: e.target.value})} />
+                                    <textarea className="input-cyber h-12" placeholder="Desc" value={newTask.description} onChange={e => setNewTask({...newTask, description: e.target.value})} />
+                                    <button onClick={async () => { await sb.upsert('tasks', [{...newTask, id: `t_${Date.now()}`}]); onRefresh(); showToast("Deployed", "✅"); }} className="btn-action">Add Task</button>
+                                </div>
+                                {tasks.map(t => (
+                                    <div key={t.id} className="cyber-card p-2 flex justify-between items-center text-[8px] uppercase">
+                                        <span>{t.title}</span>
+                                        <button onClick={async () => { await sb.delete('tasks', `id=eq.${t.id}`); onRefresh(); }} className="text-red-500 font-bold px-2">Del</button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        {activeSub === 'review' && (
+                            <div className="space-y-4">
+                                <h3 className="text-[8px] font-black uppercase text-amber-500 italic">Pending Submissions</h3>
+                                {allSubmissions.length === 0 ? <p className="text-center py-10 opacity-20 text-[8px] uppercase">Clean Slate</p> : 
+                                 allSubmissions.map(s => (
+                                    <div key={s.id} className="cyber-card p-3 space-y-3 border-amber-500/10">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className="text-[9px] font-bold text-amber-500 uppercase">{s.task_title}</p>
+                                                <p className="text-[7px] opacity-40 mt-0.5">UID: {s.uid}</p>
+                                            </div>
+                                            <span className="text-[9px] font-black">+{s.reward}</span>
+                                        </div>
+                                        <div className="bg-black/40 p-2 rounded text-[8px] font-mono opacity-60">
+                                            {s.proof}
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <button onClick={() => updateSubmission(s, 'declined')} className="btn-action bg-red-500/10 border border-red-500/20 text-red-500 font-bold h-8">Decline</button>
+                                            <button onClick={() => updateSubmission(s, 'approved')} className="btn-action h-8">Approve</button>
+                                        </div>
+                                    </div>
+                                 ))}
+                            </div>
+                        )}
+                        {activeSub === 'channels' && (
+                            <div className="space-y-3">
+                                <p className="text-[7px] uppercase opacity-40">Mandatory Gates</p>
+                                <input className="input-cyber" placeholder="@Channel_One" value={local.c1} onChange={e => setLocal({...local, c1: e.target.value})} />
+                                <input className="input-cyber" placeholder="@Channel_Two" value={local.c2} onChange={e => setLocal({...local, c2: e.target.value})} />
+                                <input className="input-cyber" placeholder="@Channel_Three" value={local.c3} onChange={e => setLocal({...local, c3: e.target.value})} />
+                            </div>
+                        )}
+                    </div>
+                    <div className="p-5 border-t border-white/5 bg-[#080d0c] absolute bottom-0 left-0 right-0">
+                        <button onClick={() => onSave(local)} className="btn-action h-12 italic">Sync Configuration</button>
+                    </div>
+                </div>
+            );
+        };
+
+        const DevPanel = ({ config, sb, onClose, onSave }) => {
+            const [local, setLocal] = useState({ 
+                ...config, 
+                sbUrl: localStorage.getItem('sb_url') || '', 
+                sbKey: localStorage.getItem('sb_key') || '' 
+            });
+
+            const clearTable = async (table) => {
+                if(!sb) return showToast("Offline", "🚫");
+                if(!confirm(`Wipe all data from ${table.toUpperCase()}?`)) return;
+                const res = await sb.delete(table, 'id=neq.0');
+                if(res.ok) showToast(`${table.toUpperCase()} Purged`, "🔥");
+                else showToast("Failed", "❌");
+            };
+
+            return (
+                <div className="fixed inset-0 bg-[#080d0c] z-[9500] p-6 overflow-y-auto">
+                    <div className="flex justify-between items-center mb-8">
+                        <h2 className="text-[10px] font-black text-amber-500 uppercase italic">Dev Kernel</h2>
+                        <button onClick={onClose} className="text-lg opacity-40">✕</button>
+                    </div>
+                    <div className="space-y-6">
+                        <div className="space-y-2">
+                            <p className="text-[7px] uppercase font-bold opacity-30">Database Protocol</p>
+                            <input className="input-cyber text-[8px] font-mono" value={local.sbUrl} onChange={e => setLocal({...local, sbUrl: e.target.value})} placeholder="Supabase URL" />
+                            <textarea className="input-cyber text-[8px] font-mono h-20" value={local.sbKey} onChange={e => setLocal({...local, sbKey: e.target.value})} placeholder="Supabase Key" />
+                        </div>
+                        
+                        <div className="space-y-3 p-4 border border-red-500/20 rounded bg-red-500/5">
+                            <p className="text-[7px] uppercase font-black text-red-500 tracking-widest">System Maintenance (Purge)</p>
+                            <div className="grid grid-cols-2 gap-2">
+                                <button onClick={() => clearTable('users')} className="btn-danger">Clear Users</button>
+                                <button onClick={() => clearTable('submissions')} className="btn-danger">Clear Submissions</button>
+                                <button onClick={() => clearTable('tasks')} className="btn-danger">Clear Tasks</button>
+                                <button onClick={() => clearTable('withdrawals')} className="btn-danger">Clear Withdrawals</button>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <p className="text-[7px] uppercase font-bold opacity-30">Telegram Relay</p>
+                            <input className="input-cyber text-[8px]" value={local.botToken} onChange={e => setLocal({...local, botToken: e.target.value})} placeholder="Bot Token" />
+                            <input className="input-cyber text-[8px]" value={local.proofChannelId} onChange={e => setLocal({...local, proofChannelId: e.target.value})} placeholder="Proof Channel Chat ID" />
+                            <input className="input-cyber text-[8px]" value={local.withdrawalChannelId} onChange={e => setLocal({...local, withdrawalChannelId: e.target.value})} placeholder="Vault Channel Chat ID" />
+                        </div>
+                        <div className="space-y-2">
+                            <p className="text-[7px] uppercase font-bold opacity-30">Root Access</p>
+                            <input className="input-cyber text-[8px]" value={local.devPin} onChange={e => setLocal({...local, devPin: e.target.value})} placeholder="Dev PIN" />
+                            <textarea className="input-cyber text-[8px] h-12" value={local.devUids} onChange={e => setLocal({...local, devUids: e.target.value})} placeholder="Whitelist Dev UIDs" />
+                        </div>
+                        <button onClick={() => onSave(local)} className="btn-action h-14 mt-4 italic">Kernel Rewrite</button>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-.<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
 
@@ -75,98 +75,246 @@ font-weight:bold;
 
 const {useState,useEffect}=React
 
-const ADMIN_PIN="0000"
-const DEV_PIN="1111"
-
 function App(){
 
 const tg=window.Telegram?.WebApp
+const userId=tg?.initDataUnsafe?.user?.id || Math.floor(Math.random()*100000)
 
-const userId=tg?.initDataUnsafe?.user?.id || Math.floor(Math.random()*10000)
+const BOT_USERNAME="EarnHubTask_bot"
 
-const [tab,setTab]=useState("dashboard")
-const [points,setPoints]=useState(0)
+const [tab,setTab]=useState("home")
+const [tap,setTap]=useState(0)
 const [admin,setAdmin]=useState(false)
-const [dev,setDev]=useState(false)
-const [lastClaim,setLastClaim]=useState(localStorage.getItem("daily")||0)
 
-const DAILY_REWARD=5
+const [points,setPoints]=useState(
+parseInt(localStorage.getItem("points"))||0
+)
 
-const tasks=[
-{
-title:"Join Telegram Channel",
-reward:5,
-channel:"https://t.me/telegram"
-},
-{
-title:"Join News Channel",
-reward:5,
-channel:"https://t.me/telegram"
+const [tasks,setTasks]=useState(
+JSON.parse(localStorage.getItem("tasks"))||[]
+)
+
+const [completed,setCompleted]=useState(
+JSON.parse(localStorage.getItem("completedTasks"))||[]
+)
+
+const [withdraws,setWithdraws]=useState(
+JSON.parse(localStorage.getItem("withdraws"))||[]
+)
+
+const [channel,setChannel]=useState(
+localStorage.getItem("channel")||"https://t.me/EarnHubOfficials"
+)
+
+const [group,setGroup]=useState(
+localStorage.getItem("group")||"https://t.me/EarnHubGroup"
+)
+
+const [dailyReward,setDailyReward]=useState(
+parseInt(localStorage.getItem("dailyReward"))||50
+)
+
+const [minWithdraw,setMinWithdraw]=useState(
+parseInt(localStorage.getItem("minWithdraw"))||1000
+)
+
+const [totalUsers,setTotalUsers]=useState(0)
+const [totalTasks,setTotalTasks]=useState(
+parseInt(localStorage.getItem("totalTasks"))||0
+)
+
+const [community,setCommunity]=useState(true)
+
+const refLink=`https://t.me/${BOT_USERNAME}?start=${userId}`
+
+
+function savePoints(p){
+setPoints(p)
+localStorage.setItem("points",p)
 }
-]
 
-const leaderboard=[
-{user:"Alex",refs:40},
-{user:"John",refs:30},
-{user:"Mary",refs:25}
-]
+useEffect(()=>{
 
-const earners=[
-{user:"Alex",coins:200},
-{user:"John",coins:180},
-{user:"Mary",coins:150}
-]
+let counted=localStorage.getItem("countedUser")
+
+if(!counted){
+
+let users=parseInt(localStorage.getItem("totalUsers")||0)+1
+
+localStorage.setItem("totalUsers",users)
+
+setTotalUsers(users)
+
+localStorage.setItem("countedUser","yes")
+
+}else{
+
+setTotalUsers(parseInt(localStorage.getItem("totalUsers")))
+
+}
+
+},[])
+
+
 
 function claimDaily(){
 
+const last=localStorage.getItem("daily")
 const now=Date.now()
 
-if(now-lastClaim<86400000){
+if(last && now-last<86400000){
 alert("Already claimed today")
 return
 }
 
-setPoints(points+DAILY_REWARD)
+savePoints(points+dailyReward)
 
 localStorage.setItem("daily",now)
 
-setLastClaim(now)
-
-alert("Daily reward received!")
+alert("Daily reward received")
 
 }
+
+
+
+function openTask(task){
+
+window.open(task.link)
+
+alert("Complete the task then click VERIFY")
+
+}
+
+
 
 function verifyTask(task){
 
-setPoints(points+task.reward)
+if(completed.includes(task.id)){
+alert("Task already completed")
+return
+}
 
-alert("Task verified +"+task.reward)
+let newCompleted=[...completed,task.id]
+
+setCompleted(newCompleted)
+
+localStorage.setItem("completedTasks",JSON.stringify(newCompleted))
+
+savePoints(points+task.reward)
+
+let t=parseInt(localStorage.getItem("totalTasks")||0)+1
+localStorage.setItem("totalTasks",t)
+setTotalTasks(t)
+
+alert("Task verified +" + task.reward)
 
 }
 
-function openAdmin(){
 
-let p=prompt("Admin PIN")
 
-if(p===ADMIN_PIN){
+function addTask(){
+
+let title=prompt("Task Title")
+let link=prompt("Task Link")
+let reward=parseInt(prompt("Reward"))
+
+let newTask={
+id:Date.now(),
+title,
+link,
+reward
+}
+
+let updated=[...tasks,newTask]
+
+setTasks(updated)
+
+localStorage.setItem("tasks",JSON.stringify(updated))
+
+}
+
+
+
+function editTask(id){
+
+let reward=parseInt(prompt("New reward"))
+
+let updated=tasks.map(t=>{
+if(t.id===id){
+t.reward=reward
+}
+return t
+})
+
+setTasks(updated)
+
+localStorage.setItem("tasks",JSON.stringify(updated))
+
+}
+
+
+
+function withdraw(amount,wallet){
+
+if(points<amount){
+alert("Not enough balance")
+return
+}
+
+if(amount<minWithdraw){
+alert("Minimum withdraw is "+minWithdraw)
+return
+}
+
+let w={
+id:Date.now(),
+amount,
+wallet,
+status:"Pending"
+}
+
+let updated=[...withdraws,w]
+
+setWithdraws(updated)
+
+localStorage.setItem("withdraws",JSON.stringify(updated))
+
+savePoints(points-amount)
+
+}
+
+
+
+function approveWithdraw(id){
+
+let updated=withdraws.map(w=>{
+if(w.id===id){
+w.status="Paid"
+}
+return w
+})
+
+setWithdraws(updated)
+
+localStorage.setItem("withdraws",JSON.stringify(updated))
+
+}
+
+
+
+function logoTap(){
+
+let newTap=tap+1
+setTap(newTap)
+
+if(newTap>=20){
 setAdmin(true)
-}else{
-alert("Wrong PIN")
+setTap(0)
 }
 
 }
 
-function openDev(){
 
-let p=prompt("Dev PIN")
-
-if(p===DEV_PIN){
-setDev(true)
-}else{
-alert("Wrong PIN")
-}
-
-}
 
 return(
 
@@ -174,7 +322,7 @@ return(
 
 <header className="p-4 flex justify-between border-b border-green-700">
 
-<h1 className="text-green-400 font-bold">
+<h1 className="text-green-400 font-bold cursor-pointer" onClick={logoTap}>
 EarnHub
 </h1>
 
@@ -183,9 +331,37 @@ EarnHub
 </header>
 
 
-{/* DASHBOARD */}
+{community &&(
 
-{tab==="dashboard" &&(
+<div className="fixed inset-0 bg-black/80 flex items-center justify-center">
+
+<div className="card text-center w-80">
+
+<h2 className="text-green-400 font-bold">
+Join Community
+</h2>
+
+<a href={channel} target="_blank" className="btn mt-2">
+Official Channel
+</a>
+
+<a href={group} target="_blank" className="btn mt-2">
+Official Group
+</a>
+
+<button className="btn mt-3" onClick={()=>setCommunity(false)}>
+Continue
+</button>
+
+</div>
+
+</div>
+
+)}
+
+
+
+{tab==="home" &&(
 
 <div className="p-4">
 
@@ -193,12 +369,11 @@ EarnHub
 
 <p>Balance</p>
 
-<h2 className="text-3xl text-green-400 font-bold">
+<h2 className="text-4xl text-green-400 font-bold">
 {points}
 </h2>
 
 </div>
-
 
 <div className="card">
 
@@ -208,268 +383,22 @@ Claim Daily Bonus
 
 </div>
 
+</div>
+
+)}
+
+
+
+{tab==="tasks" &&(
+
+<div className="p-4">
+
 <div className="card">
 
-<h3 className="text-green-400 font-bold mb-2">
+<h3 className="text-green-400 font-bold mb-3">
 Tasks
 </h3>
 
-{tasks.map((t,i)=>(
+{tasks.map(t=>(
 
-<div key={i} className="mb-3">
-
-<p>{t.title}</p>
-
-<button
-className="btn mt-1"
-onClick={()=>{
-
-window.open(t.channel)
-
-setTimeout(()=>{
-verifyTask(t)
-},4000)
-
-}}
->
-
-Start Task (+{t.reward})
-
-</button>
-
-</div>
-
-))}
-
-</div>
-
-</div>
-
-)}
-
-{/* INVITE */}
-
-{tab==="invite" &&(
-
-<div className="p-4">
-
-<div className="card text-center">
-
-<h3 className="text-green-400 font-bold">
-Invite Friends
-</h3>
-
-<input
-className="input mt-2"
-value={`https://t.me/yourbot?start=${userId}`}
-readOnly
-/>
-
-<button
-className="btn mt-2"
-onClick={()=>{
-
-navigator.clipboard.writeText(`https://t.me/yourbot?start=${userId}`)
-
-alert("Copied")
-
-}}
->
-
-Copy Invite Link
-
-</button>
-
-</div>
-
-</div>
-
-)}
-
-{/* LEADERBOARD */}
-
-{tab==="leaders" &&(
-
-<div className="p-4">
-
-<div className="card">
-
-<h3 className="text-green-400 font-bold">
-Referral Leaderboard
-</h3>
-
-{leaderboard.map((u,i)=>(
-
-<div key={i} className="flex justify-between">
-
-<p>#{i+1} {u.user}</p>
-<p>{u.refs} refs</p>
-
-</div>
-
-))}
-
-</div>
-
-</div>
-
-)}
-
-{/* TOP EARNERS */}
-
-{tab==="earners" &&(
-
-<div className="p-4">
-
-<div className="card">
-
-<h3 className="text-green-400 font-bold">
-Top Earners
-</h3>
-
-{earners.map((u,i)=>(
-
-<div key={i} className="flex justify-between">
-
-<p>#{i+1} {u.user}</p>
-<p>{u.coins}</p>
-
-</div>
-
-))}
-
-</div>
-
-</div>
-
-)}
-
-{/* VAULT */}
-
-{tab==="vault" &&(
-
-<div className="p-4">
-
-<div className="card">
-
-<h3 className="text-green-400 font-bold">
-Withdraw
-</h3>
-
-<input className="input mt-2" placeholder="Amount"/>
-
-<select className="input mt-2">
-
-<option>USDT TRC20</option>
-<option>USDT BEP20</option>
-
-</select>
-
-<input className="input mt-2" placeholder="Wallet"/>
-
-<button className="btn mt-2">
-Submit
-</button>
-
-</div>
-
-</div>
-
-)}
-
-{/* ADMIN PANEL */}
-
-{admin &&(
-
-<div className="fixed inset-0 bg-black p-6">
-
-<div className="card">
-
-<h2 className="text-green-400 font-bold">
-Admin Panel
-</h2>
-
-<p>Total Users: 120</p>
-<p>Total Tasks Done: 300</p>
-<p>Total Withdrawals: 45</p>
-
-<button
-className="btn mt-2"
-onClick={()=>setAdmin(false)}
->
-
-Close
-
-</button>
-
-</div>
-
-</div>
-
-)}
-
-{/* DEV PANEL */}
-
-{dev &&(
-
-<div className="fixed inset-0 bg-black p-6">
-
-<div className="card">
-
-<h2 className="text-green-400 font-bold">
-Developer Panel
-</h2>
-
-<input className="input" placeholder="Bot Token"/>
-
-<input className="input mt-2" placeholder="Database URL"/>
-
-<button className="btn mt-2">
-Save
-</button>
-
-<button
-className="btn mt-2"
-onClick={()=>setDev(false)}
->
-Close
-</button>
-
-</div>
-
-</div>
-
-)}
-
-{/* NAVBAR */}
-
-<div className="navbar">
-
-<button className={tab==="dashboard"?"active":""} onClick={()=>setTab("dashboard")}>Home</button>
-
-<button className={tab==="invite"?"active":""} onClick={()=>setTab("invite")}>Invite</button>
-
-<button className={tab==="leaders"?"active":""} onClick={()=>setTab("leaders")}>Leaders</button>
-
-<button className={tab==="earners"?"active":""} onClick={()=>setTab("earners")}>Earners</button>
-
-<button className={tab==="vault"?"active":""} onClick={()=>setTab("vault")}>Vault</button>
-
-<button onClick={openAdmin}>Admin</button>
-
-<button onClick={openDev}>Dev</button>
-
-</div>
-
-</div>
-
-)
-
-}
-
-ReactDOM.render(<App/>,document.getElementById("root"))
-
-</script>
-
-</body>
-    </html>
+<div key={t.id} class

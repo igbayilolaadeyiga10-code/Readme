@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <title>EarnHub Cyber - Android Optimized</title>
+    <title>EarnHub Cyber</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -170,7 +170,7 @@
             const [user, setUser] = useState({ uid: '0', username: 'Guest', points: 0, joined: false, referrals: 0 });
             const [config, setConfig] = useState({ 
                 appName: 'CyberEarn', 
-                currency: 'USDT', 
+                currency: 'NGN', 
                 minWithdrawal: 10, 
                 adminPin: '0000', 
                 devPin: '1111',
@@ -483,9 +483,9 @@
 
                     <nav className="fixed bottom-4 left-4 right-4 h-14 nav-bar rounded-xl flex items-center justify-around z-50">
                         {[
-                            { id: 'command', icon: '📡', label: 'Home' },
-                            { id: 'bounties', icon: '🎯', label: 'Task' },
-                            { id: 'terminal', icon: '🛰️', label: 'Ref' },
+                            { id: 'command', icon: '📋', label: 'Dashboard' },
+                            { id: 'bounties', icon: '🛂', label: 'Task' },
+                            { id: 'terminal', icon: '👬', label: 'Invite' },
                             { id: 'secure', icon: '🔐', label: 'Vault' }
                         ].map(t => (
                             <button key={t.id} onClick={() => setTab(t.id)} className={`flex flex-col items-center gap-0.5 transition-all ${tab === t.id ? 'text-amber-500 scale-105' : 'text-white/10'}`}>

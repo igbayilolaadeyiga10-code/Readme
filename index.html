@@ -64,7 +64,6 @@ function App(){
   const savePoints=(p)=>{
     setPoints(p);
     localStorage.setItem("points",p);
-    // Update leaderboard
     const leaderboard=JSON.parse(localStorage.getItem("leaderboard")||"{}");
     leaderboard[userId]=p;
     localStorage.setItem("leaderboard",JSON.stringify(leaderboard));
@@ -76,12 +75,12 @@ function App(){
     if(newTap>=20){setAdmin(true);setTap(0);}
   }
 
-  // Referral system
   const REF_BONUS=100;
-  const refLink=window.location.origin+"?ref="+userId;
+  const refLink=`https://t.me/${BOT_USERNAME}?start=${userId}`;
+
   useEffect(()=>{
     const params=new URLSearchParams(window.location.search);
-    const ref=params.get("ref");
+    const ref=params.get("start"); // Telegram passes start=<refId>
     const claimed=localStorage.getItem("refClaimed");
     if(ref && ref!=userId && !claimed){
       savePoints(points+REF_BONUS);
@@ -90,18 +89,23 @@ function App(){
     }
   },[]);
 
-  // Task handling
   const openTask=(task)=>{
     if(completedTasks.includes(task.id)){alert("Task already completed"); return;}
     window.open(task.link,"_blank");
-    alert("Complete task... reward in 4 seconds");
-    setTimeout(()=>{
-      savePoints(points+task.reward);
-      const updated=[...completedTasks,task.id];
-      setCompletedTasks(updated);
-      localStorage.setItem("completedTasks",JSON.stringify(updated));
-      alert("Task completed! +₦"+task.reward);
-    },4000);
+    let countdown=5;
+    const interval=setInterval(()=>{
+      if(countdown<=0){
+        clearInterval(interval);
+        savePoints(points+task.reward);
+        const updated=[...completedTasks,task.id];
+        setCompletedTasks(updated);
+        localStorage.setItem("completedTasks",JSON.stringify(updated));
+        alert("Task completed! +₦"+task.reward);
+      } else {
+        console.log("Task verifying: "+countdown+"s"); // optional console countdown
+        countdown--;
+      }
+    },1000);
   }
 
   const addTelegramTask=()=>{
@@ -122,7 +126,6 @@ function App(){
     const updated=[...tasks,newTask]; setTasks(updated); localStorage.setItem("tasks",JSON.stringify(updated));
   }
 
-  // Withdraw function
   const sendWithdrawToChannel=(w)=>{
     if(!payoutChannel) return;
     fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,{
@@ -148,7 +151,7 @@ function App(){
     alert("Withdraw request sent!");
   }
 
-  // Daily Bonus
+  // Daily bonus
   const DAILY_BONUS=50;
   const claimDailyBonus=()=>{
     const lastClaim=localStorage.getItem("lastDailyClaim");
@@ -159,7 +162,7 @@ function App(){
     alert(`🎁 Daily bonus ₦${DAILY_BONUS} added!`);
   }
 
-  // Admin Panel
+  // Admin panel
   if(admin){
     const leaderboard=JSON.parse(localStorage.getItem("leaderboard")||"{}");
     const sortedLB=Object.entries(leaderboard).sort((a,b)=>b[1]-a[1]);
@@ -167,7 +170,6 @@ function App(){
       <div className="p-4">
         <h2 className="text-xl font-bold text-green-600 mb-3">Admin Panel</h2>
 
-        {/* Task management */}
         <div className="card">
           <h3 className="font-bold">Set Task / Delete Task</h3>
           <button className="btn" onClick={addTelegramTask}>Add Telegram Task</button>
@@ -193,20 +195,17 @@ function App(){
           ))}
         </div>
 
-        {/* Withdraw Functions */}
         <div className="card mt-4">
           <h3 className="font-bold">Withdraw Functions</h3>
           <input className="input" placeholder="Minimum Withdraw" value={minWithdraw} onChange={e=>{setMinWithdraw(e.target.value);localStorage.setItem("minWithdraw",e.target.value)}}/>
           <input className="input" placeholder="Maximum Withdraw" value={maxWithdraw} onChange={e=>{setMaxWithdraw(e.target.value);localStorage.setItem("maxWithdraw",e.target.value)}}/>
         </div>
 
-        {/* Payout Channel */}
         <div className="card mt-4">
           <h3 className="font-bold">Payout Channel</h3>
           <input className="input" placeholder="Channel ID" value={payoutChannel} onChange={e=>{setPayoutChannel(e.target.value); localStorage.setItem("payoutChannel",e.target.value)}}/>
         </div>
 
-        {/* Withdraw Requests */}
         <h3 className="text-green-600 font-bold mt-6">Withdraw Requests</h3>
         {withdraws.map(w=>(
           <div key={w.id} className="card">
@@ -225,12 +224,9 @@ function App(){
           </div>
         ))}
 
-        {/* Leaderboard */}
         <div className="card mt-4">
           <h3 className="font-bold">Leaderboard (Top Users)</h3>
-          {sortedLB.map(([uid,pts],i)=>(
-            <p key={uid}>{i+1}. User: {uid} - ₦{pts}</p>
-          ))}
+          {sortedLB.map(([uid,pts],i)=><p key={uid}>{i+1}. User: {uid} - ₦{pts}</p>)}
         </div>
 
         <button className="btn bg-red-500 mt-4" onClick={()=>setAdmin(false)}>Exit Admin</button>
@@ -238,7 +234,7 @@ function App(){
     )
   }
 
-  // Normal user view
+  // User view
   return(
     <div className="max-w-md mx-auto pb-28">
       <header className="p-4 flex justify-between border-b border-green-500">
@@ -253,7 +249,7 @@ function App(){
             <h2 className="text-4xl text-green-600 font-bold">₦{points}</h2>
           </div>
           <button className="btn tapbtn" onClick={()=>savePoints(points+5)}>Tap & Earn +5</button>
-          <button className="btn mt-2" onClick={claimDailyBonus}>Claim Daily Bonus</button>
+          <button className="btn mt-2" onClick={()=>claimDailyBonus()}>Claim Daily Bonus</button>
         </div>
       )}
 
@@ -267,7 +263,8 @@ function App(){
             <div key={t.id} className="card">
               <p className="font-bold">{t.title}</p>
               <p>Reward: ₦{t.reward}</p>
-              <button className="btn" onClick={()=>openTask(t)}>Start Task</button>
+              {completedTasks.includes(t.id)?<p className="text-green-600 font-bold">Completed</p>:
+              <button className="btn" onClick={()=>openTask(t)}>Start Task</button>}
             </div>
           ))}
         </div>

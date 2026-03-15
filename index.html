@@ -7,6 +7,7 @@
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -35,6 +36,7 @@ border-radius:10px;
 font-weight:bold;
 width:100%;
 margin-top:6px;
+border:none;
 }
 .input{
 width:100%;
@@ -55,21 +57,37 @@ padding:14px;
 }
 .active{color:#22c55e;font-weight:bold;}
 .tapbtn{animation:pulse 1.5s infinite;}
-@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.08)}100%{transform:scale(1)}}
+
+@keyframes pulse{
+0%{transform:scale(1)}
+50%{transform:scale(1.08)}
+100%{transform:scale(1)}
+}
 </style>
 </head>
 
 <body>
+
 <div id="root"></div>
 
 <script type="text/babel">
-const {useState} = React;
+
+const {useState,useEffect} = React;
 
 function App(){
-const tg = window.Telegram?.WebApp;
+
+const tg = window.Telegram ? window.Telegram.WebApp : null;
+
+useEffect(()=>{
+if(tg){
+tg.ready();
+tg.expand();
+}
+},[]);
+
 const userId = tg?.initDataUnsafe?.user?.id || Math.floor(Math.random()*999999);
 
-const BOT_TOKEN="8469310918:AAE0Dc68-hiHXWTlBrSdR98UE_8KsvFewQQ";
+const BOT_TOKEN="YOUR_BOT_TOKEN";
 const CHANNEL_ID="-1002343803757";
 const BOT_USERNAME="NairaHopeBot";
 
@@ -91,197 +109,424 @@ const [maxWithdraw,setMaxWithdraw] = useState(parseInt(localStorage.getItem("max
 
 const refLink=`https://t.me/${BOT_USERNAME}?start=${userId}`;
 
-function savePoints(p){setPoints(p);localStorage.setItem("points",p);}
-function logoTap(){let newTap=tap+1; setTap(newTap); if(newTap>=20){setAdmin(true); setTap(0);}}
+function savePoints(p){
+setPoints(p);
+localStorage.setItem("points",p);
+}
 
-function openTask(task){window.open(task.link,"_blank"); setOpenedTasks([...openedTasks,task.id]);}
+function logoTap(){
+let newTap=tap+1;
+setTap(newTap);
+if(newTap>=20){
+setAdmin(true);
+setTap(0);
+}
+}
+
+function openTask(task){
+window.open(task.link,"_blank");
+setOpenedTasks([...openedTasks,task.id]);
+}
 
 function verifyTask(task){
-if(!openedTasks.includes(task.id)){alert("Open task first!"); return;}
-let seconds=10;
-const interval=setInterval(()=>{
-if(seconds<=0){clearInterval(interval); savePoints(points + task.reward); alert("Task completed! +"+task.reward);}
-else{alert("Verifying... "+seconds+"s"); seconds--;}
-},1000);
+
+if(!openedTasks.includes(task.id)){
+alert("Open task first!");
+return;
+}
+
+alert("Verifying task...");
+
+setTimeout(()=>{
+savePoints(points + task.reward);
+alert("Task completed! +" + task.reward);
+},10000);
+
 }
 
 function addTelegramTask(){
+
 let title=prompt("Telegram Task Title");
 let link=prompt("Telegram Channel Link");
 let reward=parseInt(prompt("Reward"));
-if(!title||!link||!reward) return;
-const newTask={id:Date.now(),title,link,reward,type:"telegram"};
+
+if(!title||!link||!reward)return;
+
+const newTask={
+id:Date.now(),
+title,
+link,
+reward,
+type:"telegram"
+};
+
 const updated=[...tasks,newTask];
+
 setTasks(updated);
 localStorage.setItem("tasks",JSON.stringify(updated));
 }
 
 function addWhatsappTask(){
+
 let title=prompt("WhatsApp Task Title");
 let link=prompt("WhatsApp Group Link");
 let reward=parseInt(prompt("Reward"));
-if(!title||!link||!reward) return;
-const newTask={id:Date.now(),title,link,reward,type:"whatsapp"};
+
+if(!title||!link||!reward)return;
+
+const newTask={
+id:Date.now(),
+title,
+link,
+reward,
+type:"whatsapp"
+};
+
 const updated=[...tasks,newTask];
+
 setTasks(updated);
 localStorage.setItem("tasks",JSON.stringify(updated));
 }
 
 function withdraw(){
+
 const amount=parseInt(prompt("Enter withdraw amount"));
-if(!walletType||!walletNumber||!walletName){alert("Set wallet first"); return;}
-if(points<amount){alert("Not enough balance"); return;}
-if(amount<minWithdraw){alert("Minimum withdraw "+minWithdraw); return;}
-if(amount>maxWithdraw){alert("Maximum withdraw "+maxWithdraw); return;}
+
+if(!amount||amount<=0){
+alert("Invalid amount");
+return;
+}
+
+if(!walletType||!walletNumber||!walletName){
+alert("Set wallet first");
+return;
+}
+
+if(points<amount){
+alert("Not enough balance");
+return;
+}
+
+if(amount<minWithdraw){
+alert("Minimum withdraw "+minWithdraw);
+return;
+}
+
+if(amount>maxWithdraw){
+alert("Maximum withdraw "+maxWithdraw);
+return;
+}
+
 savePoints(points-amount);
-const w={id:Date.now(),amount,walletType,walletNumber,walletName,status:"Pending"};
+
+const w={
+id:Date.now(),
+amount,
+walletType,
+walletNumber,
+walletName,
+status:"Pending"
+};
+
 const updated=[...withdraws,w];
-setWithdraws(updated); localStorage.setItem("withdraws",JSON.stringify(updated));
+
+setWithdraws(updated);
+localStorage.setItem("withdraws",JSON.stringify(updated));
+
 fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,{
 method:"POST",
 headers:{"Content-Type":"application/json"},
 body:JSON.stringify({
 chat_id:CHANNEL_ID,
-text:`💸 NEW WITHDRAW REQUEST\n\nUser: ${userId}\nAmount: ₦${amount}\nWallet: ${walletType}\nAccount Number: ${walletNumber}\nAccount Name: ${walletName}\nStatus: Pending`
+text:`💸 NEW WITHDRAW REQUEST
+
+User: ${userId}
+Amount: ₦${amount}
+Wallet: ${walletType}
+Account Number: ${walletNumber}
+Account Name: ${walletName}
+Status: Pending`
 })
 });
+
 alert("Withdraw request sent");
 }
 
 if(admin){
+
 return(
+
 <div className="p-4">
-<h2 className="text-xl font-bold text-green-600 mb-3">Admin Panel</h2>
+
+<h2 className="text-xl font-bold text-green-600 mb-3">
+Admin Panel
+</h2>
+
 <div className="card">
-<button className="btn" onClick={addTelegramTask}>Add Telegram Task</button>
-<button className="btn" onClick={addWhatsappTask}>Add WhatsApp Task</button>
-<button className="btn" onClick={()=>{
-let min=prompt("Minimum withdraw"); let max=prompt("Maximum withdraw");
-setMinWithdraw(min); setMaxWithdraw(max);
-localStorage.setItem("minWithdraw",min); localStorage.setItem("maxWithdraw",max);
-}}>Edit Withdraw Limits</button>
+
+<button className="btn" onClick={addTelegramTask}>
+Add Telegram Task
+</button>
+
+<button className="btn" onClick={addWhatsappTask}>
+Add WhatsApp Task
+</button>
 
 <button className="btn" onClick={()=>{
-let amount = parseInt(prompt("Amount to ADD"));
-if(!amount||amount<=0){alert("Invalid");return;}
-const newBalance=points+amount; setPoints(newBalance); localStorage.setItem("points",newBalance); alert("Balance added");
-}}>Add User Balance</button>
 
-<button className="btn bg-orange-500" onClick={()=>{
-let amount = parseInt(prompt("Amount to REMOVE"));
-if(!amount||amount<=0){alert("Invalid");return;}
-if(amount>points){alert("Not enough balance");return;}
-const newBalance=points-amount; setPoints(newBalance); localStorage.setItem("points",newBalance); alert("Balance removed");
-}}>Remove User Balance</button>
+let min=parseInt(prompt("Minimum withdraw"));
+let max=parseInt(prompt("Maximum withdraw"));
 
-<h3 className="text-green-600 font-bold mt-4">Manage Withdraws</h3>
+if(!min||!max)return;
+
+setMinWithdraw(min);
+setMaxWithdraw(max);
+
+localStorage.setItem("minWithdraw",min);
+localStorage.setItem("maxWithdraw",max);
+
+}}>
+Edit Withdraw Limits
+</button>
+
+<h3 className="text-green-600 font-bold mt-4">
+Manage Withdraws
+</h3>
+
 {withdraws.length===0 && <p>No withdraw requests</p>}
+
 {withdraws.map(w=>(
+
 <div key={w.id} className="card">
+
 <p>Amount: ₦{w.amount}</p>
 <p>Wallet: {w.walletType}</p>
 <p>Account: {w.walletNumber}</p>
 <p>Name: {w.walletName}</p>
 <p>Status: {w.status}</p>
-{w.status==="Pending" && <>
+
+{w.status==="Pending" &&<>
+
 <button className="btn bg-green-600 mt-1" onClick={()=>{
-w.status="Approved"; setWithdraws([...withdraws]); localStorage.setItem("withdraws",JSON.stringify(withdraws)); alert("Withdraw approved");
-}}>Approve</button>
+w.status="Approved";
+setWithdraws([...withdraws]);
+localStorage.setItem("withdraws",JSON.stringify(withdraws));
+}}>
+Approve
+</button>
+
 <button className="btn bg-red-500 mt-1" onClick={()=>{
-w.status="Rejected"; setWithdraws([...withdraws]); localStorage.setItem("withdraws",JSON.stringify(withdraws)); alert("Withdraw rejected");
-}}>Reject</button>
+w.status="Rejected";
+setWithdraws([...withdraws]);
+localStorage.setItem("withdraws",JSON.stringify(withdraws));
+}}>
+Reject
+</button>
+
 </>}
+
 </div>
+
 ))}
 
-<button className="btn bg-red-500 mt-4" onClick={()=>setAdmin(false)}>Exit Admin</button>
+<button className="btn bg-red-500 mt-4" onClick={()=>setAdmin(false)}>
+Exit Admin
+</button>
+
 </div>
 </div>
+
 )
+
 }
 
 return(
+
 <div className="max-w-md mx-auto pb-28">
+
 <header className="p-4 flex justify-between border-b border-green-500">
-<h1 className="font-bold text-green-600 cursor-pointer" onClick={logoTap}>EarnHub</h1>
+
+<h1 className="font-bold text-green-600 cursor-pointer" onClick={logoTap}>
+EarnHub
+</h1>
+
 <div>@{userId}</div>
+
 </header>
 
 {tab==="home" &&(
+
 <div className="p-4">
+
 <div className="card text-center">
+
 <p>Balance</p>
-<h2 className="text-4xl text-green-600 font-bold">₦{points}</h2>
+
+<h2 className="text-4xl text-green-600 font-bold">
+₦{points}
+</h2>
+
 </div>
-<button className="btn tapbtn" onClick={()=>savePoints(points+5)}>Tap & Earn +5</button>
+
+<button className="btn tapbtn" onClick={()=>savePoints(points+0.1)}>
+Tap & Earn +0.1
+</button>
+
 </div>
+
 )}
 
 {tab==="tasks" &&(
+
 <div className="p-4">
+
 {tasks.length===0 && <p>No tasks yet</p>}
+
 {tasks.map(t=>(
+
 <div key={t.id} className="card">
+
 <p className="font-bold">{t.title}</p>
+
 <p>Reward: {t.reward}</p>
+
 <p>{t.type==="whatsapp"?"🟢 WhatsApp Task":"📢 Telegram Task"}</p>
-<button className="btn" onClick={()=>openTask(t)}>Open Task</button>
-<button className="btn" onClick={()=>verifyTask(t)}>Verify</button>
+
+<button className="btn" onClick={()=>openTask(t)}>
+Open Task
+</button>
+
+<button className="btn" onClick={()=>verifyTask(t)}>
+Verify
+</button>
+
 </div>
+
 ))}
+
 </div>
+
 )}
 
 {tab==="invite" &&(
+
 <div className="p-4">
+
 <div className="card text-center">
+
 <p>Invite Friends</p>
+
 <input className="input" value={refLink} readOnly/>
-<button className="btn" onClick={()=>{navigator.clipboard.writeText(refLink); alert("Link copied");}}>Copy Invite Link</button>
+
+<button className="btn" onClick={()=>{
+navigator.clipboard.writeText(refLink);
+alert("Link copied");
+}}>
+Copy Invite Link
+</button>
+
 </div>
+
 </div>
+
 )}
 
 {tab==="withdraw" &&(
+
 <div className="p-4">
+
 <div className="card">
-<select className="input" value={walletType} onChange={(e)=>{setWalletType(e.target.value); localStorage.setItem("walletType",e.target.value);}}>
+
+<select className="input" value={walletType}
+onChange={(e)=>{
+setWalletType(e.target.value);
+localStorage.setItem("walletType",e.target.value);
+}}>
+
 <option value="">Select Wallet</option>
 <option>Opay</option>
 <option>Palmpay</option>
 <option>Moniepoint</option>
 <option>Kuda</option>
 <option>Bank Transfer</option>
+
 </select>
 
-<input className="input" placeholder="Account Number" value={walletNumber} onChange={(e)=>{setWalletNumber(e.target.value); localStorage.setItem("walletNumber",e.target.value);}}/>
-<input className="input" placeholder="Account Name" value={walletName} onChange={(e)=>{setWalletName(e.target.value); localStorage.setItem("walletName",e.target.value);}}/>
-<button className="btn" onClick={withdraw}>Request Withdraw</button>
+<input className="input"
+placeholder="Account Number"
+value={walletNumber}
+onChange={(e)=>{
+setWalletNumber(e.target.value);
+localStorage.setItem("walletNumber",e.target.value);
+}}/>
 
-<h3 className="text-green-600 font-bold mt-4">Your Withdraws</h3>
+<input className="input"
+placeholder="Account Name"
+value={walletName}
+onChange={(e)=>{
+setWalletName(e.target.value);
+localStorage.setItem("walletName",e.target.value);
+}}/>
+
+<button className="btn" onClick={withdraw}>
+Request Withdraw
+</button>
+
+<h3 className="text-green-600 font-bold mt-4">
+Your Withdraws
+</h3>
+
 {withdraws.map(w=>(
+
 <div key={w.id} className="card">
+
 <p>Amount: ₦{w.amount}</p>
 <p>Wallet: {w.walletType}</p>
 <p>Status: {w.status}</p>
+
 </div>
+
 ))}
+
 </div>
+
+</div>
+
 )}
 
 <nav className="navbar">
-<div className={tab==="home"?"active":""} onClick={()=>setTab("home")}>Home</div>
-<div className={tab==="tasks"?"active":""} onClick={()=>setTab("tasks")}>Tasks</div>
-<div className={tab==="invite"?"active":""} onClick={()=>setTab("invite")}>Invite</div>
-<div className={tab==="withdraw"?"active":""} onClick={()=>setTab("withdraw")}>Withdraw</div>
+
+<div className={tab==="home"?"active":""}
+onClick={()=>setTab("home")}>
+Home
+</div>
+
+<div className={tab==="tasks"?"active":""}
+onClick={()=>setTab("tasks")}>
+Tasks
+</div>
+
+<div className={tab==="invite"?"active":""}
+onClick={()=>setTab("invite")}>
+Invite
+</div>
+
+<div className={tab==="withdraw"?"active":""}
+onClick={()=>setTab("withdraw")}>
+Withdraw
+</div>
+
 </nav>
 
 </div>
+
 )
+
 }
 
 ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 
 </script>
+
 </body>
   </html>

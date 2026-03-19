@@ -1,160 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EarnHub</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<style>
+body{
+background:white;
+color:#065f46;
+font-family:sans-serif;
+margin:0;
+}
+.card{
+background:#f0fdf4;
+border:1px solid #22c55e;
+border-radius:14px;
+padding:16px;
+margin-bottom:12px;
+transition:0.2s;
+}
+.card:hover{transform:scale(1.02);}
+.btn{
+background:linear-gradient(45deg,#16a34a,#22c55e);
+color:white;
+padding:12px;
+border-radius:10px;
+font-weight:bold;
+width:100%;
+margin-top:6px;
+border:none;
+cursor:pointer;
+}
+.input{
+width:100%;
+padding:10px;
+border:1px solid #22c55e;
+border-radius:10px;
+margin-bottom:10px;
+}
+.navbar{
+position:fixed;
+bottom:0;
+width:100%;
+display:flex;
+justify-content:space-around;
+border-top:1px solid #22c55e;
+background:white;
+padding:14px;
+}
+.active{color:#22c55e;font-weight:bold;}
+.tapbtn{animation:pulse 1.5s infinite;}
+
+.taskTabs{
+display:flex;
+justify-content:space-around;
+margin-bottom:12px;
+font-weight:bold;
+}
+
+.taskTab{
+cursor:pointer;
+padding:6px 12px;
+}
+
+.taskActive{
+color:#22c55e;
+border-bottom:2px solid #22c55e;
+}
+
+@keyframes pulse{
+0%{transform:scale(1)}
+50%{transform:scale(1.08)}
+100%{transform:scale(1)}
+}
+</style>
+</head>
+
+<body>
+
+<div id="root"></div>
+
 <script type="text/babel">
-
-const SUPABASE_URL = "YOUR_URL_HERE";
-const SUPABASE_KEY = "YOUR_KEY_HERE";
-
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const {useState,useEffect} = React;
 
 function App(){
 
-// USER ID
-let uid = localStorage.getItem("uid");
-if(!uid){
-uid = "U"+Math.floor(Math.random()*99999999);
-localStorage.setItem("uid",uid);
-}
+// ----- SITE USER ID -----
+const getUserId = () => {
+  let id = localStorage.getItem("userId");
+  if (!id) {
+    id = "U" + Math.floor(Math.random() * 99999999);
+    localStorage.setItem("userId", id);
+  }
+  return id;
+};
 
-// STATES
-const [points,setPoints] = useState(0);
-const [tasks,setTasks] = useState([]);
+const userId = getUserId();
+
+// ----- STATE -----
 const [tab,setTab] = useState("home");
+const [taskTab,setTaskTab] = useState("telegram");
+const [admin,setAdmin] = useState(false);
+const [tap,setTap] = useState(0);
+const [points,setPoints] = useState(parseInt(localStorage.getItem("points"))||0);
+const [tasks,setTasks] = useState(JSON.parse(localStorage.getItem("tasks")||"[]"));
+const [completedTasks,setCompletedTasks] = useState(JSON.parse(localStorage.getItem("completedTasks")||"[]"));
+const [withdraws,setWithdraws] = useState(JSON.parse(localStorage.getItem("withdraws")||"[]"));
+const [walletType,setWalletType] = useState(localStorage.getItem("walletType")||"");
+const [walletNumber,setWalletNumber] = useState(localStorage.getItem("walletNumber")||"");
+const [walletName,setWalletName] = useState(localStorage.getItem("walletName")||"");
+const [minWithdraw,setMinWithdraw] = useState(parseInt(localStorage.getItem("minWithdraw")||1000));
+const [maxWithdraw,setMaxWithdraw] = useState(parseInt(localStorage.getItem("maxWithdraw")||20000));
 
-// ================= USER LOAD =================
-async function loadUser(){
-let {data} = await supabase.from("users").select("*").eq("id",uid);
-
-if(data.length===0){
-// referral check
-const url = new URLSearchParams(window.location.search);
-const ref = url.get("ref");
-
-await supabase.from("users").insert({
-id: uid,
-ref_by: ref || null
-});
-
-if(ref){
-await supabase.rpc("increment_ref", {ref_id: ref});
-}
-}else{
-setPoints(data[0].points);
-}
+function savePoints(p){
+setPoints(p);
+localStorage.setItem("points",p);
 }
 
-// ================= LOAD TASKS =================
-async function loadTasks(){
-let {data} = await supabase.from("tasks").select("*");
-setTasks(data);
+function logoTap(){
+let newTap=tap+1;
+setTap(newTap);
+if(newTap>=20){
+setAdmin(true);
+setTap(0);
+}
 }
 
-// ================= COMPLETE TASK =================
-async function completeTask(task){
-window.open(task.link,"_blank");
+// ----- REFERRAL SYSTEM -----
+const urlParams = new URLSearchParams(window.location.search);
+const refParam = urlParams.get("ref"); // read ?ref=USER_ID
+const REF_BONUS = 100;
 
-setTimeout(async ()=>{
-
-// check if done
-let {data} = await supabase
-.from("completed")
-.select("*")
-.eq("user_id",uid)
-.eq("task_id",task.id);
-
-if(data.length>0){
-alert("Already done");
-return;
-}
-
-// save completion
-await supabase.from("completed").insert({
-user_id: uid,
-task_id: task.id
-});
-
-// add points
-await supabase.rpc("add_points", {
-uid_input: uid,
-amount_input: task.reward
-});
-
-setPoints(points + task.reward);
-alert("Earned ₦"+task.reward);
-
-},3000);
-}
-
-// ================= WITHDRAW =================
-async function withdraw(){
-let amount = parseInt(prompt("Enter amount"));
-if(!amount) return;
-
-await supabase.from("withdrawals").insert({
-user_id: uid,
-amount,
-wallet: "bank"
-});
-
-await supabase.rpc("add_points", {
-uid_input: uid,
-amount_input: -amount
-});
-
-setPoints(points - amount);
-
-alert("Withdraw requested");
-}
-
-// ================= INIT =================
 useEffect(()=>{
-loadUser();
-loadTasks();
+const claimed = localStorage.getItem("refClaimed");
+if(refParam && refParam !== userId && !claimed){
+let newBalance = points + REF_BONUS;
+savePoints(newBalance);
+localStorage.setItem("refClaimed",true);
+alert("🎉 Referral bonus ₦100 added!");
+}
 },[]);
 
-// ================= UI =================
-return(
-<div className="max-w-md mx-auto p-4 pb-24">
+const refLink = `${window.location.origin}?ref=${userId}`;
 
-<h1 className="text-xl font-bold text-green-600">EarnHub</h1>
+// ----- TASK HANDLING -----
+function openTask(task){
+if(completedTasks.includes(task.id)){
+alert("Task already completed");
+return;
+}
+window.open(task.link,"_blank");
+alert("Complete task... reward in 5 seconds");
+setTimeout(()=>{
+let newBalance = points + task.reward;
+savePoints(newBalance);
+let updated=[...completedTasks,task.id];
+setCompletedTasks(updated);
+localStorage.setItem("completedTasks",JSON.stringify(updated));
+alert("Task completed! +₦"+task.reward);
+},5000);
+}
+
+function addTelegramTask(){
+let title=prompt("Telegram Task Title");
+let link=prompt("Telegram Channel Link");
+let reward=parseInt(prompt("Reward"));
+if(!title||!link||!reward)return;
+const newTask={id:Date.now(),title,link,reward,type:"telegram"};
+const updated=[...tasks,newTask];
+setTasks(updated);
+localStorage.setItem("tasks",JSON.stringify(updated));
+}
+
+function addWhatsappTask(){
+let title=prompt("WhatsApp Task Title");
+let link=prompt("WhatsApp Group Link");
+let reward=parseInt(prompt("Reward"));
+if(!title||!link||!reward)return;
+const newTask={id:Date.now(),title,link,reward,type:"whatsapp"};
+const updated=[...tasks,newTask];
+setTasks(updated);
+localStorage.setItem("tasks",JSON.stringify(updated));
+}
+
+// ----- WITHDRAW -----
+function withdraw(){
+const amount=parseInt(prompt("Enter withdraw amount"));
+if(!walletType||!walletNumber||!walletName){alert("Set wallet first"); return;}
+if(points<amount){alert("Not enough balance"); return;}
+if(amount<minWithdraw){alert("Minimum withdraw "+minWithdraw); return;}
+if(amount>maxWithdraw){alert("Maximum withdraw "+maxWithdraw); return;}
+savePoints(points-amount);
+const w={id:Date.now(),amount,walletType,walletNumber,walletName,status:"Pending"};
+const updated=[...withdraws,w];
+setWithdraws(updated);
+localStorage.setItem("withdraws",JSON.stringify(updated));
+alert("Withdraw request sent to admin panel");
+}
+
+// ----- ADMIN PANEL -----
+if(admin){
+return(
+<div className="p-4">
+<h2 className="text-xl font-bold text-green-600 mb-3">Admin Panel</h2>
+<div className="card">
+<button className="btn" onClick={addTelegramTask}>Add Telegram Task</button>
+<button className="btn" onClick={addWhatsappTask}>Add WhatsApp Task</button>
+
+<h3 className="text-green-600 font-bold mt-4">Manage Tasks</h3>
+{tasks.map(t=>(
+<div key={t.id} className="card">
+<p>{t.title}</p>
+<p>Type: {t.type}</p>
+<p>Reward: ₦{t.reward}</p>
+<button className="btn" onClick={()=>{
+let title=prompt("Edit title",t.title);
+let reward=prompt("Edit reward",t.reward);
+if(!title||!reward)return;
+t.title=title;
+t.reward=parseInt(reward);
+setTasks([...tasks]);
+localStorage.setItem("tasks",JSON.stringify(tasks));
+}}>Edit</button>
+<button className="btn bg-red-500" onClick={()=>{
+let updated = tasks.filter(task=>task.id!==t.id);
+setTasks(updated);
+localStorage.setItem("tasks",JSON.stringify(updated));
+}}>Delete</button>
+</div>
+))}
+<h3 className="text-green-600 font-bold mt-4">Withdraw Requests</h3>
+{withdraws.map(w=>(
+<div key={w.id} className="card">
+<p>Amount: ₦{w.amount}</p>
+<p>Wallet: {w.walletType} - {w.walletNumber}</p>
+<p>Name: {w.walletName}</p>
+<p>Status: {w.status}</p>
+</div>
+))}
+</div>
+</div>
+)
+}
+
+// ----- MAIN UI -----
+return(
+<div className="max-w-md mx-auto pb-28">
+<header className="p-4 flex justify-between border-b border-green-500">
+<h1 className="font-bold text-green-600 cursor-pointer" onClick={logoTap}>EarnHub</h1>
+<div>{userId}</div>
+</header>
 
 {tab==="home" &&(
-<div>
+<div className="p-4">
 <div className="card text-center">
-<h2 className="text-3xl text-green-600">₦{points}</h2>
+<p>Balance</p>
+<h2 className="text-4xl text-green-600 font-bold">₦{points}</h2>
 </div>
+<button className="btn tapbtn" onClick={()=>savePoints(points+5)}>Tap & Earn +5</button>
 </div>
 )}
 
 {tab==="tasks" &&(
-<div>
-{tasks.map(t=>(
+<div className="p-4">
+<div className="taskTabs">
+<div className={taskTab==="telegram"?"taskTab taskActive":"taskTab"} onClick={()=>setTaskTab("telegram")}>Telegram</div>
+<div className={taskTab==="whatsapp"?"taskTab taskActive":"taskTab"} onClick={()=>setTaskTab("whatsapp")}>WhatsApp</div>
+</div>
+{tasks.filter(t=>t.type===taskTab).map(t=>(
 <div key={t.id} className="card">
-<p>{t.title}</p>
-<p>₦{t.reward}</p>
-<button className="btn" onClick={()=>completeTask(t)}>Start</button>
+<p className="font-bold">{t.title}</p>
+<p>Reward: ₦{t.reward}</p>
+<button className="btn" onClick={()=>openTask(t)}>Start Task</button>
 </div>
 ))}
 </div>
 )}
 
 {tab==="invite" &&(
-<div className="card">
-<p>Referral Link</p>
-<input className="input" value={window.location.origin+"?ref="+uid} readOnly/>
+<div className="p-4">
+<div className="card text-center">
+<p>Invite Friends</p>
+<input className="input" value={refLink} readOnly/>
+<button className="btn" onClick={()=>{
+navigator.clipboard.writeText(refLink);
+alert("Link copied");
+}}>Copy Invite Link</button>
+</div>
 </div>
 )}
 
 {tab==="withdraw" &&(
-<button className="btn" onClick={withdraw}>Withdraw</button>
+<div className="p-4">
+<div className="card">
+<select className="input" value={walletType} onChange={(e)=>{setWalletType(e.target.value); localStorage.setItem("walletType",e.target.value);}}>
+<option value="">Select Wallet</option>
+<option>Opay</option>
+<option>Palmpay</option>
+<option>Moniepoint</option>
+<option>Kuda</option>
+<option>Bank Transfer</option>
+</select>
+
+<input className="input" placeholder="Account Number" value={walletNumber} onChange={(e)=>{setWalletNumber(e.target.value); localStorage.setItem("walletNumber",e.target.value);}}/>
+<input className="input" placeholder="Account Name" value={walletName} onChange={(e)=>{setWalletName(e.target.value); localStorage.setItem("walletName",e.target.value);}}/>
+<button className="btn" onClick={withdraw}>Request Withdraw</button>
+</div>
+</div>
 )}
 
-<div className="navbar">
-<div onClick={()=>setTab("home")}>Home</div>
-<div onClick={()=>setTab("tasks")}>Tasks</div>
-<div onClick={()=>setTab("invite")}>Invite</div>
-<div onClick={()=>setTab("withdraw")}>Withdraw</div>
-</div>
+<nav className="navbar">
+<div className={tab==="home"?"active":""} onClick={()=>setTab("home")}>Home</div>
+<div className={tab==="tasks"?"active":""} onClick={()=>setTab("tasks")}>Tasks</div>
+<div className={tab==="invite"?"active":""} onClick={()=>setTab("invite")}>Invite</div>
+<div className={tab==="withdraw"?"active":""} onClick={()=>setTab("withdraw")}>Withdraw</div>
+</nav>
 
 </div>
 )
@@ -164,4 +331,5 @@ ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 
 </script>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+</body>
+</html>

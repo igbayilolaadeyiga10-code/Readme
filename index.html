@@ -3,256 +3,215 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EarnHub</title>
+<title>EarnHub Cyber</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
 <style>
-body{background:white;color:#065f46;font-family:sans-serif;margin:0;}
-.card{background:#f0fdf4;border:1px solid #22c55e;border-radius:14px;padding:16px;margin-bottom:12px;transition:0.2s;}
-.card:hover{transform:scale(1.02);}
-.btn{background:linear-gradient(45deg,#16a34a,#22c55e);color:white;padding:12px;border-radius:10px;font-weight:bold;width:100%;margin-top:6px;border:none;}
-.input{width:100%;padding:10px;border:1px solid #22c55e;border-radius:10px;margin-bottom:10px;}
-.navbar{position:fixed;bottom:0;width:100%;display:flex;justify-content:space-around;border-top:1px solid #22c55e;background:white;padding:14px;}
-.active{color:#22c55e;font-weight:bold;}
-.tapbtn{animation:pulse 1.5s infinite;}
-.taskTabs{display:flex;justify-content:space-around;margin-bottom:12px;font-weight:bold;}
-.taskTab{cursor:pointer;padding:6px 12px;}
-.taskActive{color:#22c55e;border-bottom:2px solid #22c55e;}
-@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.08)}100%{transform:scale(1)}}
+body { background:white; font-family:sans-serif; margin:0; }
+input, select { width:100%; padding:8px; margin:4px 0; border:1px solid #22c55e; border-radius:6px; }
+button { background:#22c55e; color:white; padding:10px; border:none; border-radius:6px; cursor:pointer; width:100%; margin-top:4px; }
+button:hover { opacity:0.9; }
+.card { background:#f0fdf4; border:1px solid #22c55e; border-radius:12px; padding:12px; margin-bottom:12px; }
+.navbar { position:fixed; bottom:0; width:100%; display:flex; justify-content:space-around; border-top:1px solid #22c55e; background:white; padding:12px; }
+.active { font-weight:bold; color:#22c55e; }
 </style>
 </head>
 <body>
 <div id="root"></div>
 
 <script type="text/babel">
-const {useState,useEffect} = React;
+const { useState, useEffect } = React;
 
-function AdminPanel({ tasks, setTasks, users, setUsers, withdraws, setWithdraws, localConfig, setLocalConfig }) {
-    const [referralBonus, setReferralBonus] = useState(localConfig.referralBonus || 100);
-    const [minWithdraw, setMinWithdraw] = useState(localConfig.minWithdraw || 1000);
-    const [maxWithdraw, setMaxWithdraw] = useState(localConfig.maxWithdraw || 20000);
-    const [editUid, setEditUid] = useState("");
-    const [editBalance, setEditBalance] = useState("");
+function App() {
+    const [page, setPage] = useState(localStorage.getItem("currentPage") || "register"); // register/login/dashboard
+    const [users, setUsers] = useState(JSON.parse(localStorage.getItem("users")||"[]"));
+    const [currentUser, setCurrentUser] = useState(JSON.parse(localStorage.getItem("currentUser")||"null"));
+    const [referralBonus, setReferralBonus] = useState(parseInt(localStorage.getItem("referralBonus")||100));
+    const [minWithdraw, setMinWithdraw] = useState(parseInt(localStorage.getItem("minWithdraw")||1000));
+    const [maxWithdraw, setMaxWithdraw] = useState(parseInt(localStorage.getItem("maxWithdraw")||20000));
+    const [tasks, setTasks] = useState(JSON.parse(localStorage.getItem("tasks")||"[]"));
+    const [withdraws, setWithdraws] = useState(JSON.parse(localStorage.getItem("withdraws")||"[]"));
 
-    const saveConfig = () => {
-        const newConfig = {...localConfig, referralBonus, minWithdraw, maxWithdraw};
-        setLocalConfig(newConfig);
-        localStorage.setItem("referralBonus", referralBonus);
-        localStorage.setItem("minWithdraw", minWithdraw);
-        localStorage.setItem("maxWithdraw", maxWithdraw);
-        alert("Settings updated ✅");
+    const saveUsers = (arr) => { setUsers(arr); localStorage.setItem("users", JSON.stringify(arr)); }
+    const saveCurrentUser = (user) => { setCurrentUser(user); localStorage.setItem("currentUser", JSON.stringify(user)); }
+
+    // -------- Registration --------
+    const [regForm, setRegForm] = useState({username:"", phone:"", password:"", email:"", referral:""});
+    const handleRegister = () => {
+        if(!regForm.username || !regForm.phone || !regForm.password || !regForm.email){ alert("Fill all required fields"); return; }
+        if(users.find(u=>u.username===regForm.username)){ alert("Username exists"); return; }
+
+        const newUser = {
+            username: regForm.username,
+            phone: regForm.phone,
+            password: regForm.password,
+            email: regForm.email,
+            referrals:0,
+            points:0,
+            referralCode: regForm.username
+        };
+
+        // Handle referral bonus
+        if(regForm.referral){
+            const refUser = users.find(u=>u.username===regForm.referral);
+            if(refUser){
+                refUser.points += referralBonus;
+                refUser.referrals +=1;
+                saveUsers([...users.filter(u=>u.username!==refUser.username), refUser]);
+                alert(`Referral bonus ₦${referralBonus} added to ${refUser.username}`);
+            }
+        }
+
+        saveUsers([...users, newUser]);
+        alert("Registration successful! Please login now.");
+        setRegForm({username:"", phone:"", password:"", email:"", referral:""});
+        setPage("login");
+        localStorage.setItem("currentPage","login");
     }
 
-    const approveWithdraw = (id) => {
-        const updated = withdraws.map(w => w.id === id ? {...w, status: "Approved"} : w);
-        setWithdraws(updated);
-        localStorage.setItem("withdraws", JSON.stringify(updated));
-        alert("Withdrawal approved ✅");
+    // -------- Login --------
+    const [loginForm, setLoginForm] = useState({username:"", password:""});
+    const handleLogin = () => {
+        const user = users.find(u=>u.username===loginForm.username && u.password===loginForm.password);
+        if(!user){ alert("Invalid credentials"); return; }
+        saveCurrentUser(user);
+        setPage("dashboard");
+        localStorage.setItem("currentPage","dashboard");
     }
 
-    const rejectWithdraw = (id) => {
-        const updated = withdraws.map(w => w.id === id ? {...w, status: "Rejected"} : w);
-        setWithdraws(updated);
-        localStorage.setItem("withdraws", JSON.stringify(updated));
-        alert("Withdrawal rejected ❌");
+    // -------- Logout --------
+    const handleLogout = () => {
+        setCurrentUser(null);
+        localStorage.removeItem("currentUser");
+        setPage("login");
+        localStorage.setItem("currentPage","login");
     }
 
-    const editUserBalance = () => {
-        if(!editUid || !editBalance) return alert("Fill both fields");
-        const updatedUsers = users.map(u => u.id == editUid ? {...u, points: parseInt(editBalance)} : u);
-        setUsers(updatedUsers);
-        localStorage.setItem("users", JSON.stringify(updatedUsers));
-        alert("User balance updated 💰");
-        setEditUid("");
-        setEditBalance("");
+    // -------- Dashboard Functions --------
+    const handleWithdraw = () => {
+        const amount = parseInt(prompt(`Enter withdraw amount (min: ${minWithdraw}, max: ${maxWithdraw})`));
+        if(!amount || amount<minWithdraw || amount>maxWithdraw || amount>currentUser.points){ alert("Invalid amount"); return; }
+        const w = {id:Date.now(), username:currentUser.username, amount, status:"Pending"};
+        setWithdraws([...withdraws, w]);
+        localStorage.setItem("withdraws", JSON.stringify([...withdraws, w]));
+        currentUser.points -= amount;
+        saveCurrentUser(currentUser);
+        alert("Withdraw request sent");
     }
 
-    return (
-        <div className="p-4 max-w-md mx-auto">
-            <h2 className="text-xl font-bold mb-4 text-green-600">Admin Panel</h2>
+    // -------- Admin Panel --------
+    const [adminMode, setAdminMode] = useState(false);
+    const adminUsernames = ["admin"]; // Example, you can extend
+    useEffect(()=>{ if(currentUser && adminUsernames.includes(currentUser.username)){ setAdminMode(true); } },[currentUser]);
 
-            <div className="card mb-4">
-                <h3 className="font-bold text-green-600 mb-2">System Settings</h3>
-                <div className="space-y-2">
-                    <input className="input" type="number" value={referralBonus} onChange={e => setReferralBonus(parseInt(e.target.value))} placeholder="Referral Bonus"/>
-                    <input className="input" type="number" value={minWithdraw} onChange={e => setMinWithdraw(parseInt(e.target.value))} placeholder="Min Withdraw"/>
-                    <input className="input" type="number" value={maxWithdraw} onChange={e => setMaxWithdraw(parseInt(e.target.value))} placeholder="Max Withdraw"/>
-                    <button className="btn" onClick={saveConfig}>Save Settings</button>
+    if(page==="register"){
+        return (
+            <div className="card p-4 max-w-md mx-auto mt-8">
+                <h2 className="font-bold text-green-600 mb-2 text-center">Register</h2>
+                <input placeholder="Username" value={regForm.username} onChange={e=>setRegForm({...regForm, username:e.target.value})} />
+                <input placeholder="Phone Number" value={regForm.phone} onChange={e=>setRegForm({...regForm, phone:e.target.value})} />
+                <input placeholder="Password" type="password" value={regForm.password} onChange={e=>setRegForm({...regForm, password:e.target.value})} />
+                <input placeholder="Email" value={regForm.email} onChange={e=>setRegForm({...regForm, email:e.target.value})} />
+                <input placeholder="Referral Code (optional)" value={regForm.referral} onChange={e=>setRegForm({...regForm, referral:e.target.value})} />
+                <button onClick={handleRegister}>Register</button>
+                <p className="mt-2 text-center">Already have an account? <span style={{color:"#22c55e",cursor:"pointer"}} onClick={()=>{setPage("login"); localStorage.setItem("currentPage","login")}}>Login</span></p>
+            </div>
+        )
+    }
+
+    if(page==="login"){
+        return (
+            <div className="card p-4 max-w-md mx-auto mt-8">
+                <h2 className="font-bold text-green-600 mb-2 text-center">Login</h2>
+                <input placeholder="Username" value={loginForm.username} onChange={e=>setLoginForm({...loginForm, username:e.target.value})} />
+                <input placeholder="Password" type="password" value={loginForm.password} onChange={e=>setLoginForm({...loginForm, password:e.target.value})} />
+                <button onClick={handleLogin}>Login</button>
+                <p className="mt-2 text-center">Don't have an account? <span style={{color:"#22c55e",cursor:"pointer"}} onClick={()=>{setPage("register"); localStorage.setItem("currentPage","register")}}>Register</span></p>
+            </div>
+        )
+    }
+
+    if(page==="dashboard" && currentUser){
+        const refLink = `https://your-site.com/?ref=${currentUser.username}`;
+        return (
+            <div className="max-w-md mx-auto p-4">
+                <header className="flex justify-between mb-4">
+                    <h2 className="text-green-600 font-bold">Dashboard</h2>
+                    <button onClick={handleLogout}>Logout</button>
+                </header>
+                <div className="card">
+                    <p>Username: {currentUser.username}</p>
+                    <p>Points: ₦{currentUser.points}</p>
+                    <p>Referral Link: <input readOnly value={refLink} style={{width:"100%"}}/></p>
+                    <button onClick={()=>{navigator.clipboard.writeText(refLink); alert("Referral link copied");}}>Copy Referral Link</button>
                 </div>
-            </div>
 
-            <div className="card mb-4">
-                <h3 className="font-bold text-green-600 mb-2">Withdraw Requests</h3>
-                {withdraws.length === 0 && <p className="text-sm">No withdraw requests</p>}
-                {withdraws.map(w => (
-                    <div key={w.id} className="card mb-2 p-2">
-                        <p>UID: {w.uid}</p>
-                        <p>Amount: ₦{w.amount}</p>
-                        <p>Wallet: {w.walletType} - {w.walletNumber}</p>
-                        <p>Status: {w.status}</p>
-                        {w.status === "Pending" && (
-                            <div className="flex gap-2 mt-2">
-                                <button className="btn" onClick={()=>approveWithdraw(w.id)}>Approve</button>
-                                <button className="btn bg-red-500" onClick={()=>rejectWithdraw(w.id)}>Reject</button>
-                            </div>
-                        )}
+                <div className="card mt-4">
+                    <h3 className="font-bold mb-2">Tasks</h3>
+                    {tasks.map(t=><div key={t.id} className="card">
+                        <p>{t.title} - ₦{t.reward}</p>
+                        <button onClick={()=>{
+                            if(currentUser.points>=0){ // simulate task completion
+                                currentUser.points += t.reward;
+                                saveCurrentUser(currentUser);
+                                alert("Task completed! Points added.");
+                            }
+                        }}>Complete Task</button>
+                    </div>)}
+                </div>
+
+                <div className="card mt-4">
+                    <h3 className="font-bold mb-2">Withdraw</h3>
+                    <button onClick={handleWithdraw}>Request Withdraw</button>
+                </div>
+
+                {adminMode && (
+                    <div className="card mt-4">
+                        <h3 className="font-bold text-red-600 mb-2">Admin Panel</h3>
+                        <input type="number" placeholder="Set Referral Bonus" value={referralBonus} onChange={e=>{setReferralBonus(parseInt(e.target.value)); localStorage.setItem("referralBonus",e.target.value)}} />
+                        <input type="number" placeholder="Set Min Withdraw" value={minWithdraw} onChange={e=>{setMinWithdraw(parseInt(e.target.value)); localStorage.setItem("minWithdraw",e.target.value)}} />
+                        <input type="number" placeholder="Set Max Withdraw" value={maxWithdraw} onChange={e=>{setMaxWithdraw(parseInt(e.target.value)); localStorage.setItem("maxWithdraw",e.target.value)}} />
+                        <h4 className="font-bold mt-2">View Withdraws</h4>
+                        {withdraws.map(w=><div key={w.id} className="card">
+                            <p>{w.username} requested ₦{w.amount} - Status: {w.status}</p>
+                            <button onClick={()=>{ w.status="Approved"; setWithdraws([...withdraws]); localStorage.setItem("withdraws", JSON.stringify(withdraws)); }}>Approve</button>
+                            <button onClick={()=>{ w.status="Rejected"; setWithdraws([...withdraws]); localStorage.setItem("withdraws", JSON.stringify(withdraws)); }}>Reject</button>
+                        </div>)}
+                        <h4 className="font-bold mt-2">Edit User Points</h4>
+                        <EditPoints users={users} saveUsers={saveUsers} />
                     </div>
-                ))}
+                )}
             </div>
+        )
+    }
 
-            <div className="card mb-4">
-                <h3 className="font-bold text-green-600 mb-2">Edit User Balance</h3>
-                <input className="input" placeholder="User UID" value={editUid} onChange={e=>setEditUid(e.target.value)}/>
-                <input className="input" placeholder="New Balance" value={editBalance} onChange={e=>setEditBalance(e.target.value)}/>
-                <button className="btn" onClick={editUserBalance}>Update Balance</button>
-            </div>
+    return <div>Loading...</div>
+}
 
-            <div className="card mb-4">
-                <h3 className="font-bold text-green-600 mb-2">All Users</h3>
-                {users.length === 0 && <p className="text-sm">No users registered</p>}
-                {users.map(u=>(
-                    <div key={u.id} className="card mb-1 p-1">
-                        <p>Username: {u.username}</p>
-                        <p>Points: ₦{u.points}</p>
-                        <p>Referrer: {u.referral || "None"}</p>
-                        <p>UID: {u.id}</p>
-                    </div>
-                ))}
-            </div>
-
-            <div className="card mb-4">
-                <h3 className="font-bold text-green-600 mb-2">Tasks</h3>
-                {tasks.map(t=>(
-                    <div key={t.id} className="card mb-1 p-1">
-                        <p>Title: {t.title}</p>
-                        <p>Type: {t.type}</p>
-                        <p>Reward: ₦{t.reward}</p>
-                    </div>
-                ))}
-            </div>
+// -------- Edit User Points Component --------
+function EditPoints({users, saveUsers}){
+    const [uid, setUid] = useState("");
+    const [points, setPoints] = useState(0);
+    const handleEdit = () => {
+        const user = users.find(u=>u.username===uid);
+        if(!user){ alert("User not found"); return; }
+        user.points = points;
+        saveUsers([...users.filter(u=>u.username!==uid), user]);
+        alert("Points updated");
+        setUid(""); setPoints(0);
+    }
+    return (
+        <div>
+            <input placeholder="Username" value={uid} onChange={e=>setUid(e.target.value)} />
+            <input type="number" placeholder="Points" value={points} onChange={e=>setPoints(parseInt(e.target.value))} />
+            <button onClick={handleEdit}>Update Points</button>
         </div>
     )
 }
 
-function App() {
-    const [tab, setTab] = useState("register");
-    const [users, setUsers] = useState(JSON.parse(localStorage.getItem("users")||"[]"));
-    const [tasks, setTasks] = useState(JSON.parse(localStorage.getItem("tasks")||"[]"));
-    const [withdraws, setWithdraws] = useState(JSON.parse(localStorage.getItem("withdraws")||"[]"));
-    const [currentUser, setCurrentUser] = useState(null);
-    const [localConfig, setLocalConfig] = useState({
-        referralBonus: parseInt(localStorage.getItem("referralBonus")) || 100,
-        minWithdraw: parseInt(localStorage.getItem("minWithdraw")) || 1000,
-        maxWithdraw: parseInt(localStorage.getItem("maxWithdraw")) || 20000
-    });
-
-    const handleRegister = (username,email,phone,password,referral) => {
-        if(!username||!email||!phone||!password) return alert("All fields required except referral");
-        const uid = Date.now();
-        const newUser = { id: uid, username, email, phone, password, points:0, referral: referral || "", completedTasks: [] };
-        const updated = [...users,newUser];
-        setUsers(updated);
-        localStorage.setItem("users",JSON.stringify(updated));
-        alert("Registration successful ✅, please login");
-        setTab("login");
-    }
-
-    const handleLogin = (username,password) => {
-        const user = users.find(u => u.username===username && u.password===password);
-        if(!user) return alert("Invalid credentials ❌");
-        setCurrentUser(user);
-
-        // Check referral bonus
-        if(user.referral){
-            const refUser = users.find(u => u.username === user.referral);
-            if(refUser && !localStorage.getItem("refClaimed_"+user.id)){
-                refUser.points += localConfig.referralBonus;
-                const updated = users.map(u=>u.id===refUser.id ? refUser : u);
-                setUsers(updated);
-                localStorage.setItem("users",JSON.stringify(updated));
-                localStorage.setItem("refClaimed_"+user.id,true);
-                alert("Referral bonus granted to upline ✅");
-            }
-        }
-
-        setTab("dashboard");
-    }
-
-    const logout = () => {
-        setCurrentUser(null);
-        setTab("login");
-    }
-
-    if(tab==="register"){
-        return (
-            <div className="p-4 max-w-md mx-auto">
-                <h2 className="text-xl font-bold text-green-600 mb-4">Register</h2>
-                <input className="input" placeholder="Username" id="r_username"/>
-                <input className="input" placeholder="Phone Number" id="r_phone"/>
-                <input className="input" placeholder="Email" id="r_email"/>
-                <input className="input" type="password" placeholder="Password" id="r_password"/>
-                <input className="input" placeholder="Referral Code (optional)" id="r_referral"/>
-                <button className="btn" onClick={()=>{
-                    handleRegister(
-                        document.getElementById("r_username").value,
-                        document.getElementById("r_email").value,
-                        document.getElementById("r_phone").value,
-                        document.getElementById("r_password").value,
-                        document.getElementById("r_referral").value
-                    );
-                }}>Register</button>
-                <p className="mt-2 text-sm">Already have an account? <span className="text-green-600 cursor-pointer" onClick={()=>setTab("login")}>Login</span></p>
-            </div>
-        )
-    }
-
-    if(tab==="login"){
-        return (
-            <div className="p-4 max-w-md mx-auto">
-                <h2 className="text-xl font-bold text-green-600 mb-4">Login</h2>
-                <input className="input" placeholder="Username" id="l_username"/>
-                <input className="input" type="password" placeholder="Password" id="l_password"/>
-                <button className="btn" onClick={()=>handleLogin(document.getElementById("l_username").value, document.getElementById("l_password").value)}>Login</button>
-                <p className="mt-2 text-sm">Don't have an account? <span className="text-green-600 cursor-pointer" onClick={()=>setTab("register")}>Register</span></p>
-            </div>
-        )
-    }
-
-    if(tab==="dashboard" && currentUser){
-        return (
-            <div className="p-4 max-w-md mx-auto">
-                <header className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-bold text-green-600">Dashboard</h2>
-                    <button className="btn" onClick={logout}>Logout</button>
-                </header>
-                <p className="mb-2">Welcome, {currentUser.username} (₦{currentUser.points})</p>
-                <div className="card mb-4">
-                    <h3 className="font-bold text-green-600 mb-2">Tasks</h3>
-                    {tasks.map(t=>(
-                        <div key={t.id} className="card mb-1">
-                            <p>Title: {t.title}</p>
-                            <p>Type: {t.type}</p>
-                            <p>Reward: ₦{t.reward}</p>
-                        </div>
-                    ))}
-                </div>
-                {currentUser.username==="admin" && <AdminPanel 
-                    tasks={tasks} setTasks={setTasks} 
-                    users={users} setUsers={setUsers} 
-                    withdraws={withdraws} setWithdraws={setWithdraws} 
-                    localConfig={localConfig} setLocalConfig={setLocalConfig} 
-                />}
-            </div>
-        )
-    }
-
-    return <p>Loading...</p>
-}
-
-ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 </body>
 </html>

@@ -139,13 +139,20 @@ const refParam = urlParams.get("ref"); // read ?ref=USER_ID
 const REF_BONUS = 100;
 
 useEffect(()=>{
-const claimed = localStorage.getItem("refClaimed");
-if(refParam && refParam !== userId && !claimed){
-let newBalance = points + REF_BONUS;
-savePoints(newBalance);
-localStorage.setItem("refClaimed",true);
-alert("🎉 Referral bonus ₦100 added!");
-}
+  const claimed = localStorage.getItem("refClaimed");
+  if(refParam && refParam !== userId && !claimed){
+    
+    // Save that this referral was claimed
+    localStorage.setItem("refClaimed",true);
+    
+    // Increase points of **the referrer**
+    let refPoints = JSON.parse(localStorage.getItem("refPoints")||"{}");
+    if(!refPoints[refParam]) refPoints[refParam] = 0;
+    refPoints[refParam] += REF_BONUS;
+    localStorage.setItem("refPoints",JSON.stringify(refPoints));
+    
+    alert("🎉 You were referred! Referrer earned ₦100!");
+  }
 },[]);
 
 const refLink = `${window.location.origin}?ref=${userId}`;
@@ -207,12 +214,15 @@ alert("Withdraw request sent to admin panel");
 
 // ----- ADMIN PANEL -----
 if(admin){
-return(
+  const refPoints = JSON.parse(localStorage.getItem("refPoints")||"{}");
+  return(
 <div className="p-4">
 <h2 className="text-xl font-bold text-green-600 mb-3">Admin Panel</h2>
+
 <div className="card">
 <button className="btn" onClick={addTelegramTask}>Add Telegram Task</button>
 <button className="btn" onClick={addWhatsappTask}>Add WhatsApp Task</button>
+</div>
 
 <h3 className="text-green-600 font-bold mt-4">Manage Tasks</h3>
 {tasks.map(t=>(
@@ -236,6 +246,7 @@ localStorage.setItem("tasks",JSON.stringify(updated));
 }}>Delete</button>
 </div>
 ))}
+
 <h3 className="text-green-600 font-bold mt-4">Withdraw Requests</h3>
 {withdraws.map(w=>(
 <div key={w.id} className="card">
@@ -245,7 +256,15 @@ localStorage.setItem("tasks",JSON.stringify(updated));
 <p>Status: {w.status}</p>
 </div>
 ))}
+
+<h3 className="text-green-600 font-bold mt-4">Referral Earnings</h3>
+{Object.keys(refPoints).map(k=>(
+<div key={k} className="card">
+<p>User: {k}</p>
+<p>Earned from Referrals: ₦{refPoints[k]}</p>
 </div>
+))}
+
 </div>
 )
 }

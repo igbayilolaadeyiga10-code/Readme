@@ -5,11 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>EarnHub</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
 <style>
-body{margin:0;font-family:sans-serif;background:white;color:#065f46;}
+body{background:white;color:#065f46;font-family:sans-serif;margin:0;}
 .card{background:#f0fdf4;border:1px solid #22c55e;border-radius:14px;padding:16px;margin-bottom:12px;transition:0.2s;}
 .card:hover{transform:scale(1.02);}
 .btn{background:linear-gradient(45deg,#16a34a,#22c55e);color:white;padding:12px;border-radius:10px;font-weight:bold;width:100%;margin-top:6px;border:none;}
@@ -27,237 +28,228 @@ body{margin:0;font-family:sans-serif;background:white;color:#065f46;}
 <div id="root"></div>
 
 <script type="text/babel">
-const {useState, useEffect} = React;
+const {useState,useEffect} = React;
 
-function App(){
-  // --- USERS STORAGE ---
-  const [user,setUser] = useState(JSON.parse(localStorage.getItem("currentUser")||"null"));
-  const [users,setUsers] = useState(JSON.parse(localStorage.getItem("users")||"[]"));
-  const [view,setView] = useState(user?"dashboard":"register"); // register/login/dashboard
-  const [tab,setTab] = useState("home");
-  const [taskTab,setTaskTab] = useState("telegram");
-  const [points,setPoints] = useState(parseInt(localStorage.getItem("points")||0));
-  const [tasks,setTasks] = useState(JSON.parse(localStorage.getItem("tasks")||"[]"));
-  const [completedTasks,setCompletedTasks] = useState(JSON.parse(localStorage.getItem("completedTasks")||"[]"));
-  const [walletType,setWalletType] = useState(localStorage.getItem("walletType")||"");
-  const [walletNumber,setWalletNumber] = useState(localStorage.getItem("walletNumber")||"");
-  const [walletName,setWalletName] = useState(localStorage.getItem("walletName")||"");
-  const [admin,setAdmin] = useState(false);
-  const [tap,setTap] = useState(0);
+function AdminPanel({ tasks, setTasks, users, setUsers, withdraws, setWithdraws, localConfig, setLocalConfig }) {
+    const [referralBonus, setReferralBonus] = useState(localConfig.referralBonus || 100);
+    const [minWithdraw, setMinWithdraw] = useState(localConfig.minWithdraw || 1000);
+    const [maxWithdraw, setMaxWithdraw] = useState(localConfig.maxWithdraw || 20000);
+    const [editUid, setEditUid] = useState("");
+    const [editBalance, setEditBalance] = useState("");
 
-  const REF_BONUS = 100;
-
-  const savePoints = (p)=>{
-    setPoints(p); 
-    localStorage.setItem("points",p);
-  }
-
-  const logoTap=()=>{
-    let newTap=tap+1;
-    setTap(newTap);
-    if(newTap>=20){setAdmin(true); setTap(0);}
-  }
-
-  // --- REFERRAL LINK ---
-  const refLink = `${window.location.origin}?ref=${user?.username||""}`;
-
-  // --- REGISTRATION ---
-  const register=(form)=>{
-    const {username,email,phone,password,referral} = form;
-    if(users.find(u=>u.username===username)){
-      alert("Username already taken"); return;
+    const saveConfig = () => {
+        const newConfig = {...localConfig, referralBonus, minWithdraw, maxWithdraw};
+        setLocalConfig(newConfig);
+        localStorage.setItem("referralBonus", referralBonus);
+        localStorage.setItem("minWithdraw", minWithdraw);
+        localStorage.setItem("maxWithdraw", maxWithdraw);
+        alert("Settings updated ✅");
     }
-    const newUser = {id:Date.now().toString(), username, email, phone, password, points:0};
-    const updatedUsers = [...users,newUser];
-    setUsers(updatedUsers);
-    localStorage.setItem("users",JSON.stringify(updatedUsers));
-    alert("Registered successfully! Please login.");
-    setView("login"); // go to login page after successful registration
 
-    // --- REFERRAL BONUS ---
-    if(referral){
-      const upline = updatedUsers.find(u=>u.username===referral);
-      if(upline){
-        upline.points = (upline.points||0) + REF_BONUS;
-        localStorage.setItem("users",JSON.stringify(updatedUsers));
-        alert(`Referral bonus ₦${REF_BONUS} added to ${referral}`);
-      }
+    const approveWithdraw = (id) => {
+        const updated = withdraws.map(w => w.id === id ? {...w, status: "Approved"} : w);
+        setWithdraws(updated);
+        localStorage.setItem("withdraws", JSON.stringify(updated));
+        alert("Withdrawal approved ✅");
     }
-  }
 
-  // --- LOGIN ---
-  const login=(form)=>{
-    const {username,password} = form;
-    const u = users.find(u=>u.username===username && u.password===password);
-    if(u){
-      setUser(u);
-      localStorage.setItem("currentUser",JSON.stringify(u));
-      alert("Login successful!");
-      setView("dashboard");
-    }else{
-      alert("Invalid username or password");
+    const rejectWithdraw = (id) => {
+        const updated = withdraws.map(w => w.id === id ? {...w, status: "Rejected"} : w);
+        setWithdraws(updated);
+        localStorage.setItem("withdraws", JSON.stringify(updated));
+        alert("Withdrawal rejected ❌");
     }
-  }
 
-  // --- TASK FUNCTIONS ---
-  const openTask=(task)=>{
-    if(completedTasks.includes(task.id)){alert("Task already completed"); return;}
-    window.open(task.link,"_blank");
-    setTimeout(()=>{
-      savePoints(points+task.reward);
-      const updated = [...completedTasks,task.id];
-      setCompletedTasks(updated);
-      localStorage.setItem("completedTasks",JSON.stringify(updated));
-      alert("Task completed! +₦"+task.reward);
-    },5000);
-  }
+    const editUserBalance = () => {
+        if(!editUid || !editBalance) return alert("Fill both fields");
+        const updatedUsers = users.map(u => u.id == editUid ? {...u, points: parseInt(editBalance)} : u);
+        setUsers(updatedUsers);
+        localStorage.setItem("users", JSON.stringify(updatedUsers));
+        alert("User balance updated 💰");
+        setEditUid("");
+        setEditBalance("");
+    }
 
-  const addTask=(type)=>{
-    let title = prompt(type + " Task Title");
-    let link = prompt(type + " Link");
-    let reward = parseInt(prompt("Reward"));
-    if(!title||!link||!reward) return;
-    const newTask={id:Date.now(),title,link,reward,type:type.toLowerCase()};
-    const updated=[...tasks,newTask];
-    setTasks(updated);
-    localStorage.setItem("tasks",JSON.stringify(updated));
-  }
+    return (
+        <div className="p-4 max-w-md mx-auto">
+            <h2 className="text-xl font-bold mb-4 text-green-600">Admin Panel</h2>
 
-  const withdraw=()=>{
-    const amount=parseInt(prompt("Enter withdraw amount"));
-    if(!walletType||!walletNumber||!walletName){alert("Set wallet first"); return;}
-    if(points<amount){alert("Not enough balance"); return;}
-    savePoints(points-amount);
-    alert("Withdraw requested!");
-  }
-
-  // --- REGISTER PAGE ---
-  if(view==="register"){
-    const [form,setForm] = useState({username:"",email:"",phone:"",password:"",referral:""});
-    return(
-      <div className="p-4 max-w-md mx-auto">
-        <h2 className="text-2xl font-bold text-green-600 mb-4">Register</h2>
-        <div className="card">
-          <input className="input" placeholder="Username" value={form.username} onChange={e=>setForm({...form,username:e.target.value})}/>
-          <input className="input" placeholder="Phone" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})}/>
-          <input className="input" placeholder="Email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})}/>
-          <input className="input" type="password" placeholder="Password" value={form.password} onChange={e=>setForm({...form,password:e.target.value})}/>
-          <input className="input" placeholder="Referral Username (optional)" value={form.referral} onChange={e=>setForm({...form,referral:e.target.value})}/>
-          <button className="btn" onClick={()=>register(form)}>Register</button>
-        </div>
-        <p className="mt-4 text-center">Already have an account? <span className="text-green-600 cursor-pointer" onClick={()=>setView("login")}>Login</span></p>
-      </div>
-    )
-  }
-
-  // --- LOGIN PAGE ---
-  if(view==="login"){
-    const [loginForm,setLoginForm] = useState({username:"",password:""});
-    return(
-      <div className="p-4 max-w-md mx-auto">
-        <h2 className="text-2xl font-bold text-green-600 mb-4">Login</h2>
-        <div className="card">
-          <input className="input" placeholder="Username" value={loginForm.username} onChange={e=>setLoginForm({...loginForm,username:e.target.value})}/>
-          <input className="input" type="password" placeholder="Password" value={loginForm.password} onChange={e=>setLoginForm({...loginForm,password:e.target.value})}/>
-          <button className="btn" onClick={()=>login(loginForm)}>Login</button>
-        </div>
-        <p className="mt-4 text-center">Don't have an account? <span className="text-green-600 cursor-pointer" onClick={()=>setView("register")}>Register</span></p>
-      </div>
-    )
-  }
-
-  // --- ADMIN PANEL ---
-  if(admin){
-    return(
-      <div className="p-4">
-        <h2 className="text-xl font-bold text-green-600 mb-3">Admin Panel</h2>
-        <button className="btn" onClick={()=>addTask("Telegram")}>Add Telegram Task</button>
-        <button className="btn" onClick={()=>addTask("WhatsApp")}>Add WhatsApp Task</button>
-        <h3 className="text-green-600 font-bold mt-4">Manage Tasks</h3>
-        {tasks.map(t=>(
-          <div key={t.id} className="card">
-            <p>{t.title}</p>
-            <p>Type: {t.type}</p>
-            <p>Reward: ₦{t.reward}</p>
-          </div>
-        ))}
-      </div>
-    )
-  }
-
-  // --- DASHBOARD ---
-  return (
-    <div className="max-w-md mx-auto pb-28">
-      <header className="p-4 flex justify-between border-b border-green-500">
-        <h1 className="font-bold text-green-600 cursor-pointer" onClick={logoTap}>EarnHub</h1>
-        <div>@{user.username}</div>
-      </header>
-
-      {tab==="home" &&(
-        <div className="p-4">
-          <div className="card text-center">
-            <p>Balance</p>
-            <h2 className="text-4xl text-green-600 font-bold">₦{points}</h2>
-          </div>
-          <button className="btn tapbtn" onClick={()=>savePoints(points+5)}>Tap & Earn +5</button>
-        </div>
-      )}
-
-      {tab==="tasks" &&(
-        <div className="p-4">
-          <div className="taskTabs">
-            <div className={taskTab==="telegram"?"taskTab taskActive":"taskTab"} onClick={()=>setTaskTab("telegram")}>Telegram</div>
-            <div className={taskTab==="whatsapp"?"taskTab taskActive":"taskTab"} onClick={()=>setTaskTab("whatsapp")}>WhatsApp</div>
-          </div>
-          {tasks.filter(t=>t.type===taskTab).map(t=>(
-            <div key={t.id} className="card">
-              <p className="font-bold">{t.title}</p>
-              <p>Reward: ₦{t.reward}</p>
-              <button className="btn" onClick={()=>openTask(t)}>Start Task</button>
+            <div className="card mb-4">
+                <h3 className="font-bold text-green-600 mb-2">System Settings</h3>
+                <div className="space-y-2">
+                    <input className="input" type="number" value={referralBonus} onChange={e => setReferralBonus(parseInt(e.target.value))} placeholder="Referral Bonus"/>
+                    <input className="input" type="number" value={minWithdraw} onChange={e => setMinWithdraw(parseInt(e.target.value))} placeholder="Min Withdraw"/>
+                    <input className="input" type="number" value={maxWithdraw} onChange={e => setMaxWithdraw(parseInt(e.target.value))} placeholder="Max Withdraw"/>
+                    <button className="btn" onClick={saveConfig}>Save Settings</button>
+                </div>
             </div>
-          ))}
-        </div>
-      )}
 
-      {tab==="invite" &&(
-        <div className="p-4">
-          <div className="card text-center">
-            <p>Invite Friends</p>
-            <input className="input" value={refLink} readOnly/>
-            <button className="btn" onClick={()=>{
-              navigator.clipboard.writeText(refLink);
-              alert("Link copied!");
-            }}>Copy Invite Link</button>
-          </div>
-        </div>
-      )}
+            <div className="card mb-4">
+                <h3 className="font-bold text-green-600 mb-2">Withdraw Requests</h3>
+                {withdraws.length === 0 && <p className="text-sm">No withdraw requests</p>}
+                {withdraws.map(w => (
+                    <div key={w.id} className="card mb-2 p-2">
+                        <p>UID: {w.uid}</p>
+                        <p>Amount: ₦{w.amount}</p>
+                        <p>Wallet: {w.walletType} - {w.walletNumber}</p>
+                        <p>Status: {w.status}</p>
+                        {w.status === "Pending" && (
+                            <div className="flex gap-2 mt-2">
+                                <button className="btn" onClick={()=>approveWithdraw(w.id)}>Approve</button>
+                                <button className="btn bg-red-500" onClick={()=>rejectWithdraw(w.id)}>Reject</button>
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
 
-      {tab==="withdraw" &&(
-        <div className="p-4">
-          <div className="card">
-            <select className="input" value={walletType} onChange={(e)=>{setWalletType(e.target.value); localStorage.setItem("walletType",e.target.value);}}>
-              <option value="">Select Wallet</option>
-              <option>Opay</option>
-              <option>Palmpay</option>
-              <option>Moniepoint</option>
-              <option>Kuda</option>
-              <option>Bank Transfer</option>
-            </select>
-            <input className="input" placeholder="Account Number" value={walletNumber} onChange={(e)=>{setWalletNumber(e.target.value); localStorage.setItem("walletNumber",e.target.value);}}/>
-            <input className="input" placeholder="Account Name" value={walletName} onChange={(e)=>{setWalletName(e.target.value); localStorage.setItem("walletName",e.target.value);}}/>
-            <button className="btn" onClick={withdraw}>Request Withdraw</button>
-          </div>
-        </div>
-      )}
+            <div className="card mb-4">
+                <h3 className="font-bold text-green-600 mb-2">Edit User Balance</h3>
+                <input className="input" placeholder="User UID" value={editUid} onChange={e=>setEditUid(e.target.value)}/>
+                <input className="input" placeholder="New Balance" value={editBalance} onChange={e=>setEditBalance(e.target.value)}/>
+                <button className="btn" onClick={editUserBalance}>Update Balance</button>
+            </div>
 
-      <nav className="navbar">
-        <div className={tab==="home"?"active":""} onClick={()=>setTab("home")}>Home</div>
-        <div className={tab==="tasks"?"active":""} onClick={()=>setTab("tasks")}>Tasks</div>
-        <div className={tab==="invite"?"active":""} onClick={()=>setTab("invite")}>Invite</div>
-        <div className={tab==="withdraw"?"active":""} onClick={()=>setTab("withdraw")}>Withdraw</div>
-      </nav>
-    </div>
-  )
+            <div className="card mb-4">
+                <h3 className="font-bold text-green-600 mb-2">All Users</h3>
+                {users.length === 0 && <p className="text-sm">No users registered</p>}
+                {users.map(u=>(
+                    <div key={u.id} className="card mb-1 p-1">
+                        <p>Username: {u.username}</p>
+                        <p>Points: ₦{u.points}</p>
+                        <p>Referrer: {u.referral || "None"}</p>
+                        <p>UID: {u.id}</p>
+                    </div>
+                ))}
+            </div>
+
+            <div className="card mb-4">
+                <h3 className="font-bold text-green-600 mb-2">Tasks</h3>
+                {tasks.map(t=>(
+                    <div key={t.id} className="card mb-1 p-1">
+                        <p>Title: {t.title}</p>
+                        <p>Type: {t.type}</p>
+                        <p>Reward: ₦{t.reward}</p>
+                    </div>
+                ))}
+            </div>
+        </div>
+    )
+}
+
+function App() {
+    const [tab, setTab] = useState("register");
+    const [users, setUsers] = useState(JSON.parse(localStorage.getItem("users")||"[]"));
+    const [tasks, setTasks] = useState(JSON.parse(localStorage.getItem("tasks")||"[]"));
+    const [withdraws, setWithdraws] = useState(JSON.parse(localStorage.getItem("withdraws")||"[]"));
+    const [currentUser, setCurrentUser] = useState(null);
+    const [localConfig, setLocalConfig] = useState({
+        referralBonus: parseInt(localStorage.getItem("referralBonus")) || 100,
+        minWithdraw: parseInt(localStorage.getItem("minWithdraw")) || 1000,
+        maxWithdraw: parseInt(localStorage.getItem("maxWithdraw")) || 20000
+    });
+
+    const handleRegister = (username,email,phone,password,referral) => {
+        if(!username||!email||!phone||!password) return alert("All fields required except referral");
+        const uid = Date.now();
+        const newUser = { id: uid, username, email, phone, password, points:0, referral: referral || "", completedTasks: [] };
+        const updated = [...users,newUser];
+        setUsers(updated);
+        localStorage.setItem("users",JSON.stringify(updated));
+        alert("Registration successful ✅, please login");
+        setTab("login");
+    }
+
+    const handleLogin = (username,password) => {
+        const user = users.find(u => u.username===username && u.password===password);
+        if(!user) return alert("Invalid credentials ❌");
+        setCurrentUser(user);
+
+        // Check referral bonus
+        if(user.referral){
+            const refUser = users.find(u => u.username === user.referral);
+            if(refUser && !localStorage.getItem("refClaimed_"+user.id)){
+                refUser.points += localConfig.referralBonus;
+                const updated = users.map(u=>u.id===refUser.id ? refUser : u);
+                setUsers(updated);
+                localStorage.setItem("users",JSON.stringify(updated));
+                localStorage.setItem("refClaimed_"+user.id,true);
+                alert("Referral bonus granted to upline ✅");
+            }
+        }
+
+        setTab("dashboard");
+    }
+
+    const logout = () => {
+        setCurrentUser(null);
+        setTab("login");
+    }
+
+    if(tab==="register"){
+        return (
+            <div className="p-4 max-w-md mx-auto">
+                <h2 className="text-xl font-bold text-green-600 mb-4">Register</h2>
+                <input className="input" placeholder="Username" id="r_username"/>
+                <input className="input" placeholder="Phone Number" id="r_phone"/>
+                <input className="input" placeholder="Email" id="r_email"/>
+                <input className="input" type="password" placeholder="Password" id="r_password"/>
+                <input className="input" placeholder="Referral Code (optional)" id="r_referral"/>
+                <button className="btn" onClick={()=>{
+                    handleRegister(
+                        document.getElementById("r_username").value,
+                        document.getElementById("r_email").value,
+                        document.getElementById("r_phone").value,
+                        document.getElementById("r_password").value,
+                        document.getElementById("r_referral").value
+                    );
+                }}>Register</button>
+                <p className="mt-2 text-sm">Already have an account? <span className="text-green-600 cursor-pointer" onClick={()=>setTab("login")}>Login</span></p>
+            </div>
+        )
+    }
+
+    if(tab==="login"){
+        return (
+            <div className="p-4 max-w-md mx-auto">
+                <h2 className="text-xl font-bold text-green-600 mb-4">Login</h2>
+                <input className="input" placeholder="Username" id="l_username"/>
+                <input className="input" type="password" placeholder="Password" id="l_password"/>
+                <button className="btn" onClick={()=>handleLogin(document.getElementById("l_username").value, document.getElementById("l_password").value)}>Login</button>
+                <p className="mt-2 text-sm">Don't have an account? <span className="text-green-600 cursor-pointer" onClick={()=>setTab("register")}>Register</span></p>
+            </div>
+        )
+    }
+
+    if(tab==="dashboard" && currentUser){
+        return (
+            <div className="p-4 max-w-md mx-auto">
+                <header className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-bold text-green-600">Dashboard</h2>
+                    <button className="btn" onClick={logout}>Logout</button>
+                </header>
+                <p className="mb-2">Welcome, {currentUser.username} (₦{currentUser.points})</p>
+                <div className="card mb-4">
+                    <h3 className="font-bold text-green-600 mb-2">Tasks</h3>
+                    {tasks.map(t=>(
+                        <div key={t.id} className="card mb-1">
+                            <p>Title: {t.title}</p>
+                            <p>Type: {t.type}</p>
+                            <p>Reward: ₦{t.reward}</p>
+                        </div>
+                    ))}
+                </div>
+                {currentUser.username==="admin" && <AdminPanel 
+                    tasks={tasks} setTasks={setTasks} 
+                    users={users} setUsers={setUsers} 
+                    withdraws={withdraws} setWithdraws={setWithdraws} 
+                    localConfig={localConfig} setLocalConfig={setLocalConfig} 
+                />}
+            </div>
+        )
+    }
+
+    return <p>Loading...</p>
 }
 
 ReactDOM.createRoot(document.getElementById("root")).render(<App/>);

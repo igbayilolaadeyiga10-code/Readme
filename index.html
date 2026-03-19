@@ -33,6 +33,7 @@ function App(){
   // --- USERS STORAGE ---
   const [user,setUser] = useState(JSON.parse(localStorage.getItem("currentUser")||"null"));
   const [users,setUsers] = useState(JSON.parse(localStorage.getItem("users")||"[]"));
+  const [view,setView] = useState(user?"dashboard":"register"); // track current page
   const [tab,setTab] = useState("home");
   const [taskTab,setTaskTab] = useState("telegram");
   const [points,setPoints] = useState(parseInt(localStorage.getItem("points")||0));
@@ -46,7 +47,10 @@ function App(){
 
   const REF_BONUS = 100;
 
-  const savePoints = (p)=>{setPoints(p); localStorage.setItem("points",p);}
+  const savePoints = (p)=>{
+    setPoints(p); 
+    localStorage.setItem("points",p);
+  }
 
   const logoTap=()=>{
     let newTap=tap+1;
@@ -59,18 +63,15 @@ function App(){
   // --- REGISTRATION ---
   const register=(form)=>{
     const {username,email,phone,password,referral} = form;
-
-    // check if username exists
     if(users.find(u=>u.username===username)){
       alert("Username already taken"); return;
     }
-
     const newUser = {id:Date.now().toString(), username, email, phone, password, points:0};
     const updatedUsers = [...users,newUser];
     setUsers(updatedUsers);
     localStorage.setItem("users",JSON.stringify(updatedUsers));
-    setUser(newUser);
-    localStorage.setItem("currentUser",JSON.stringify(newUser));
+    alert("Registered successfully! Please login.");
+    setView("login"); // go to login page after successful registration
 
     // --- REFERRAL ---
     if(referral){
@@ -81,8 +82,6 @@ function App(){
         alert(`Referral bonus ₦${REF_BONUS} added to ${referral}`);
       }
     }
-
-    alert("Registered successfully!");
   }
 
   // --- LOGIN ---
@@ -93,6 +92,7 @@ function App(){
       setUser(u);
       localStorage.setItem("currentUser",JSON.stringify(u));
       alert("Login successful!");
+      setView("dashboard"); // go to dashboard after login
     }else{
       alert("Invalid username or password");
     }
@@ -130,11 +130,9 @@ function App(){
     alert("Withdraw requested!");
   }
 
-  // --- LOGIN / REGISTER PAGE ---
-  if(!user){
+  // --- REGISTER PAGE ---
+  if(view==="register"){
     const [form,setForm] = useState({username:"",email:"",phone:"",password:"",referral:""});
-    const [loginForm,setLoginForm] = useState({username:"",password:""});
-
     return(
       <div className="p-4 max-w-md mx-auto">
         <h2 className="text-2xl font-bold text-green-600 mb-4">Register</h2>
@@ -146,13 +144,23 @@ function App(){
           <input className="input" placeholder="Referral Username (optional)" value={form.referral} onChange={e=>setForm({...form,referral:e.target.value})}/>
           <button className="btn" onClick={()=>register(form)}>Register</button>
         </div>
+        <p className="mt-4 text-center">Already have an account? <span className="text-green-600 cursor-pointer" onClick={()=>setView("login")}>Login</span></p>
+      </div>
+    )
+  }
 
-        <h2 className="text-2xl font-bold text-green-600 mt-6 mb-4">Login</h2>
+  // --- LOGIN PAGE ---
+  if(view==="login"){
+    const [loginForm,setLoginForm] = useState({username:"",password:""});
+    return(
+      <div className="p-4 max-w-md mx-auto">
+        <h2 className="text-2xl font-bold text-green-600 mb-4">Login</h2>
         <div className="card">
           <input className="input" placeholder="Username" value={loginForm.username} onChange={e=>setLoginForm({...loginForm,username:e.target.value})}/>
           <input className="input" type="password" placeholder="Password" value={loginForm.password} onChange={e=>setLoginForm({...loginForm,password:e.target.value})}/>
           <button className="btn" onClick={()=>login(loginForm)}>Login</button>
         </div>
+        <p className="mt-4 text-center">Don't have an account? <span className="text-green-600 cursor-pointer" onClick={()=>setView("register")}>Register</span></p>
       </div>
     )
   }
@@ -189,7 +197,7 @@ function App(){
     )
   }
 
-  // --- MAIN APP ---
+  // --- DASHBOARD ---
   return (
     <div className="max-w-md mx-auto pb-28">
       <header className="p-4 flex justify-between border-b border-green-500">
@@ -265,7 +273,6 @@ function App(){
 }
 
 ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
-
 </script>
 </body>
 </html>

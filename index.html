@@ -33,7 +33,7 @@ function App(){
   // --- USERS STORAGE ---
   const [user,setUser] = useState(JSON.parse(localStorage.getItem("currentUser")||"null"));
   const [users,setUsers] = useState(JSON.parse(localStorage.getItem("users")||"[]"));
-  const [view,setView] = useState(user?"dashboard":"register"); // track current page
+  const [view,setView] = useState(user?"dashboard":"register"); // register/login/dashboard
   const [tab,setTab] = useState("home");
   const [taskTab,setTaskTab] = useState("telegram");
   const [points,setPoints] = useState(parseInt(localStorage.getItem("points")||0));
@@ -58,6 +58,7 @@ function App(){
     if(newTap>=20){setAdmin(true); setTap(0);}
   }
 
+  // --- REFERRAL LINK ---
   const refLink = `${window.location.origin}?ref=${user?.username||""}`;
 
   // --- REGISTRATION ---
@@ -73,7 +74,7 @@ function App(){
     alert("Registered successfully! Please login.");
     setView("login"); // go to login page after successful registration
 
-    // --- REFERRAL ---
+    // --- REFERRAL BONUS ---
     if(referral){
       const upline = updatedUsers.find(u=>u.username===referral);
       if(upline){
@@ -92,7 +93,7 @@ function App(){
       setUser(u);
       localStorage.setItem("currentUser",JSON.stringify(u));
       alert("Login successful!");
-      setView("dashboard"); // go to dashboard after login
+      setView("dashboard");
     }else{
       alert("Invalid username or password");
     }
@@ -178,19 +179,6 @@ function App(){
             <p>{t.title}</p>
             <p>Type: {t.type}</p>
             <p>Reward: ₦{t.reward}</p>
-            <button className="btn" onClick={()=>{
-              let title=prompt("Edit title",t.title);
-              let reward=prompt("Edit reward",t.reward);
-              if(!title||!reward) return;
-              t.title=title; t.reward=parseInt(reward);
-              setTasks([...tasks]);
-              localStorage.setItem("tasks",JSON.stringify(tasks));
-            }}>Edit</button>
-            <button className="btn bg-red-500" onClick={()=>{
-              const updated = tasks.filter(task=>task.id!==t.id);
-              setTasks(updated);
-              localStorage.setItem("tasks",JSON.stringify(updated));
-            }}>Delete</button>
           </div>
         ))}
       </div>

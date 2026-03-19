@@ -171,3 +171,75 @@ function App(){
         <h1 className="font-bold text-green-600 cursor-pointer" onClick={logoTap}>EarnHub</h1>
         <div>@{user.username}</div>
       </header>
+
+      {tab==="home" &&(
+        <div className="p-4">
+          <div className="card text-center">
+            <p>Balance</p>
+            <h2 className="text-4xl text-green-600 font-bold">₦{points}</h2>
+          </div>
+          <button className="btn tapbtn" onClick={()=>savePoints(points+5)}>Tap & Earn +5</button>
+        </div>
+      )}
+
+      {tab==="tasks" &&(
+        <div className="p-4">
+          <div className="taskTabs">
+            <div className={taskTab==="telegram"?"taskTab taskActive":"taskTab"} onClick={()=>setTaskTab("telegram")}>Telegram</div>
+            <div className={taskTab==="whatsapp"?"taskTab taskActive":"taskTab"} onClick={()=>setTaskTab("whatsapp")}>WhatsApp</div>
+          </div>
+          {tasks.filter(t=>t.type===taskTab).map(t=>(
+            <div key={t.id} className="card">
+              <p className="font-bold">{t.title}</p>
+              <p>Reward: ₦{t.reward}</p>
+              <button className="btn" onClick={()=>openTask(t)}>Start Task</button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {tab==="invite" &&(
+        <div className="p-4">
+          <div className="card text-center">
+            <p>Invite Friends</p>
+            <input className="input" value={refLink} readOnly/>
+            <button className="btn" onClick={()=>{
+              navigator.clipboard.writeText(refLink);
+              alert("Link copied!");
+            }}>Copy Invite Link</button>
+          </div>
+        </div>
+      )}
+
+      {tab==="withdraw" &&(
+        <div className="p-4">
+          <div className="card">
+            <select className="input" value={walletType} onChange={(e)=>{setWalletType(e.target.value); localStorage.setItem("walletType",e.target.value);}}>
+              <option value="">Select Wallet</option>
+              <option>Opay</option>
+              <option>Palmpay</option>
+              <option>Moniepoint</option>
+              <option>Kuda</option>
+              <option>Bank Transfer</option>
+            </select>
+            <input className="input" placeholder="Account Number" value={walletNumber} onChange={(e)=>{setWalletNumber(e.target.value); localStorage.setItem("walletNumber",e.target.value);}}/>
+            <input className="input" placeholder="Account Name" value={walletName} onChange={(e)=>{setWalletName(e.target.value); localStorage.setItem("walletName",e.target.value);}}/>
+            <button className="btn" onClick={withdraw}>Request Withdraw</button>
+          </div>
+        </div>
+      )}
+
+      <nav className="navbar">
+        <div className={tab==="home"?"active":""} onClick={()=>setTab("home")}>Home</div>
+        <div className={tab==="tasks"?"active":""} onClick={()=>setTab("tasks")}>Tasks</div>
+        <div className={tab==="invite"?"active":""} onClick={()=>setTab("invite")}>Invite</div>
+        <div className={tab==="withdraw"?"active":""} onClick={()=>setTab("withdraw")}>Withdraw</div>
+      </nav>
+    </div>
+  )
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

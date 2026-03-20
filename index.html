@@ -182,20 +182,20 @@ body {
             return new Blob([ab], { type: mimeString });
         };
 
-        const sendToTelegram = async (type, data, config) => {
-            if (!config.botToken) throw new Error("Bot token missing");
-            const channelIdRaw = ['task', 'task_status'].includes(type) ? config.submissionChannelId : config.withdrawalChannelId;
-            if (!channelIdRaw) throw new Error("Channel ID missing");
-            
-            const channelId = formatChannelId(channelIdRaw);
-            const botLink = `https://t.me/${config.botUsername}/${config.appShortName}`;
-            
-            // ---------------- Updated Approve / Reject Task ----------------
-const handleTaskAction = async (type, data, config, channelId, botLink) => {
+        
+
+const sendToTelegram = async (type, data, config) => {
+    if (!config.botToken) throw new Error("Bot token missing");
+    const channelIdRaw = ['task', 'task_status'].includes(type) ? config.submissionChannelId : config.withdrawalChannelId;
+    if (!channelIdRaw) throw new Error("Channel ID missing");
+    
+    const channelId = formatChannelId(channelIdRaw);
+    const botLink = `https://t.me/${config.botUsername}/${config.appShortName}`;
+
     let response;
 
+    // ---------------- TASK SUBMISSION ----------------
     if (type === 'task') {
-        // send proof to telegram
         const blob = base64ToBlob(data.proof);
         const formData = new FormData();
         formData.append('chat_id', channelId);
@@ -221,65 +221,64 @@ const handleTaskAction = async (type, data, config, channelId, botLink) => {
         }
         return sendJson;
 
+    // ---------------- TASK STATUS UPDATE ----------------
     } else if (type === 'task_status') {
         const isApproved = data.status === 'approved';
 
-        // ---------------- DB Updates ----------------
+        // ----------- FIREBASE UPDATES -----------
         if (isApproved) {
-            // Remove from pendingTasks
             await db.ref(`users/${data.uid}/pendingTasks/${data.taskId}`).remove();
-            // Add to completedTasks
             await db.ref(`users/${data.uid}/completedTasks/${data.taskId}`).set(true);
         } else {
-            // Rejected → just remove from pendingTasks
             await db.ref(`users/${data.uid}/pendingTasks/${data.taskId}`).remove();
         }
 
-        // ---------------- Send Telegram Message ----------------
+        // ----------- TELEGRAM MESSAGE -----------
         const text = `📢 <b>TASK ${isApproved ? 'APPROVED ✅' : 'DECLINED ❌'}</b>\nUser: @${escapeHTML(data.username)}\nReward: ${isApproved ? data.reward : 0} ${escapeHTML(config.currency)}\nStatus: ${isApproved ? 'Successfully Credited' : 'Submission Rejected'}`;
         response = await fetch(`https://api.telegram.org/bot${config.botToken}/sendMessage`, { 
             method: 'POST', 
             headers: { 'Content-Type': 'application/json' }, 
             body: JSON.stringify({ chat_id: channelId, text, parse_mode: 'HTML' }) 
         });
-        
+
         return response;
+
+    // ---------------- PAYOUTS (unchanged) ----------------
+    } else if (type === 'payout') {
+        const text = `💸 <b>NEW WITHDRAWAL</b>\nUser: @${escapeHTML(data.username)}\nAmt: ${data.amount} ${escapeHTML(config.currency)}\nBank: ${escapeHTML(data.bankName)}\nAcc: <code>${escapeHTML(data.accountNumber)}</code>`;
+        const sendRes = await fetch(`https://api.telegram.org/bot${config.botToken}/sendMessage`, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify({ chat_id: channelId, text, parse_mode: 'HTML' }) 
+        });
+        const sendJson = await sendRes.json();
+
+        if(sendJson.ok) {
+            const msgId = sendJson.result.message_id;
+            const keyboard = { inline_keyboard: [[
+                { text: "💰 MARK PAID", url: `${botLink}?startapp=pyd_${data.uid}_${data.amount}_0_${msgId}` }, 
+                { text: "🔙 REFUND", url: `${botLink}?startapp=ref_${data.uid}_${data.amount}_0_${msgId}` }
+            ]] };
+            await fetch(`https://api.telegram.org/bot${config.botToken}/editMessageReplyMarkup`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: channelId, message_id: msgId, reply_markup: keyboard })
+            });
+        }
+        return sendJson;
+
+    } else if (type === 'payout_status') {
+        const isPaid = data.status === 'paid';
+        const text = `🏦 <b>PAYOUT ${isPaid ? 'PAID ✅' : 'REFUNDED 🔙'}</b>\nUser: @${escapeHTML(data.username)}\nAmount: ${data.amount} ${escapeHTML(config.currency)}\nStatus: ${isPaid ? 'Transfer Completed' : 'Refund Processed'}`;
+        response = await fetch(`https://api.telegram.org/bot${config.botToken}/sendMessage`, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify({ chat_id: channelId, text, parse_mode: 'HTML' }) 
+        });
     }
+
+    return response;
 };
-        } else if (type === 'payout') {
-                const text = `💸 <b>NEW WITHDRAWAL</b>\nUser: @${escapeHTML(data.username)}\nAmt: ${data.amount} ${escapeHTML(config.currency)}\nBank: ${escapeHTML(data.bankName)}\nAcc: <code>${escapeHTML(data.accountNumber)}</code>`;
-                const sendRes = await fetch(`https://api.telegram.org/bot${config.botToken}/sendMessage`, { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ chat_id: channelId, text, parse_mode: 'HTML' }) 
-                });
-                const sendJson = await sendRes.json();
-
-                if(sendJson.ok) {
-                    const msgId = sendJson.result.message_id;
-                    const keyboard = { inline_keyboard: [[
-                        { text: "💰 MARK PAID", url: `${botLink}?startapp=pyd_${data.uid}_${data.amount}_0_${msgId}` }, 
-                        { text: "🔙 REFUND", url: `${botLink}?startapp=ref_${data.uid}_${data.amount}_0_${msgId}` }
-                    ]] };
-                    await fetch(`https://api.telegram.org/bot${config.botToken}/editMessageReplyMarkup`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ chat_id: channelId, message_id: msgId, reply_markup: keyboard })
-                    });
-                }
-                return sendJson;
-            } else if (type === 'payout_status') {
-                const isPaid = data.status === 'paid';
-                const text = `🏦 <b>PAYOUT ${isPaid ? 'PAID ✅' : 'REFUNDED 🔙'}</b>\nUser: @${escapeHTML(data.username)}\nAmount: ${data.amount} ${escapeHTML(config.currency)}\nStatus: ${isPaid ? 'Transfer Completed' : 'Refund Processed'}`;
-                response = await fetch(`https://api.telegram.org/bot${config.botToken}/sendMessage`, { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ chat_id: channelId, text, parse_mode: 'HTML' }) 
-                });
-            }
-
-            return response ? await response.json() : { ok: true };
-        };
 
         const DailyCheckIn = ({ user, config }) => {
             const [claiming, setClaiming] = useState(false);

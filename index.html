@@ -159,31 +159,26 @@
         };
 
         const App = () => {
-          const [activeTab, setActiveTab] = useState('missions');
-          const [isAdmin, setIsAdmin] = useState(false);
-          const [showAdminModal, setShowAdminModal] = useState(false);
-          const [showBanner, setShowBanner] = useState(false);
-          const [loading, setLoading] = useState(true);
-          const [user, setUser] = useState(null);
-          const [authUser, setAuthUser] = useState(null);
-          const [tasks, setTasks] = useState([]);
-          const [submissions, setSubmissions] = useState([]);
-          const [ranks, setRanks] = useState({ earners: [], referrers: [] });
-          const [config, setConfig] = useState({
-            pointsToBnbRate: 1000000, 
-            minWithdrawalPoints: 50000, 
-            dailyBonus: 500,
-            referralBonus: 1000,
-            minTasksForWithdrawal: 3,
-            minReferralsForWithdrawal: 5,
-            adminPass: "admin123",
-            telegramBotToken: "",
-            tgChatId: "",
-            tgPayoutChatId: "",
-            chan1Name: "Missions Channel", chan1Link: "",
-            chan2Name: "Payouts Channel", chan2Link: "",
-            chan3Name: "News Channel", chan3Link: ""
-          });
+
+  // ✅ ADD IT RIGHT HERE
+  localStorage.removeItem("config");
+  // OR use: localStorage.clear();
+
+  const [activeTab, setActiveTab] = useState('missions');
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showAdminModal, setShowAdminModal] = useState(false);
+  const [showBanner, setShowBanner] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  const [authUser, setAuthUser] = useState(null);
+  const [tasks, setTasks] = useState([]);
+  const [submissions, setSubmissions] = useState([]);
+  const [ranks, setRanks] = useState({ earners: [], referrers: [] });
+
+  const [config, setConfig] = useState({
+    ...
+    adminPass: "admin123",
+  });
 
           // Show banner whenever Missions tab is selected
           useEffect(() => {

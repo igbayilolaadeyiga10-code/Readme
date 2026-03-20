@@ -13,109 +13,109 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-        
-        :root {
-            --bg-color: #240b36;
-            --card-bg: #3c135c;
-            --text-main: #ffd1ff;
-            --accent: #00f5ff;
-        }
+   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+    
+    :root {
+        --bg-color: #0f9d58;   /* Green background */
+        --card-bg: #ffffff;    /* White cards */
+        --text-main: #0f172a;  /* Dark readable text */
+        --accent: #16a34a;     /* Bright green accent */
+    }
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            margin: 0; padding: 0;
-            overflow-x: hidden;
-            font-size: 11px;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-        }
+    body {
+        background-color: var(--bg-color);
+        color: var(--text-main);
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        margin: 0; padding: 0;
+        overflow-x: hidden;
+        font-size: 11px;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+    }
 
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        
-        .nav-pill {
-            background: rgba(60, 19, 92, 0.98);
-            backdrop-filter: blur(20px);
-            border-top: 1px solid rgba(255, 209, 255, 0.1);
-        }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    
+    .nav-pill {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-top: 1px solid rgba(0, 0, 0, 0.05);
+    }
 
-        .card {
-            background: var(--card-bg);
-            border-radius: 14px;
-            border: 1px solid rgba(255, 209, 255, 0.05);
-        }
+    .card {
+        background: var(--card-bg);
+        border-radius: 14px;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
 
-        .btn-primary {
-            background: var(--accent);
-            color: var(--bg-color);
-            font-weight: 800;
-            border-radius: 10px;
-            padding: 10px;
-            text-transform: uppercase;
-            font-size: 10px;
-            letter-spacing: 0.3px;
-            width: 100%;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-        }
-        .btn-primary:active { transform: scale(0.96); }
-        .btn-primary:disabled { opacity: 0.4; filter: grayscale(1); }
+    .btn-primary {
+        background: var(--accent);
+        color: white;
+        font-weight: 800;
+        border-radius: 10px;
+        padding: 10px;
+        text-transform: uppercase;
+        font-size: 10px;
+        letter-spacing: 0.3px;
+        width: 100%;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+    }
+    .btn-primary:active { transform: scale(0.96); }
+    .btn-primary:disabled { opacity: 0.4; filter: grayscale(1); }
 
-        .btn-outline {
-            background: rgba(255, 209, 255, 0.05);
-            color: var(--accent);
-            border: 1px solid var(--accent);
-            font-weight: 800;
-            border-radius: 10px;
-            padding: 8px;
-            text-transform: uppercase;
-            font-size: 9px;
-            transition: all 0.2s;
-        }
+    .btn-outline {
+        background: rgba(0, 0, 0, 0.03);
+        color: var(--accent);
+        border: 1px solid var(--accent);
+        font-weight: 800;
+        border-radius: 10px;
+        padding: 8px;
+        text-transform: uppercase;
+        font-size: 9px;
+        transition: all 0.2s;
+    }
 
-        .input-field {
-            background: rgba(26, 8, 39, 0.6);
-            border: 1px solid rgba(255, 209, 255, 0.1);
-            border-radius: 8px;
-            padding: 8px 12px;
-            color: var(--text-main);
-            outline: none;
-            width: 100%;
-            font-size: 11px;
-        }
+    .input-field {
+        background: #f9fafb;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        padding: 8px 12px;
+        color: #111827;
+        outline: none;
+        width: 100%;
+        font-size: 11px;
+    }
 
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-slide { animation: slideUp 0.3s ease-out forwards; }
-        
-        .compact-text { font-size: 10px; line-height: 1.3; }
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-slide { animation: slideUp 0.3s ease-out forwards; }
+    
+    .compact-text { font-size: 10px; line-height: 1.3; }
 
-        .streak-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: rgba(255, 209, 255, 0.1);
-            transition: all 0.3s;
-        }
-        .streak-dot.active {
-            background: var(--accent);
-            box-shadow: 0 0 10px var(--accent);
-        }
+    .streak-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.1);
+        transition: all 0.3s;
+    }
+    .streak-dot.active {
+        background: var(--accent);
+        box-shadow: 0 0 10px var(--accent);
+    }
 
-        /* Ensure no generic Tailwind classes use white/black */
-        .bg-white { background-color: var(--text-main) !important; }
-        .text-black { color: var(--bg-color) !important; }
-        .text-white { color: var(--text-main) !important; }
-        .bg-black { background-color: var(--bg-color) !important; }
-    </style>
+    /* Override Tailwind defaults */
+    .bg-white { background-color: #ffffff !important; }
+    .text-black { color: #000000 !important; }
+    .text-white { color: #ffffff !important; }
+    .bg-black { background-color: #0f9d58 !important; }
+   </style>
 </head>
 <body>
     <div id="toast-container"></div>

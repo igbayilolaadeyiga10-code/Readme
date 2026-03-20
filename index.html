@@ -13,14 +13,14 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
-<style>
+    <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
+/* ROOT COLORS */
 :root {
-    --bg: #ffffff;
-    --green: #16a34a;
-    --red: #dc2626;
-    --red-dark: #991b1b;
+    --bg: #ffffff;       /* Page background */
+    --primary: #dc2626;  /* Red */
+    --text-main: #000000;
 }
 
 /* BODY */
@@ -29,59 +29,85 @@ body {
     font-family: 'Plus Jakarta Sans', sans-serif;
     margin: 0;
     padding: 0;
+    color: var(--text-main);
 }
 
-/* 🔴 FIX THE PURPLE AREA (HEADER + CARD) */
-div[style*="purple"],
-div[class*="purple"],
-div[class*="header"],
-div[class*="top"],
-div[class*="card"] {
-    background: linear-gradient(135deg, var(--red), var(--red-dark)) !important;
+/* ===== MAIN HEADER / BALANCE CARD ===== */
+/* Apply a solid red background only to the top card/header */
+.balance-card, 
+.header-card, 
+.top-card {
+    background-color: var(--primary) !important;  /* solid red */
+    color: #ffffff !important;                     /* all text white */
+    border-radius: 12px;
+    padding: 16px;
 }
 
-/* ⚪ FORCE ALL TEXT INSIDE TO WHITE */
-div[style*="purple"] *,
-div[class*="purple"] *,
-div[class*="header"] *,
-div[class*="top"] *,
-div[class*="card"] * {
+/* Force all children text to white */
+.balance-card * ,
+.header-card *,
+.top-card * {
     color: #ffffff !important;
 }
 
-/* ⚪ FIX BIG BALANCE NUMBER */
-h1, h2, h3 {
+/* Large numbers in the card */
+.balance-card h1,
+.balance-card h2,
+.balance-card h3,
+.top-card h1,
+.top-card h2,
+.top-card h3 {
     color: #ffffff !important;
 }
 
-/* ⚪ REMOVE BLACK TEXT EVERYWHERE IN THAT AREA */
-.text-black {
-    color: #ffffff !important;
-}
-
-/* GREEN BUTTONS (UNCHANGED) */
+/* ===== BUTTONS ===== */
 .btn-primary {
-    background: var(--green);
-    color: #fff;
+    background-color: #16a34a; /* green */
+    color: #ffffff;
+    font-weight: 700;
     border-radius: 12px;
     padding: 10px;
-    font-weight: 700;
+    font-size: 12px;
+    text-transform: uppercase;
 }
 
-/* OUTLINE BUTTON */
 .btn-outline {
-    border: 1px solid var(--green);
-    color: var(--green);
+    border: 1px solid #16a34a;
+    color: #16a34a;
     border-radius: 10px;
     padding: 8px;
+    font-size: 11px;
 }
 
-/* KEEP OTHER CARDS WHITE */
-body > div:not([class*="header"]):not([class*="top"]) {
+/* ===== ICON CIRCLES ===== */
+.icon-circle {
+    background: rgba(22, 163, 74, 0.1);
+    border-radius: 50%;
+    padding: 12px;
+}
+
+/* ===== NAVBAR ===== */
+.nav-pill {
     background: #ffffff;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-</style>
+/* ===== INPUT FIELDS ===== */
+.input-field {
+    background: #ffffff;
+    border: 1px solid #16a34a;
+    border-radius: 10px;
+    padding: 10px;
+    width: 100%;
+    font-size: 12px;
+    color: #000000;
+}
+
+/* ===== SAFE OVERRIDES ===== */
+.text-black { color: #000000 !important; }
+.text-white { color: #ffffff !important; }
+.bg-white { background-color: #ffffff !important; }
+    </style>
 </head>
 <body>
     <div id="toast-container"></div>

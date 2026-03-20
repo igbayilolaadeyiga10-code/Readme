@@ -17,11 +17,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 :root {
-    --bg-color: #ffffff;      /* Pure white background */
-    --card-bg: #ffffff;       /* White cards */
-    --primary: #16a34a;       /* Main green */
-    --primary-dark: #15803d;  /* Dark green */
-    --text-main: #000000;     /* Black text */
+    --bg-color: #ffffff;        /* White background */
+    --card-bg: #ffffff;
+    
+    --green: #16a34a;           /* Main green */
+    --green-dark: #15803d;
+
+    --red: #dc2626;             /* Balance card red */
+    --red-dark: #991b1b;
+
+    --text-main: #000000;
 }
 
 /* BODY */
@@ -45,12 +50,17 @@ body {
     border: 1px solid rgba(0,0,0,0.05);
 }
 
-/* MAIN BALANCE (GREEN) */
+/* 🔴 BALANCE CARD (FIXED) */
 .balance-card {
-    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-    color: #ffffff;
+    background: linear-gradient(135deg, var(--red), var(--red-dark));
     border-radius: 18px;
     padding: 16px;
+    color: #ffffff !important;
+}
+
+/* FORCE ALL TEXT WHITE INSIDE */
+.balance-card * {
+    color: #ffffff !important;
 }
 
 /* BUTTONS INSIDE BALANCE */
@@ -59,13 +69,12 @@ body {
     border-radius: 12px;
     padding: 10px;
     text-align: center;
-    color: #ffffff;
     font-weight: 600;
 }
 
-/* PRIMARY BUTTON */
+/* GREEN PRIMARY BUTTON */
 .btn-primary {
-    background: var(--primary);
+    background: var(--green);
     color: #ffffff;
     font-weight: 700;
     border-radius: 12px;
@@ -76,8 +85,8 @@ body {
 
 /* OUTLINE BUTTON */
 .btn-outline {
-    border: 1px solid var(--primary);
-    color: var(--primary);
+    border: 1px solid var(--green);
+    color: var(--green);
     border-radius: 10px;
     padding: 8px;
     font-size: 10px;
@@ -86,7 +95,7 @@ body {
 /* INPUT */
 .input-field {
     background: #ffffff;
-    border: 1px solid var(--primary);
+    border: 1px solid var(--green);
     border-radius: 10px;
     padding: 10px;
     width: 100%;
@@ -101,26 +110,26 @@ body {
     padding: 12px;
 }
 
-/* BOTTOM NAV */
+/* NAVBAR */
 .nav-pill {
     background: #ffffff;
     border-top: 1px solid rgba(0,0,0,0.08);
 }
 
-/* SMALL ANIMATION */
+/* ANIMATION */
 @keyframes fadeUp {
     from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: translateY(0); }
 }
 .animate { animation: fadeUp 0.3s ease; }
 
-/* FORCE COLORS */
+/* FORCE OVERRIDE */
 .bg-white { background-color: #ffffff !important; }
 .text-white { color: #ffffff !important; }
 .text-black { color: #000000 !important; }
-.bg-black { background-color: var(--primary) !important; }
+.bg-black { background-color: var(--green) !important; }
 
-    </style>
+</style>
 </head>
 <body>
     <div id="toast-container"></div>

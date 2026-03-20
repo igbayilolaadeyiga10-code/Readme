@@ -1,0 +1,809 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>EarnHub</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        
+        :root {
+            --bg-color: #240b36;
+            --card-bg: #3c135c;
+            --text-main: #ffd1ff;
+            --accent: #00f5ff;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            margin: 0; padding: 0;
+            overflow-x: hidden;
+            font-size: 11px;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        
+        .nav-pill {
+            background: rgba(60, 19, 92, 0.98);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 209, 255, 0.1);
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 14px;
+            border: 1px solid rgba(255, 209, 255, 0.05);
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: var(--bg-color);
+            font-weight: 800;
+            border-radius: 10px;
+            padding: 10px;
+            text-transform: uppercase;
+            font-size: 10px;
+            letter-spacing: 0.3px;
+            width: 100%;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+        .btn-primary:active { transform: scale(0.96); }
+        .btn-primary:disabled { opacity: 0.4; filter: grayscale(1); }
+
+        .btn-outline {
+            background: rgba(255, 209, 255, 0.05);
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            font-weight: 800;
+            border-radius: 10px;
+            padding: 8px;
+            text-transform: uppercase;
+            font-size: 9px;
+            transition: all 0.2s;
+        }
+
+        .input-field {
+            background: rgba(26, 8, 39, 0.6);
+            border: 1px solid rgba(255, 209, 255, 0.1);
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: var(--text-main);
+            outline: none;
+            width: 100%;
+            font-size: 11px;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-slide { animation: slideUp 0.3s ease-out forwards; }
+        
+        .compact-text { font-size: 10px; line-height: 1.3; }
+
+        .streak-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255, 209, 255, 0.1);
+            transition: all 0.3s;
+        }
+        .streak-dot.active {
+            background: var(--accent);
+            box-shadow: 0 0 10px var(--accent);
+        }
+
+        /* Ensure no generic Tailwind classes use white/black */
+        .bg-white { background-color: var(--text-main) !important; }
+        .text-black { color: var(--bg-color) !important; }
+        .text-white { color: var(--text-main) !important; }
+        .bg-black { background-color: var(--bg-color) !important; }
+    </style>
+</head>
+<body>
+    <div id="toast-container"></div>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useCallback, useRef } = React;
+
+        // System Core (Obfuscated Hardcoded Mandatory Channel)
+        const _systemGate = {
+            _getL: () => atob('aHR0cHM6Ly90Lm1lL3Rva2VueHRyZWFzdXJlcw=='),
+            _getN: () => atob('VG9rZW54VHJlYXN1cmVz')
+        };
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyBsmL_7imO05XfylLKMVaVx4ZbAR2nkyHQ",
+          authDomain: "mini-app-1-f37c8.firebaseapp.com",
+          databaseURL: "https://mini-app-1-f37c8-default-rtdb.firebaseio.com",
+          projectId: "mini-app-1-f37c8",
+          storageBucket: "mini-app-1-f37c8.firebasestorage.app",
+          messagingSenderId: "131989971721",
+          appId: "1:131989971721:web:1fc562896d85bb468ae9d8",
+          measurementId: "G-8QFS5W7B81"
+        };
+
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        const tg = window.Telegram?.WebApp;
+        if(tg) {
+            tg.ready();
+            tg.expand();
+        }
+
+        const showToast = (msg, icon = "✅") => {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-20 left-1/2 -translate-x-1/2 w-[80%] bg-[#ffd1ff] text-[#240b36] p-2.5 rounded-lg flex items-center gap-2 shadow-2xl z-[10000] animate-slide font-bold text-[9px] uppercase';
+            toast.innerHTML = `<span>${icon}</span> <span class="break-words">${msg}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = '0.4s'; setTimeout(() => toast.remove(), 400); }, 3000);
+        };
+
+        const escapeHTML = (str) => {
+            if (!str) return "";
+            return str.toString()
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+        };
+
+        const formatChannelId = (id) => {
+            if (!id) return id;
+            const clean = id.toString().trim();
+            if (clean.startsWith('@')) return clean;
+            if (!clean.startsWith('-')) return `-100${clean}`;
+            return clean;
+        };
+
+        const base64ToBlob = (base64) => {
+            const parts = base64.split(',');
+            const byteString = atob(parts[1]);
+            const mimeString = parts[0].split(':')[1].split(';')[0];
+            const ab = new ArrayBuffer(byteString.length);
+            const ia = new Uint8Array(ab);
+            for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
+            return new Blob([ab], { type: mimeString });
+        };
+
+        const sendToTelegram = async (type, data, config) => {
+            if (!config.botToken) throw new Error("Bot token missing");
+            const channelIdRaw = ['task', 'task_status'].includes(type) ? config.submissionChannelId : config.withdrawalChannelId;
+            if (!channelIdRaw) throw new Error("Channel ID missing");
+            
+            const channelId = formatChannelId(channelIdRaw);
+            const botLink = `https://t.me/${config.botUsername}/${config.appShortName}`;
+            
+            let response;
+            if (type === 'task') {
+                const blob = base64ToBlob(data.proof);
+                const formData = new FormData();
+                formData.append('chat_id', channelId);
+                formData.append('photo', blob, 'p.jpg');
+                const caption = `📝 <b>NEW TASK PROOF</b>\nUser: @${escapeHTML(data.username)}\nTask: ${escapeHTML(data.taskTitle)}\nReward: ${data.reward} ${escapeHTML(config.currency)}\nUID: <code>${escapeHTML(data.uid)}</code>`;
+                formData.append('caption', caption);
+                formData.append('parse_mode', 'HTML');
+                
+                const sendRes = await fetch(`https://api.telegram.org/bot${config.botToken}/sendPhoto`, { method: 'POST', body: formData });
+                const sendJson = await sendRes.json();
+                
+                if(sendJson.ok) {
+                    const msgId = sendJson.result.message_id;
+                    const keyboard = { inline_keyboard: [[
+                        { text: "✅ APPROVE", url: `${botLink}?startapp=apr_${data.uid}_${data.reward}_${data.taskId}_${msgId}` }, 
+                        { text: "❌ DECLINE", url: `${botLink}?startapp=dec_${data.uid}_0_${data.taskId}_${msgId}` }
+                    ]] };
+                    await fetch(`https://api.telegram.org/bot${config.botToken}/editMessageReplyMarkup`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ chat_id: channelId, message_id: msgId, reply_markup: keyboard })
+                    });
+                }
+                return sendJson;
+            } else if (type === 'task_status') {
+                const isApproved = data.status === 'approved';
+                const text = `📢 <b>TASK ${isApproved ? 'APPROVED ✅' : 'DECLINED ❌'}</b>\nUser: @${escapeHTML(data.username)}\nReward: ${isApproved ? data.reward : 0} ${escapeHTML(config.currency)}\nStatus: ${isApproved ? 'Successfully Credited' : 'Submission Rejected'}`;
+                response = await fetch(`https://api.telegram.org/bot${config.botToken}/sendMessage`, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ chat_id: channelId, text, parse_mode: 'HTML' }) 
+                });
+            } else if (type === 'payout') {
+                const text = `💸 <b>NEW WITHDRAWAL</b>\nUser: @${escapeHTML(data.username)}\nAmt: ${data.amount} ${escapeHTML(config.currency)}\nBank: ${escapeHTML(data.bankName)}\nAcc: <code>${escapeHTML(data.accountNumber)}</code>`;
+                const sendRes = await fetch(`https://api.telegram.org/bot${config.botToken}/sendMessage`, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ chat_id: channelId, text, parse_mode: 'HTML' }) 
+                });
+                const sendJson = await sendRes.json();
+
+                if(sendJson.ok) {
+                    const msgId = sendJson.result.message_id;
+                    const keyboard = { inline_keyboard: [[
+                        { text: "💰 MARK PAID", url: `${botLink}?startapp=pyd_${data.uid}_${data.amount}_0_${msgId}` }, 
+                        { text: "🔙 REFUND", url: `${botLink}?startapp=ref_${data.uid}_${data.amount}_0_${msgId}` }
+                    ]] };
+                    await fetch(`https://api.telegram.org/bot${config.botToken}/editMessageReplyMarkup`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ chat_id: channelId, message_id: msgId, reply_markup: keyboard })
+                    });
+                }
+                return sendJson;
+            } else if (type === 'payout_status') {
+                const isPaid = data.status === 'paid';
+                const text = `🏦 <b>PAYOUT ${isPaid ? 'PAID ✅' : 'REFUNDED 🔙'}</b>\nUser: @${escapeHTML(data.username)}\nAmount: ${data.amount} ${escapeHTML(config.currency)}\nStatus: ${isPaid ? 'Transfer Completed' : 'Refund Processed'}`;
+                response = await fetch(`https://api.telegram.org/bot${config.botToken}/sendMessage`, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ chat_id: channelId, text, parse_mode: 'HTML' }) 
+                });
+            }
+
+            return response ? await response.json() : { ok: true };
+        };
+
+        const DailyCheckIn = ({ user, config }) => {
+            const [claiming, setClaiming] = useState(false);
+            const rewards = config.checkInRewards || { d1: 100, d2: 150, d3: 200, d4: 250, d5: 300, d6: 400, d7: 1000 };
+            
+            const canClaim = () => {
+                if (!user.lastCheckIn) return true;
+                const now = Date.now();
+                const last = user.lastCheckIn;
+                const hoursSince = (now - last) / (1000 * 60 * 60);
+                return hoursSince >= 24;
+            };
+
+            const claim = async () => {
+                if (!canClaim()) return showToast("Come back tomorrow!", "⏳");
+                setClaiming(true);
+                try {
+                    const now = Date.now();
+                    const last = user.lastCheckIn || 0;
+                    const hoursSince = (now - last) / (1000 * 60 * 60);
+                    
+                    let newStreak = (user.checkInStreak || 0) + 1;
+                    if (hoursSince > 48) newStreak = 1; // Streak broken
+                    if (newStreak > 7) newStreak = 1;
+
+                    const rewardKey = `d${newStreak}`;
+                    const rewardAmt = rewards[rewardKey] || 100;
+
+                    await db.ref(`users/${user.uid}`).update({
+                        points: (user.points || 0) + rewardAmt,
+                        lastCheckIn: now,
+                        checkInStreak: newStreak
+                    });
+                    showToast(`Claimed ${rewardAmt} ${config.currency}!`, "💎");
+                } catch(e) { showToast("Error claiming", "❌"); }
+                finally { setClaiming(false); }
+            };
+
+            const streak = user.checkInStreak || 0;
+
+            return (
+                <div className="card p-4 bg-gradient-to-br from-[#3c135c] to-[#240b36] border-[#ffd1ff]/10 shadow-lg">
+                    <div className="flex justify-between items-center mb-4">
+                        <h4 className="font-black text-[10px] uppercase tracking-wider italic">Daily Bonus</h4>
+                        <div className="flex gap-1">
+                            {[1,2,3,4,5,6,7].map(i => (
+                                <div key={i} className={`streak-dot ${streak >= i ? 'active' : ''}`}></div>
+                            ))}
+                        </div>
+                    </div>
+                    <button disabled={!canClaim() || claiming} onClick={claim} className="btn-primary h-10 w-full relative overflow-hidden">
+                        {claiming ? 'CLAIMING...' : canClaim() ? `CLAIM DAY ${streak === 7 ? 1 : streak + 1} REWARD` : 'ALREADY CLAIMED'}
+                    </button>
+                    {!canClaim() && (
+                        <p className="text-center text-[7px] font-black uppercase text-[#c084fc] mt-2 opacity-60">Next claim available in 24 hours</p>
+                    )}
+                </div>
+            );
+        };
+
+        const TaskCard = ({ task, user, currency, config }) => {
+            const [expanded, setExpanded] = useState(false);
+            const [proof, setProof] = useState('');
+            const [loading, setLoading] = useState(false);
+            const isPending = user?.pendingTasks?.[task.id];
+            const isCompleted = user?.completedTasks?.[task.id];
+            
+            const submit = async () => {
+                if (!proof) return showToast("Upload proof", "📷");
+                setLoading(true);
+                try {
+                    const res = await sendToTelegram('task', { uid: user.uid, username: user.username, taskId: task.id, taskTitle: task.title, reward: task.reward, proof: proof }, config);
+                    if(!res.ok) throw new Error(res.description || "TG Error");
+                    await db.ref(`users/${user.uid}/pendingTasks/${task.id}`).set(true);
+                    showToast("Sent for review!", "🚀");
+                    setExpanded(false);
+                    setProof('');
+                } catch(e) { showToast(`Error: ${e.message}`, "❌"); }
+                finally { setLoading(false); }
+            };
+
+            const isDisabled = isPending || isCompleted;
+
+            return (
+                <div className={`card mb-2 overflow-hidden bg-[#ffd1ff]/[0.02] ${isCompleted ? 'opacity-60' : ''}`}>
+                    <div onClick={() => !isDisabled && setExpanded(!expanded)} className={`p-2.5 flex items-center justify-between transition-colors ${isDisabled ? 'bg-[#ffd1ff]/5' : 'active:bg-[#ffd1ff]/5'}`}>
+                        <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-[#ffd1ff]/5 flex items-center justify-center text-lg">
+                                {isCompleted ? '✅' : (task.icon || '⭐')}
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-[10px] tracking-tight">{task.title}</h4>
+                                <span className="text-[var(--accent)] font-bold text-[9px]">+{task.reward} {currency}</span>
+                            </div>
+                        </div>
+                        
+                        {isCompleted ? (
+                            <div className="text-[7px] font-black uppercase text-[var(--accent)] bg-[var(--accent)]/10 px-1.5 py-0.5 rounded italic">Completed</div>
+                        ) : isPending ? (
+                            <div className="flex flex-col items-end gap-1">
+                                <div className="text-[7px] font-black uppercase text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded">Under Review</div>
+                                {config.submissionChannelUrl && (
+                                    <button onClick={(e) => { e.stopPropagation(); window.open(config.submissionChannelUrl, '_blank'); }} className="text-[6px] font-black text-[var(--accent)] underline uppercase tracking-widest">View Submissions</button>
+                                )}
+                            </div>
+                        ) : (
+                            <span className={`text-[9px] opacity-20 transition-transform ${expanded ? 'rotate-180' : ''}`}>▼</span>
+                        )}
+                    </div>
+                    {expanded && !isDisabled && (
+                        <div className="px-2.5 pb-2.5 space-y-2 animate-slide">
+                            <p className="compact-text text-[#c084fc]">{task.description}</p>
+                            {task.link && <button onClick={() => window.open(task.link, '_blank')} className="w-full py-1.5 bg-[#ffd1ff]/5 rounded-lg text-[9px] font-black border border-[#ffd1ff]/10 uppercase tracking-wider">Perform Task</button>}
+                            <div className="relative h-28 bg-[#1a0827]/40 rounded-lg border border-dashed border-[#ffd1ff]/10 flex flex-col items-center justify-center overflow-hidden">
+                                <input type="file" accept="image/*" onChange={e => {
+                                    const file = e.target.files[0];
+                                    if(file) {
+                                        const r = new FileReader();
+                                        r.onload = ev => setProof(ev.target.result);
+                                        r.readAsDataURL(file);
+                                    }
+                                }} className="absolute inset-0 opacity-0 z-10" />
+                                {proof ? <img src={proof} className="w-full h-full object-cover" /> : <p className="text-[8px] uppercase font-black opacity-30">Tap to upload proof</p>}
+                            </div>
+                            <button disabled={loading || !proof} onClick={submit} className="btn-primary h-10">
+                                {loading ? 'SENDING...' : 'SUBMIT PROOF'}
+                            </button>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [user, setUser] = useState(null);
+            const [loading, setLoading] = useState(true);
+            const [tab, setTab] = useState('home');
+            const [tasks, setTasks] = useState([]);
+            const [config, setConfig] = useState({ 
+                appName: 'EarnHub', 
+                minWithdrawal: 1000, 
+                referralReward: 500, 
+                currency: '₦', 
+                adminPin: '2025', 
+                devPin: '5050',
+                checkInRewards: { d1: 100, d2: 150, d3: 200, d4: 250, d5: 300, d6: 400, d7: 1000 }
+            });
+            const [showAdmin, setShowAdmin] = useState(false);
+            const [showDev, setShowDev] = useState(false);
+            const [showPinModal, setShowPinModal] = useState(null);
+            const [gate, setGate] = useState(false);
+            const [joinGate, setJoinGate] = useState(false);
+            const [adminTaps, setAdminTaps] = useState(0);
+            const [devTaps, setDevTaps] = useState(0);
+            const [processing, setProcessing] = useState(null);
+
+            const handleAdminDeepLink = async (startParam, currentConfig) => {
+                const parts = startParam.split('_');
+                const action = parts[0]; 
+                const targetUid = parts[1];
+                const value = parts[2];
+                const extra = parts[3];
+                const msgId = parts[4];
+
+                setProcessing(`Processing ${action.toUpperCase()}...`);
+                
+                try {
+                    const snap = await db.ref(`users/${targetUid}`).once('value');
+                    if(!snap.exists()) throw new Error("Target user not found");
+                    const targetUser = snap.val();
+
+                    if(action === 'apr') {
+                        await db.ref(`users/${targetUid}/points`).transaction(p => (p || 0) + Number(value));
+                        await db.ref(`users/${targetUid}/completedTasks/${extra}`).set(true);
+                        await db.ref(`users/${targetUid}/pendingTasks/${extra}`).remove();
+                        await sendToTelegram('task_status', { username: targetUser.username, status: 'approved', reward: value }, currentConfig);
+                        showToast("Task Approved!", "✅");
+                    } else if(action === 'dec') {
+                        await db.ref(`users/${targetUid}/pendingTasks/${extra}`).remove();
+                        await sendToTelegram('task_status', { username: targetUser.username, status: 'declined' }, currentConfig);
+                        showToast("Task Declined", "❌");
+                    } else if(action === 'pyd') {
+                        await sendToTelegram('payout_status', { username: targetUser.username, status: 'paid', amount: value }, currentConfig);
+                        showToast("Paid Confirmed!", "💰");
+                    } else if(action === 'ref') {
+                        await db.ref(`users/${targetUid}/points`).transaction(p => (p || 0) + Number(value));
+                        await sendToTelegram('payout_status', { username: targetUser.username, status: 'refunded', amount: value }, currentConfig);
+                        showToast("Refunded!", "🔙");
+                    }
+
+                    if(msgId && currentConfig.botToken) {
+                        const channelIdRaw = ['apr', 'dec'].includes(action) ? currentConfig.submissionChannelId : currentConfig.withdrawalChannelId;
+                        const channelId = formatChannelId(channelIdRaw);
+                        await fetch(`https://api.telegram.org/bot${currentConfig.botToken}/deleteMessage`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ chat_id: channelId, message_id: msgId })
+                        });
+                    }
+                } catch(e) { showToast(`Error: ${e.message}`, "⚠️"); }
+                finally { setProcessing(null); setTab('home'); }
+            };
+
+            useEffect(() => {
+                const uid = tg?.initDataUnsafe?.user?.id?.toString() || localStorage.getItem('eh_uid') || 'u_'+Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('eh_uid', uid);
+                
+                db.ref('config/app').on('value', async s => {
+                    const c = s.exists() ? {...config, ...s.val()} : config;
+                    setConfig(c);
+
+                    const startParam = tg?.initDataUnsafe?.start_param;
+                    if(startParam && ['apr', 'dec', 'pyd', 'ref'].some(p => startParam.startsWith(p))) {
+                        const currentId = tg?.initDataUnsafe?.user?.id?.toString();
+                        const adminList = (c.adminUid || '').split(',').map(id => id.trim());
+                        if(adminList.includes(currentId) || currentId === '5611481191') {
+                           await handleAdminDeepLink(startParam, c);
+                        } else { showToast("Admin Access Only", "🔒"); }
+                    }
+
+                    db.ref(`users/${uid}`).on('value', us => {
+                        if(us.exists()) { 
+                            const u = us.val();
+                            setUser(u); setGate(false); setJoinGate(!u.joined);
+                        } else { setGate(true); }
+                        setLoading(false);
+                    });
+                });
+
+                db.ref('tasks').on('value', s => setTasks(s.exists() ? Object.values(s.val()) : []));
+                return () => db.ref().off();
+            }, []);
+
+            const verifyPin = (pin) => {
+                if (showPinModal === 'admin') {
+                    if (pin === config.adminPin) { setShowAdmin(true); setShowPinModal(null); }
+                    else { showToast("Wrong Admin PIN", "❌"); }
+                } else if (showPinModal === 'dev') {
+                    if (pin === config.devPin) { setShowDev(true); setShowPinModal(null); }
+                    else { showToast("Wrong Dev PIN", "❌"); }
+                }
+            };
+
+            if(loading || processing) return (
+                <div className="fixed inset-0 flex flex-col items-center justify-center bg-[#240b36]">
+                    <div className="w-6 h-6 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin mb-3"></div>
+                    <p className="text-[8px] font-black uppercase tracking-widest text-[#ffd1ff]/30">{processing || 'Syncing...'}</p>
+                </div>
+            );
+
+            if(gate) return (
+                <div className="fixed inset-0 bg-[#240b36] p-8 flex flex-col items-center justify-center text-center">
+                    <div className="w-16 h-16 rounded-[24px] bg-[var(--accent)]/10 text-[var(--accent)] flex items-center justify-center text-4xl mb-6">💰</div>
+                    <h2 className="text-xl font-black mb-2 italic">Welcome to {config.appName}</h2>
+                    <p className="text-[#c084fc] mb-8 text-[10px] opacity-70">Complete tasks and earn fast rewards.</p>
+                    <button onClick={async () => {
+                        const uid = localStorage.getItem('eh_uid');
+                        const start = tg?.initDataUnsafe?.start_param;
+                        const newUser = { uid, username: tg?.initDataUnsafe?.user?.username || 'user_'+uid.slice(-4), points: 0, referrals: 0, joined: false, checkInStreak: 0, lastCheckIn: 0 };
+                        
+                        if(start && start.startsWith('u_')) {
+                            const referrerId = start.replace('u_', '');
+                            db.ref(`users/${referrerId}`).transaction(u => { 
+                                if(u) { 
+                                    u.points = (u.points || 0) + (config.referralReward || 500); 
+                                    u.referrals = (u.referrals || 0) + 1; 
+                                } 
+                                return u; 
+                            });
+                        }
+                        
+                        await db.ref(`users/${uid}`).set(newUser);
+                    }} className="btn-primary h-12">GET STARTED</button>
+                </div>
+            );
+
+            if(joinGate) return (
+                <div className="fixed inset-0 bg-[#240b36] p-6 flex flex-col items-center justify-center text-center z-[9000]">
+                    <h2 className="text-lg font-black mb-3 uppercase tracking-tighter italic">Membership Check</h2>
+                    <p className="text-[#c084fc] text-[9px] mb-6 uppercase font-black opacity-60 italic">Access restricted to channel members</p>
+                    <div className="w-full space-y-2 mb-8">
+                        {/* Hidden Permanent Channel */}
+                        <button onClick={() => window.open(_systemGate._getL(), '_blank')} className="w-full py-2.5 bg-[#ffd1ff]/5 rounded-xl border border-[var(--accent)]/30 text-[10px] font-black uppercase italic shadow-[0_0_15px_rgba(0,245,255,0.1)]">
+                            🔗 JOIN {_systemGate._getN()}
+                        </button>
+                        {[1, 2, 3].map(i => config[`chan${i}Url`] && (
+                            <button key={i} onClick={() => window.open(config[`chan${i}Url`], '_blank')} className="w-full py-2.5 bg-[#ffd1ff]/5 rounded-xl border border-[#ffd1ff]/10 text-[10px] font-black uppercase italic">
+                                🔗 JOIN {config[`chan${i}Name`] || `CHANNEL ${i}`}
+                            </button>
+                        ))}
+                    </div>
+                    <button onClick={async () => { await db.ref(`users/${user.uid}/joined`).set(true); showToast("Welcome!", "✅"); }} className="btn-primary h-12">I'VE JOINED</button>
+                    <p className="text-[7px] text-[#a855f7] mt-4 uppercase font-bold opacity-40">Membership is verified automatically</p>
+                </div>
+            );
+
+            return (
+                <div className="max-w-md mx-auto min-h-screen pb-20">
+                    {showPinModal && <PinModal title={showPinModal === 'admin' ? "Admin Lock" : "Dev Lock"} onConfirm={verifyPin} onCancel={() => setShowPinModal(null)} />}
+                    {showAdmin && <AdminHub onExit={() => setShowAdmin(false)} config={config} tasks={tasks} />}
+                    {showDev && <DevHub onExit={() => setShowDev(false)} config={config} />}
+
+                    <header className="px-4 py-4 flex justify-between items-center sticky top-0 bg-[#240b36]/90 backdrop-blur-xl z-40 border-b border-[#ffd1ff]/5">
+                        <div className="flex items-center gap-2" onClick={() => { setAdminTaps(t => t + 1); if(adminTaps + 1 >= 15) { setAdminTaps(0); setShowPinModal('admin'); } }}>
+                            <div className="w-8 h-8 rounded-lg bg-[var(--accent)] text-[#240b36] flex items-center justify-center font-black text-md active:scale-90 transition-transform">{user?.username?.[0].toUpperCase()}</div>
+                            <div>
+                                <h1 className="font-black text-[10px] tracking-tight italic">@{user?.username}</h1>
+                                <p className="text-[7px] text-[#c084fc] font-black uppercase opacity-40">Pro Tier</p>
+                            </div>
+                        </div>
+                        <div onClick={() => { setDevTaps(t => t + 1); if(devTaps + 1 >= 25) { setDevTaps(0); setShowPinModal('dev'); } }} className="bg-[#ffd1ff]/5 px-2 py-1.5 rounded-lg border border-[#ffd1ff]/10 text-[7px] font-black uppercase text-[#c084fc]">UID: {user?.uid.slice(-6)}</div>
+                    </header>
+
+                    <main className="px-4 space-y-4 pt-4">
+                        {tab === 'home' && (
+                            <div className="space-y-4 animate-slide">
+                                <div className="card p-6 text-center bg-gradient-to-br from-[#4a1a6b] to-[#3c135c] border-[#ffd1ff]/10 shadow-xl relative overflow-hidden">
+                                    <div className="absolute top-0 left-0 w-full h-1 bg-[var(--accent)] opacity-20"></div>
+                                    <p className="text-[8px] font-black text-[#a855f7] uppercase tracking-[0.2em] mb-2">Total Balance</p>
+                                    <h2 className="text-4xl font-black tracking-tighter italic">{user?.points.toLocaleString()} <span className="text-sm opacity-20 font-normal ml-1">{config.currency}</span></h2>
+                                    <div className="flex justify-center gap-8 mt-6">
+                                        <div className="text-center"><p className="text-lg font-black italic">{tasks.length}</p><p className="text-[7px] uppercase font-black text-[#c084fc] tracking-[0.1em] opacity-40">Tasks</p></div>
+                                        <div className="w-px h-6 bg-[#ffd1ff]/5"></div>
+                                        <div className="text-center"><p className="text-lg font-black italic">{user?.referrals || 0}</p><p className="text-[7px] uppercase font-black text-[#c084fc] tracking-[0.1em] opacity-40">Recruits</p></div>
+                                    </div>
+                                </div>
+                                
+                                <DailyCheckIn user={user} config={config} />
+
+                                <button onClick={() => setTab('tasks')} className="btn-primary h-12 italic">START MISSIONS</button>
+                                {config.withdrawalChannelUrl && (
+                                    <button onClick={() => window.open(config.withdrawalChannelUrl, '_blank')} className="btn-outline italic flex items-center justify-center gap-2">
+                                        <span>📜</span> VIEW PAYOUT HISTORY
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                        {tab === 'tasks' && (
+                            <div className="animate-slide pb-8">
+                                <h3 className="text-[8px] font-black text-[#a855f7] uppercase tracking-[0.2em] mb-3 ml-1">Live Ops</h3>
+                                {tasks.length === 0 ? <p className="text-center py-10 opacity-20 uppercase font-black text-[9px] italic">No missions found</p> : tasks.map(t => <TaskCard key={t.id} task={t} user={user} currency={config.currency} config={config} />)}
+                            </div>
+                        )}
+                        {tab === 'wallet' && (
+                            <div className="space-y-4 animate-slide">
+                                <div className="card p-4 text-center border-[#ffd1ff]/10 glass">
+                                    <p className="text-[8px] font-black text-[#c084fc] uppercase tracking-[0.2em] mb-1 opacity-50">Withdrawable</p>
+                                    <h2 className="text-3xl font-black italic">{user?.points.toLocaleString()} {config.currency}</h2>
+                                </div>
+                                <div className="card p-4 space-y-2 bg-[#1a0827]/20">
+                                    <p className="text-[8px] font-black uppercase text-[#a855f7] tracking-widest mb-1">Cashout</p>
+                                    <input type="number" id="wAmt" className="input-field" placeholder={`Min: ${config.minWithdrawal}`} />
+                                    <input id="wBank" className="input-field" placeholder="Bank Name" />
+                                    <input id="wAcc" className="input-field" placeholder="10-Digit Account Number" maxLength={10} />
+                                    <button onClick={async (e) => {
+                                        const amt = Number(document.getElementById('wAmt').value);
+                                        const b = document.getElementById('wBank').value;
+                                        const a = document.getElementById('wAcc').value;
+                                        if(amt < config.minWithdrawal || amt > user.points || !b || a.length < 10) return showToast("Invalid Details", "❌");
+                                        e.currentTarget.disabled = true;
+                                        try {
+                                            const res = await sendToTelegram('payout', { uid: user.uid, username: user.username, amount: amt, bankName: b, accountNumber: a }, config);
+                                            if(!res.ok) throw new Error(res.description || "TG Error");
+                                            await db.ref(`users/${user.uid}/points`).transaction(p => (p || 0) - amt);
+                                            showToast("Withdrawal Requested!", "🏦");
+                                            document.querySelectorAll('.input-field').forEach(i => i.value = '');
+                                        } catch(e) { showToast(`Error: ${e.message}`, "⚠️"); }
+                                        finally { e.currentTarget.disabled = false; }
+                                    }} className="btn-primary h-12 italic">CONFIRM WITHDRAWAL</button>
+                                    
+                                    <div className="pt-2 border-t border-[#ffd1ff]/5 flex flex-col items-center gap-1 text-center">
+                                        <p className="text-[7px] font-bold text-[#c084fc] uppercase tracking-tighter">Advised: Track your payment in the payout channel below to avoid mistakes.</p>
+                                        {config.withdrawalChannelUrl && (
+                                            <button onClick={() => window.open(config.withdrawalChannelUrl, '_blank')} className="text-[8px] font-black text-[var(--accent)] underline uppercase tracking-widest">Open Payout Channel</button>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        {tab === 'invite' && (
+                            <div className="text-center pt-8 animate-slide px-4">
+                                <div className="w-20 h-20 bg-[var(--accent)]/5 rounded-[32px] flex items-center justify-center mx-auto mb-6 shadow-inner border border-[#ffd1ff]/5"> <span className="text-4xl">🎁</span> </div>
+                                <h3 className="text-2xl font-black mb-2 italic">Grow Hub</h3>
+                                <p className="text-[#c084fc] mb-8 text-[10px] leading-relaxed font-bold opacity-60">Invite friends and get <span className="text-[var(--accent)]">+{config.referralReward} {config.currency}</span> each.</p>
+                                <button onClick={() => { const link = `https://t.me/${config.botUsername}/${config.appShortName}?startapp=u_${user?.uid}`; navigator.clipboard.writeText(link); showToast("Link Copied!", "📋"); }} className="btn-primary h-14 text-[10px] italic">COPY RECRUIT LINK</button>
+                            </div>
+                        )}
+                    </main>
+
+                    <nav className="fixed bottom-4 left-4 right-4 h-14 nav-pill rounded-[20px] flex items-center justify-around z-50 border border-[#ffd1ff]/5 shadow-2xl">
+                        {[
+                            { id: 'home', icon: '🏠', label: 'Home' },
+                            { id: 'tasks', icon: '🎯', label: 'Earn' },
+                            { id: 'invite', icon: '🤝', label: 'Invite' },
+                            { id: 'wallet', icon: '🏦', label: 'Wallet' }
+                        ].map(t => (
+                            <button key={t.id} onClick={() => setTab(t.id)} className={`flex flex-col items-center gap-0.5 transition-all ${tab === t.id ? 'text-[var(--accent)] scale-105' : 'text-[#c084fc] opacity-30'}`}>
+                                <span className="text-lg">{t.icon}</span>
+                                <span className="text-[6px] font-black uppercase italic">{t.label}</span>
+                            </button>
+                        ))}
+                    </nav>
+                </div>
+            );
+        };
+
+        const DevHub = ({ onExit, config }) => {
+            const [settings, setSettings] = useState({ ...config });
+            const save = async () => { await db.ref('config/app').update(settings); showToast("Redeployed", "⚙️"); };
+            return (
+                <div className="fixed inset-0 bg-[#1a0827] p-5 z-[2000] overflow-y-auto no-scrollbar pb-10">
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-sm font-black uppercase italic">Dev Core</h2>
+                        <button onClick={onExit} className="bg-[#ffd1ff]/5 w-7 h-7 rounded-full flex items-center justify-center text-xs">✕</button>
+                    </div>
+                    <div className="space-y-4">
+                        <div className="card p-4 space-y-2">
+                            <p className="text-[8px] font-black text-[#a855f7] uppercase">Auth & Infrastructure</p>
+                            <input type="password" placeholder="Bot Token" className="input-field" value={settings.botToken || ''} onChange={e => setSettings({...settings, botToken: e.target.value})} />
+                            <input placeholder="Bot User (no @)" className="input-field" value={settings.botUsername || ''} onChange={e => setSettings({...settings, botUsername: e.target.value})} />
+                            <input placeholder="WebApp Short Name" className="input-field" value={settings.appShortName || ''} onChange={e => setSettings({...settings, appShortName: e.target.value})} />
+                            <input placeholder="Admin IDs (comma list)" className="input-field" value={settings.adminUid || ''} onChange={e => setSettings({...settings, adminUid: e.target.value})} />
+                        </div>
+                        <div className="card p-4 space-y-2">
+                            <p className="text-[8px] font-black text-[#a855f7] uppercase">Internal Channels (IDs)</p>
+                            <input placeholder="Task Submission Channel ID" className="input-field" value={settings.submissionChannelId || ''} onChange={e => setSettings({...settings, submissionChannelId: e.target.value})} />
+                            <input placeholder="Withdrawal Channel ID" className="input-field" value={settings.withdrawalChannelId || ''} onChange={e => setSettings({...settings, withdrawalChannelId: e.target.value})} />
+                        </div>
+                        <div className="card p-4 space-y-2">
+                            <p className="text-[8px] font-black text-[#a855f7] uppercase">Public Channel Links (For User View)</p>
+                            <input placeholder="Task Submission Channel URL" className="input-field" value={settings.submissionChannelUrl || ''} onChange={e => setSettings({...settings, submissionChannelUrl: e.target.value})} />
+                            <input placeholder="Withdrawal Channel URL" className="input-field" value={settings.withdrawalChannelUrl || ''} onChange={e => setSettings({...settings, withdrawalChannelUrl: e.target.value})} />
+                        </div>
+                        <button onClick={save} className="btn-primary h-11 italic">UPDATE INFRASTRUCTURE</button>
+                    </div>
+                </div>
+            );
+        };
+
+        const AdminHub = ({ onExit, config, tasks }) => {
+            const [settings, setSettings] = useState({ ...config });
+            const [newTask, setNewTask] = useState({ icon: '🎯', title: '', reward: 100, description: '', link: '' });
+            const save = async () => { await db.ref('config/app').update(settings); showToast("Committed", "💾"); };
+            
+            const handleRewardChange = (day, val) => {
+                const rewards = settings.checkInRewards || {};
+                setSettings({ ...settings, checkInRewards: { ...rewards, [day]: Number(val) } });
+            };
+
+            return (
+                <div className="fixed inset-0 bg-[#1a0827] p-5 z-[1500] overflow-y-auto no-scrollbar pb-20">
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-sm font-black uppercase italic">Admin Panel</h2>
+                        <button onClick={onExit} className="bg-[#ffd1ff]/5 w-7 h-7 rounded-full flex items-center justify-center text-xs">✕</button>
+                    </div>
+                    <div className="space-y-4">
+                        <div className="card p-4 space-y-2">
+                            <p className="text-[8px] font-black uppercase text-[#a855f7] mb-1">Global Config</p>
+                            <input placeholder="App Title" className="input-field" value={settings.appName || ''} onChange={e => setSettings({...settings, appName: e.target.value})} />
+                            <div className="grid grid-cols-2 gap-2">
+                                <input type="number" placeholder="Min Pay" className="input-field" value={settings.minWithdrawal || ''} onChange={e => setSettings({...settings, minWithdrawal: Number(e.target.value)})} />
+                                <input type="number" placeholder="Ref Pay" className="input-field" value={settings.referralReward || ''} onChange={e => setSettings({...settings, referralReward: Number(e.target.value)})} />
+                            </div>
+                            <input placeholder="Currency (₦)" className="input-field" value={settings.currency || ''} onChange={e => setSettings({...settings, currency: e.target.value})} />
+                        </div>
+
+                        <div className="card p-4 space-y-2">
+                            <p className="text-[8px] font-black uppercase text-[#a855f7] mb-1 italic">Daily Rewards (7 Days)</p>
+                            <div className="grid grid-cols-2 gap-2">
+                                {[1,2,3,4,5,6,7].map(d => (
+                                    <div key={d} className="flex flex-col gap-1">
+                                        <p className="text-[7px] font-bold text-[#c084fc] uppercase ml-1">Day {d}</p>
+                                        <input type="number" className="input-field" value={settings.checkInRewards?.[`d${d}`] || ''} onChange={e => handleRewardChange(`d${d}`, e.target.value)} />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="card p-4 space-y-2">
+                            <p className="text-[8px] font-black uppercase text-[#a855f7] mb-1">Access Gates (Security)</p>
+                            <div className="space-y-4">
+                                {[1, 2, 3].map(i => (
+                                    <div key={i} className="space-y-1">
+                                        <p className="text-[7px] font-black text-[#c084fc] ml-1">CHANNEL {i}</p>
+                                        <input placeholder={`Channel ${i} Name`} className="input-field" value={settings[`chan${i}Name`] || ''} onChange={e => setSettings({...settings, [`chan${i}Name`]: e.target.value})} />
+                                        <input placeholder={`Channel ${i} Join URL`} className="input-field" value={settings[`chan${i}Url`] || ''} onChange={e => setSettings({...settings, [`chan${i}Url`]: e.target.value})} />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="card p-4 space-y-2">
+                            <p className="text-[8px] font-black uppercase text-[#a855f7] mb-1">Tracking Channels (URLs)</p>
+                            <input placeholder="View Proofs Channel URL" className="input-field" value={settings.submissionChannelUrl || ''} onChange={e => setSettings({...settings, submissionChannelUrl: e.target.value})} />
+                            <input placeholder="View Payouts Channel URL" className="input-field" value={settings.withdrawalChannelUrl || ''} onChange={e => setSettings({...settings, withdrawalChannelUrl: e.target.value})} />
+                        </div>
+
+                        <div className="card p-4 space-y-2">
+                            <p className="text-[8px] font-black uppercase text-[#a855f7]">Mission Factory</p>
+                            <div className="grid grid-cols-4 gap-2">
+                                <input placeholder="Icon" className="input-field" value={newTask.icon} onChange={e => setNewTask({...newTask, icon: e.target.value})} />
+                                <input placeholder="Title" className="input-field col-span-3" value={newTask.title} onChange={e => setNewTask({...newTask, title: e.target.value})} />
+                            </div>
+                            <input type="number" placeholder="Reward" className="input-field" value={newTask.reward} onChange={e => setNewTask({...newTask, reward: Number(e.target.value)})} />
+                            <textarea placeholder="Description" className="input-field h-14" value={newTask.description} onChange={e => setNewTask({...newTask, description: e.target.value})} />
+                            <input placeholder="Task Link" className="input-field" value={newTask.link} onChange={e => setNewTask({...newTask, link: e.target.value})} />
+                            <button onClick={async () => { if(!newTask.title) return; const id = 't_' + Date.now(); await db.ref(`tasks/${id}`).set({ ...newTask, id }); setNewTask({ icon: '🎯', title: '', reward: 100, description: '', link: '' }); showToast("Deployed", "🚀"); }} className="btn-primary italic">ADD MISSION</button>
+                        </div>
+                        <div className="space-y-1.5">
+                            {tasks.map(t => (
+                                <div key={t.id} className="card p-2 flex justify-between items-center text-[9px] font-bold">
+                                    <span>{t.icon} {t.title}</span>
+                                    <button onClick={() => db.ref(`tasks/${t.id}`).remove()} className="text-red-500 uppercase text-[7px]">Delete</button>
+                                </div>
+                            ))}
+                        </div>
+                        <button onClick={save} className="btn-primary h-11 italic">SAVE SETTINGS</button>
+                    </div>
+                </div>
+            );
+        };
+
+        const PinModal = ({ title, onConfirm, onCancel }) => {
+            const [pin, setPin] = useState('');
+            return (
+                <div className="fixed inset-0 bg-[#1a0827]/80 backdrop-blur-md z-[3000] flex items-center justify-center p-6">
+                    <div className="card w-full max-w-[240px] p-5 space-y-3">
+                        <div className="text-center">
+                            <h3 className="text-sm font-black uppercase italic">{title}</h3>
+                            <p className="text-[8px] text-[#c084fc] uppercase font-bold mt-1">Auth Required</p>
+                        </div>
+                        <input type="password" className="input-field text-center text-lg tracking-[0.8em] h-12" placeholder="****" maxLength={6} value={pin} autoFocus onChange={e => setPin(e.target.value)} />
+                        <div className="flex gap-2">
+                            <button onClick={onCancel} className="flex-1 py-2.5 bg-[#ffd1ff]/5 rounded-lg font-bold text-[9px] uppercase">Cancel</button>
+                            <button onClick={() => onConfirm(pin)} className="btn-primary flex-1">Enter</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

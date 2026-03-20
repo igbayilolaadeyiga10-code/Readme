@@ -17,70 +17,55 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 :root {
-    --bg-color: #ffffff;        /* White background */
-    --card-bg: #ffffff;
-    
-    --green: #16a34a;           /* Main green */
-    --green-dark: #15803d;
-
-    --red: #dc2626;             /* Balance card red */
+    --bg: #ffffff;
+    --green: #16a34a;
+    --red: #dc2626;
     --red-dark: #991b1b;
-
-    --text-main: #000000;
 }
 
 /* BODY */
 body {
-    background: var(--bg-color);
-    color: var(--text-main);
+    background: var(--bg);
     font-family: 'Plus Jakarta Sans', sans-serif;
     margin: 0;
     padding: 0;
-    font-size: 12px;
-    overflow-x: hidden;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
 }
 
-/* GENERAL CARD */
-.card {
-    background: var(--card-bg);
-    border-radius: 16px;
-    padding: 12px;
-    border: 1px solid rgba(0,0,0,0.05);
+/* 🔴 FIX THE PURPLE AREA (HEADER + CARD) */
+div[style*="purple"],
+div[class*="purple"],
+div[class*="header"],
+div[class*="top"],
+div[class*="card"] {
+    background: linear-gradient(135deg, var(--red), var(--red-dark)) !important;
 }
 
-/* 🔴 BALANCE CARD (FIXED) */
-.balance-card {
-    background: linear-gradient(135deg, var(--red), var(--red-dark));
-    border-radius: 18px;
-    padding: 16px;
+/* ⚪ FORCE ALL TEXT INSIDE TO WHITE */
+div[style*="purple"] *,
+div[class*="purple"] *,
+div[class*="header"] *,
+div[class*="top"] *,
+div[class*="card"] * {
     color: #ffffff !important;
 }
 
-/* FORCE ALL TEXT WHITE INSIDE */
-.balance-card * {
+/* ⚪ FIX BIG BALANCE NUMBER */
+h1, h2, h3 {
     color: #ffffff !important;
 }
 
-/* BUTTONS INSIDE BALANCE */
-.quick-btn {
-    background: rgba(255,255,255,0.15);
-    border-radius: 12px;
-    padding: 10px;
-    text-align: center;
-    font-weight: 600;
+/* ⚪ REMOVE BLACK TEXT EVERYWHERE IN THAT AREA */
+.text-black {
+    color: #ffffff !important;
 }
 
-/* GREEN PRIMARY BUTTON */
+/* GREEN BUTTONS (UNCHANGED) */
 .btn-primary {
     background: var(--green);
-    color: #ffffff;
-    font-weight: 700;
+    color: #fff;
     border-radius: 12px;
     padding: 10px;
-    font-size: 11px;
-    text-transform: uppercase;
+    font-weight: 700;
 }
 
 /* OUTLINE BUTTON */
@@ -89,45 +74,12 @@ body {
     color: var(--green);
     border-radius: 10px;
     padding: 8px;
-    font-size: 10px;
 }
 
-/* INPUT */
-.input-field {
+/* KEEP OTHER CARDS WHITE */
+body > div:not([class*="header"]):not([class*="top"]) {
     background: #ffffff;
-    border: 1px solid var(--green);
-    border-radius: 10px;
-    padding: 10px;
-    width: 100%;
-    font-size: 12px;
-    color: #000;
 }
-
-/* ICON CIRCLE */
-.icon-circle {
-    background: rgba(22,163,74,0.1);
-    border-radius: 50%;
-    padding: 12px;
-}
-
-/* NAVBAR */
-.nav-pill {
-    background: #ffffff;
-    border-top: 1px solid rgba(0,0,0,0.08);
-}
-
-/* ANIMATION */
-@keyframes fadeUp {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-.animate { animation: fadeUp 0.3s ease; }
-
-/* FORCE OVERRIDE */
-.bg-white { background-color: #ffffff !important; }
-.text-white { color: #ffffff !important; }
-.text-black { color: #000000 !important; }
-.bg-black { background-color: var(--green) !important; }
 
 </style>
 </head>

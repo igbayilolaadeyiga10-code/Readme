@@ -13,73 +13,68 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
-    <style>
+<style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 :root {
-    --bg-color: #f5f5f5;        /* Light app background */
-    --card-bg: #ffffff;         /* White cards */
-    --primary: #b11226;         /* Deep red */
-    --primary-dark: #8e0e1d;    /* Darker red */
-    --accent: #e11d48;          /* Bright red */
-    --text-main: #1e293b;       /* Dark text */
-    --text-light: #64748b;      /* Soft text */
+    --bg-color: #ffffff;      /* Pure white background */
+    --card-bg: #ffffff;       /* White cards */
+    --primary: #16a34a;       /* Main green */
+    --primary-dark: #15803d;  /* Dark green */
+    --text-main: #000000;     /* Black text */
 }
 
+/* BODY */
 body {
     background: var(--bg-color);
     color: var(--text-main);
     font-family: 'Plus Jakarta Sans', sans-serif;
     margin: 0;
     padding: 0;
-    overflow-x: hidden;
     font-size: 12px;
+    overflow-x: hidden;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
 }
 
-/* Smooth container cards */
+/* GENERAL CARD */
 .card {
     background: var(--card-bg);
     border-radius: 16px;
     padding: 12px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    border: 1px solid rgba(0,0,0,0.05);
 }
 
-/* MAIN RED BALANCE CARD */
+/* MAIN BALANCE (GREEN) */
 .balance-card {
     background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-    color: white;
+    color: #ffffff;
     border-radius: 18px;
     padding: 16px;
-    box-shadow: 0 8px 25px rgba(177,18,38,0.25);
 }
 
-/* Buttons inside red card */
+/* BUTTONS INSIDE BALANCE */
 .quick-btn {
     background: rgba(255,255,255,0.15);
     border-radius: 12px;
     padding: 10px;
     text-align: center;
-    color: white;
+    color: #ffffff;
     font-weight: 600;
-    backdrop-filter: blur(10px);
 }
 
-/* Primary Button */
+/* PRIMARY BUTTON */
 .btn-primary {
     background: var(--primary);
-    color: white;
+    color: #ffffff;
     font-weight: 700;
     border-radius: 12px;
     padding: 10px;
-    text-transform: uppercase;
     font-size: 11px;
-    transition: 0.2s;
+    text-transform: uppercase;
 }
-.btn-primary:active { transform: scale(0.96); }
 
-/* Outline Button */
+/* OUTLINE BUTTON */
 .btn-outline {
     border: 1px solid var(--primary);
     color: var(--primary);
@@ -88,42 +83,43 @@ body {
     font-size: 10px;
 }
 
-/* Input */
+/* INPUT */
 .input-field {
     background: #ffffff;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--primary);
     border-radius: 10px;
     padding: 10px;
     width: 100%;
     font-size: 12px;
+    color: #000;
 }
 
-/* Bottom nav */
-.nav-pill {
-    background: #ffffff;
-    border-top: 1px solid #e5e7eb;
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
-}
-
-/* Icons circle (like Airtime/Data row) */
+/* ICON CIRCLE */
 .icon-circle {
-    background: #f1f5f9;
+    background: rgba(22,163,74,0.1);
     border-radius: 50%;
     padding: 12px;
 }
 
-/* Small animation */
+/* BOTTOM NAV */
+.nav-pill {
+    background: #ffffff;
+    border-top: 1px solid rgba(0,0,0,0.08);
+}
+
+/* SMALL ANIMATION */
 @keyframes fadeUp {
     from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: translateY(0); }
 }
 .animate { animation: fadeUp 0.3s ease; }
 
-/* Override Tailwind */
+/* FORCE COLORS */
 .bg-white { background-color: #ffffff !important; }
-.text-black { color: #000 !important; }
-.text-white { color: #fff !important; }
+.text-white { color: #ffffff !important; }
+.text-black { color: #000000 !important; }
 .bg-black { background-color: var(--primary) !important; }
+
     </style>
 </head>
 <body>

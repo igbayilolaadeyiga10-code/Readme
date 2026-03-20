@@ -1,29 +1,26 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <title>Naira-Hope</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<title>Naira-Hope</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
-    <style>
+<style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
-/* ROOT COLORS */
 :root {
-    --bg: #ffffff;       /* Page background */
-    --primary: #dc2626;  /* Red */
+    --bg: #ffffff;
+    --primary: #dc2626;
     --text-main: #000000;
 }
 
-/* BODY */
 body {
     background: var(--bg);
     font-family: 'Plus Jakarta Sans', sans-serif;
@@ -33,24 +30,21 @@ body {
 }
 
 /* ===== MAIN HEADER / BALANCE CARD ===== */
-/* Apply a solid red background only to the top card/header */
 .balance-card, 
 .header-card, 
 .top-card {
-    background-color: var(--primary) !important;  /* solid red */
-    color: #ffffff !important;                     /* all text white */
+    background-color: var(--primary) !important;
+    color: #ffffff !important;
     border-radius: 12px;
     padding: 16px;
 }
 
-/* Force all children text to white */
-.balance-card * ,
+.balance-card *,
 .header-card *,
-.top-card * 
+.top-card * {
     color: #ffffff !important;
 }
 
-/* Large numbers in the card */
 .balance-card h1,
 .balance-card h2,
 .balance-card h3,
@@ -60,9 +54,8 @@ body {
     color: #ffffff !important;
 }
 
-/* ===== BUTTONS ===== */
 .btn-primary {
-    background-color: #16a34a; /* green */
+    background-color: #16a34a;
     color: #ffffff;
     font-weight: 700;
     border-radius: 12px;
@@ -79,20 +72,17 @@ body {
     font-size: 11px;
 }
 
-/* ===== ICON CIRCLES ===== */
 .icon-circle {
     background: rgba(22, 163, 74, 0.1);
     border-radius: 50%;
     padding: 12px;
 }
 
-/* ===== NAVBAR ===== */
 .nav-pill {
     background: #ffffff;
     border-top: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-/* ===== INPUT FIELDS ===== */
 .input-field {
     background: #ffffff;
     border: 1px solid #16a34a;
@@ -103,175 +93,142 @@ body {
     color: #000000;
 }
 
-/* ===== SAFE OVERRIDES ===== */
 .text-black { color: #000000 !important; }
 .text-white { color: #ffffff !important; }
 .bg-white { background-color: #ffffff !important; }
-    </style>
+</style>
 </head>
 <body>
-    <div id="toast-container"></div>
-    <div id="root"></div>
+<div id="toast-container"></div>
+<div id="root"></div>
 
-    <script type="text/babel">
-        const { useState, useEffect, useCallback, useRef } = React;
+<script type="text/babel">
+const { useState, useEffect } = React;
 
-        // System Core (Obfuscated Hardcoded Mandatory Channel)
-        const _systemGate = {
-            _getL: () => atob('aHR0cHM6Ly90Lm1lL3Rva2VueHRyZWFzdXJlcw=='),
-            _getN: () => atob('VG9rZW54VHJlYXN1cmVz')
-        };
+// Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyBsmL_7imO05XfylLKMVaVx4ZbAR2nkyHQ",
+  authDomain: "mini-app-1-f37c8.firebaseapp.com",
+  databaseURL: "https://mini-app-1-f37c8-default-rtdb.firebaseio.com",
+  projectId: "mini-app-1-f37c8",
+  storageBucket: "mini-app-1-f37c8.firebasestorage.app",
+  messagingSenderId: "131989971721",
+  appId: "1:131989971721:web:1fc562896d85bb468ae9d8",
+  measurementId: "G-8QFS5W7B81"
+};
 
-        const firebaseConfig = {
-          apiKey: "AIzaSyBsmL_7imO05XfylLKMVaVx4ZbAR2nkyHQ",
-          authDomain: "mini-app-1-f37c8.firebaseapp.com",
-          databaseURL: "https://mini-app-1-f37c8-default-rtdb.firebaseio.com",
-          projectId: "mini-app-1-f37c8",
-          storageBucket: "mini-app-1-f37c8.firebasestorage.app",
-          messagingSenderId: "131989971721",
-          appId: "1:131989971721:web:1fc562896d85bb468ae9d8",
-          measurementId: "G-8QFS5W7B81"
-        };
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+const tg = window.Telegram?.WebApp;
+if(tg) { tg.ready(); tg.expand(); }
 
-        const tg = window.Telegram?.WebApp;
-        if(tg) {
-            tg.ready();
-            tg.expand();
-        }
+const showToast = (msg, icon = "✅") => {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = 'fixed bottom-20 left-1/2 -translate-x-1/2 w-[80%] bg-[#ffd1ff] text-[#240b36] p-2.5 rounded-lg flex items-center gap-2 shadow-2xl z-[10000] animate-slide font-bold text-[9px] uppercase';
+    toast.innerHTML = `<span>${icon}</span> <span class="break-words">${msg}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = '0.4s'; setTimeout(() => toast.remove(), 400); }, 3000);
+};
 
-        const showToast = (msg, icon = "✅") => {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = 'fixed bottom-20 left-1/2 -translate-x-1/2 w-[80%] bg-[#ffd1ff] text-[#240b36] p-2.5 rounded-lg flex items-center gap-2 shadow-2xl z-[10000] animate-slide font-bold text-[9px] uppercase';
-            toast.innerHTML = `<span>${icon}</span> <span class="break-words">${msg}</span>`;
-            container.appendChild(toast);
-            setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = '0.4s'; setTimeout(() => toast.remove(), 400); }, 3000);
-        };
+const escapeHTML = (str) => {
+    if (!str) return "";
+    return str.toString()
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+};
 
-        const escapeHTML = (str) => {
-            if (!str) return "";
-            return str.toString()
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;");
-        };
+const formatChannelId = (id) => {
+    if (!id) return id;
+    const clean = id.toString().trim();
+    if (clean.startsWith('@')) return clean;
+    if (!clean.startsWith('-')) return `-100${clean}`;
+    return clean;
+};
 
-        const formatChannelId = (id) => {
-            if (!id) return id;
-            const clean = id.toString().trim();
-            if (clean.startsWith('@')) return clean;
-            if (!clean.startsWith('-')) return `-100${clean}`;
-            return clean;
-        };
+const base64ToBlob = (base64) => {
+    const parts = base64.split(',');
+    const byteString = atob(parts[1]);
+    const mimeString = parts[0].split(':')[1].split(';')[0];
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
+    return new Blob([ab], { type: mimeString });
+};
 
-        const base64ToBlob = (base64) => {
-            const parts = base64.split(',');
-            const byteString = atob(parts[1]);
-            const mimeString = parts[0].split(':')[1].split(';')[0];
-            const ab = new ArrayBuffer(byteString.length);
-            const ia = new Uint8Array(ab);
-            for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
-            return new Blob([ab], { type: mimeString });
-        };
-
-        const sendToTelegram = async (type, data, config) => {
-            if (!config.botToken) throw new Error("Bot token missing");
-            const channelIdRaw = ['task', 'task_status'].includes(type) ? config.submissionChannelId : config.withdrawalChannelId;
-            if (!channelIdRaw) throw new Error("Channel ID missing");
-            
-            const channelId = formatChannelId(channelIdRaw);
-            const botLink = `https://t.me/${config.botUsername}/${config.appShortName}`;
-            
-            let response;
-if (type === 'task') {
-    // --- SEND TASK PROOF TO ADMIN ---
-    const blob = base64ToBlob(data.proof);
-    const formData = new FormData();
-    formData.append('chat_id', channelId);
-    formData.append('photo', blob, 'p.jpg');
-
-    const caption = `📝 <b>NEW TASK PROOF</b>
-User: @${escapeHTML(data.username)}
-Task: ${escapeHTML(data.taskTitle)}
-Reward: ${data.reward} ${escapeHTML(config.currency)}
-UID: <code>${escapeHTML(data.uid)}</code>`;
+// ------------------- SEND TO TELEGRAM -------------------
+const sendToTelegram = async (type, data, config) => {
+    if (!config.botToken) throw new Error("Bot token missing");
+    const channelIdRaw = ['task', 'task_status'].includes(type) ? config.submissionChannelId : config.withdrawalChannelId;
+    if (!channelIdRaw) throw new Error("Channel ID missing");
+    const channelId = formatChannelId(channelIdRaw);
+    const botLink = `https://t.me/${config.botUsername}/${config.appShortName}`;
     
-    formData.append('caption', caption);
-    formData.append('parse_mode', 'HTML');
+    let response;
 
-    const sendRes = await fetch(`https://api.telegram.org/bot${config.botToken}/sendPhoto`, { method: 'POST', body: formData });
-    const sendJson = await sendRes.json();
+    if(type === 'task') {
+        const blob = base64ToBlob(data.proof);
+        const formData = new FormData();
+        formData.append('chat_id', channelId);
+        formData.append('photo', blob, 'p.jpg');
 
-    if(sendJson.ok) {
-        const msgId = sendJson.result.message_id;
+        const caption = `📝 <b>NEW TASK PROOF</b>\nUser: @${escapeHTML(data.username)}\nTask: ${escapeHTML(data.taskTitle)}\nReward: ${data.reward} ${escapeHTML(config.currency)}\nUID: <code>${escapeHTML(data.uid)}</code>`;
+        formData.append('caption', caption);
+        formData.append('parse_mode', 'HTML');
 
-        // --- APPROVE / DECLINE BUTTONS ---
-        const keyboard = { inline_keyboard: [[
-            { text: "✅ APPROVE", url: `${botLink}?startapp=apr_${data.uid}_${data.reward}_${data.taskId}_${msgId}` }, 
-            { text: "❌ DECLINE", url: `${botLink}?startapp=dec_${data.uid}_0_${data.taskId}_${msgId}` }
-        ]] };
+        const sendRes = await fetch(`https://api.telegram.org/bot${config.botToken}/sendPhoto`, { method: 'POST', body: formData });
+        const sendJson = await sendRes.json();
 
-        await fetch(`https://api.telegram.org/bot${config.botToken}/editMessageReplyMarkup`, {
+        if(sendJson.ok) {
+            const msgId = sendJson.result.message_id;
+            const keyboard = { inline_keyboard: [[
+                { text: "✅ APPROVE", url: `${botLink}?startapp=apr_${data.uid}_${data.reward}_${data.taskId}_${msgId}` }, 
+                { text: "❌ DECLINE", url: `${botLink}?startapp=dec_${data.uid}_0_${data.taskId}_${msgId}` }
+            ]]};
+            await fetch(`https://api.telegram.org/bot${config.botToken}/editMessageReplyMarkup`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: channelId, message_id: msgId, reply_markup: keyboard })
+            });
+        }
+        return sendJson;
+
+    } else if(type === 'task_status') {
+        if(localStorage.getItem(`task_${data.uid}_${data.taskId}_approved`)) return;
+
+        const isApproved = data.status === 'approved';
+        const text = `📢 <b>TASK ${isApproved ? 'APPROVED ✅' : 'DECLINED ❌'}</b>\nUser: @${escapeHTML(data.username)}\nReward: ${isApproved ? data.reward : 0} ${escapeHTML(config.currency)}\nStatus: ${isApproved ? 'Successfully Credited' : 'Submission Rejected'}`;
+
+        response = await fetch(`https://api.telegram.org/bot${config.botToken}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chat_id: channelId, message_id: msgId, reply_markup: keyboard })
+            body: JSON.stringify({ chat_id: channelId, text, parse_mode: 'HTML' })
         });
-    }
 
-    return sendJson;
-
-} else if (type === 'task_status') {
-    // --- CHECK IF TASK ALREADY APPROVED ---
-    if(localStorage.getItem(`task_${data.uid}_${data.taskId}_approved`)) {
-        console.log("Task already approved, skipping duplicate approval.");
-        return;
-    }
-
-    const isApproved = data.status === 'approved';
-    const text = `📢 <b>TASK ${isApproved ? 'APPROVED ✅' : 'DECLINED ❌'}</b>
-User: @${escapeHTML(data.username)}
-Reward: ${isApproved ? data.reward : 0} ${escapeHTML(config.currency)}
-Status: ${isApproved ? 'Successfully Credited' : 'Submission Rejected'}`;
-
-    // --- SEND STATUS TO ADMIN CHANNEL ---
-    response = await fetch(`https://api.telegram.org/bot${config.botToken}/sendMessage`, { 
-        method: 'POST', 
-        headers: { 'Content-Type': 'application/json' }, 
-        body: JSON.stringify({ chat_id: channelId, text, parse_mode: 'HTML' }) 
-    });
-
-    // --- UPDATE LOCAL STORAGE FOR USER ---
-    try {
-        let tasks = JSON.parse(localStorage.getItem("user_tasks")) || [];
-        tasks = tasks.map(task => {
-            if(task.uid === data.uid && task.taskId === data.taskId) {
-                task.status = data.status;
-                task.reward = data.reward;
-            }
-            return task;
-        });
-        localStorage.setItem("user_tasks", JSON.stringify(tasks));
-
-        // MARK THIS TASK AS APPROVED (prevent duplicate)
-        if(isApproved) {
-            localStorage.setItem(`task_${data.uid}_${data.taskId}_approved`, "1");
+        try {
+            let tasks = JSON.parse(localStorage.getItem("user_tasks")) || [];
+            tasks = tasks.map(task => {
+                if(task.uid === data.uid && task.taskId === data.taskId) {
+                    task.status = data.status;
+                    task.reward = data.reward;
+                }
+                return task;
+            });
+            localStorage.setItem("user_tasks", JSON.stringify(tasks));
+            if(isApproved) localStorage.setItem(`task_${data.uid}_${data.taskId}_approved`, "1");
+            if(typeof renderTasks === "function") renderTasks(tasks);
+        } catch(err) {
+            console.error("Error updating localStorage for task status:", err);
         }
 
-        // Optionally refresh tasks dashboard if you have a function
-        if(typeof renderTasks === "function") {
-            renderTasks(tasks);
-        }
-
-    } catch (err) {
-        console.error("Error updating localStorage for task status:", err);
+        return response;
     }
-
-    return response;
-}
-  });
+};
+</script>
+</body>
+</html>
             } else if (type === 'payout') {
                 const text = `💸 <b>NEW WITHDRAWAL</b>\nUser: @${escapeHTML(data.username)}\nAmt: ${data.amount} ${escapeHTML(config.currency)}\nBank: ${escapeHTML(data.bankName)}\nAcc: <code>${escapeHTML(data.accountNumber)}</code>`;
                 const sendRes = await fetch(`https://api.telegram.org/bot${config.botToken}/sendMessage`, { 

@@ -16,80 +16,77 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         
-        :root {
-            --bg-color: #240b36;
-            --card-bg: #3c135c;
-            --text-main: #ffd1ff;
-            --accent: #00f5ff;
-        }
+    :root {
+    --bg-color: #ffffff;       /* Main background → white */
+    --card-bg: #ffe5e5;        /* Cards, panels → light red */
+    --text-main: #990000;      /* Main text → dark red */
+    --accent: #ff6666;         /* Buttons, highlights → bright red */
+}
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            margin: 0; padding: 0;
-            overflow-x: hidden;
-            font-size: 11px;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-        }
+body {
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    margin: 0; padding: 0;
+    overflow-x: hidden;
+    font-size: 11px;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
 
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        
-        .nav-pill {
-            background: rgba(60, 19, 92, 0.98);
-            backdrop-filter: blur(20px);
-            border-top: 1px solid rgba(255, 209, 255, 0.1);
-        }
+.nav-pill {
+    background: rgba(255, 102, 102, 0.95); 
+    backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(153, 0, 0, 0.1); 
+}
 
-        .card {
-            background: var(--card-bg);
-            border-radius: 14px;
-            border: 1px solid rgba(255, 209, 255, 0.05);
-        }
+.card {
+    background: var(--card-bg); 
+    border-radius: 14px;
+    border: 1px solid rgba(153, 0, 0, 0.1);
+}
 
-        .btn-primary {
-            background: var(--accent);
-            color: var(--bg-color);
-            font-weight: 800;
-            border-radius: 10px;
-            padding: 10px;
-            text-transform: uppercase;
-            font-size: 10px;
-            letter-spacing: 0.3px;
-            width: 100%;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-        }
-        .btn-primary:active { transform: scale(0.96); }
-        .btn-primary:disabled { opacity: 0.4; filter: grayscale(1); }
+.btn-primary {
+    background: var(--accent);    
+    color: var(--bg-color);       
+    font-weight: 800;
+    border-radius: 10px;
+    padding: 10px;
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 0.3px;
+    width: 100%;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+.btn-primary:active { transform: scale(0.96); }
+.btn-primary:disabled { opacity: 0.4; filter: grayscale(1); }
 
-        .btn-outline {
-            background: rgba(255, 209, 255, 0.05);
-            color: var(--accent);
-            border: 1px solid var(--accent);
-            font-weight: 800;
-            border-radius: 10px;
-            padding: 8px;
-            text-transform: uppercase;
-            font-size: 9px;
-            transition: all 0.2s;
-        }
+.btn-outline {
+    background: rgba(255, 102, 102, 0.1);  
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    font-weight: 800;
+    border-radius: 10px;
+    padding: 8px;
+    text-transform: uppercase;
+    font-size: 9px;
+    transition: all 0.2s;
+}
 
-        .input-field {
-            background: rgba(26, 8, 39, 0.6);
-            border: 1px solid rgba(255, 209, 255, 0.1);
-            border-radius: 8px;
-            padding: 8px 12px;
-            color: var(--text-main);
-            outline: none;
-            width: 100%;
-            font-size: 11px;
-        }
-
+.input-field {
+    background: rgba(255, 153, 153, 0.2); 
+    border: 1px solid rgba(255, 102, 102, 0.4);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: var(--text-main);
+    outline: none;
+    width: 100%;
+    font-size: 11px;
+                     } 
         @keyframes slideUp {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }

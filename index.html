@@ -158,26 +158,20 @@
           } catch (e) { console.error("TG Photo Error", e); }
         };
 
-        const App = () => {
+const App = () => {
 
-  // ✅ ADD IT RIGHT HERE
-  localStorage.removeItem("config");
-  // OR use: localStorage.clear();
+  useEffect(() => {
+    localStorage.removeItem("config"); // <-- resets admin password
+  }, []);
 
   const [activeTab, setActiveTab] = useState('missions');
   const [isAdmin, setIsAdmin] = useState(false);
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [showBanner, setShowBanner] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState(null);
-  const [authUser, setAuthUser] = useState(null);
-  const [tasks, setTasks] = useState([]);
-  const [submissions, setSubmissions] = useState([]);
-  const [ranks, setRanks] = useState({ earners: [], referrers: [] });
-
+  ...
   const [config, setConfig] = useState({
-    ...
-    adminPass: "admin123",
+      adminPass: "admin123",
+      ...
   });
 
           // Show banner whenever Missions tab is selected

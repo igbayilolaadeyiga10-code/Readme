@@ -158,27 +158,10 @@
           } catch (e) { console.error("TG Photo Error", e); }
         };
 
-const App = () => {
-
-  // ✅ Reset config only once after component mounts
-  useEffect(() => {
-    localStorage.removeItem("config"); // clear old admin password
-  }, []);
-
-  const [activeTab, setActiveTab] = useState('missions');
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [showAdminModal, setShowAdminModal] = useState(false);
-  const [showBanner, setShowBanner] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState(null);
-  const [authUser, setAuthUser] = useState(null);
-  const [tasks, setTasks] = useState([]);
-  const [submissions, setSubmissions] = useState([]);
-  const [ranks, setRanks] = useState({ earners: [], referrers: [] });
-
-  const [config, setConfig] = useState({
-    pointsToBnbRate: 1000000, 
-    minWithdrawalPoints: 50000, 
+  const App = () => {
+  const defaultConfig = {
+    pointsToBnbRate: 1000000,
+    minWithdrawalPoints: 50000,
     dailyBonus: 500,
     referralBonus: 1000,
     minTasksForWithdrawal: 3,
@@ -190,9 +173,38 @@ const App = () => {
     chan1Name: "Missions Channel", chan1Link: "",
     chan2Name: "Payouts Channel", chan2Link: "",
     chan3Name: "News Channel", chan3Link: ""
-  });
+  };
+
+  // ✅ Load saved config safely, fallback to default
+  const savedConfig = (() => {
+    try {
+      const data = localStorage.getItem("config");
+      return data ? JSON.parse(data) : defaultConfig;
+    } catch {
+      return defaultConfig;
+    }
+  })();
+
+  const [config, setConfig] = useState(savedConfig);
+  const [activeTab, setActiveTab] = useState('missions');
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showAdminModal, setShowAdminModal] = useState(false);
+  const [showBanner, setShowBanner] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  const [authUser, setAuthUser] = useState(null);
+  const [tasks, setTasks] = useState([]);
+  const [submissions, setSubmissions] = useState([]);
+  const [ranks, setRanks] = useState({ earners: [], referrers: [] });
+
+  // ✅ Only clear config AFTER component mounts
+  useEffect(() => {
+    localStorage.removeItem("config"); // resets admin password
+    setConfig(defaultConfig); // restore default config in state
+  }, []);
 
   ...
+};
           // Show banner whenever Missions tab is selected
           useEffect(() => {
             if (activeTab === 'missions' && user) {

@@ -1,183 +1,323 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PrimeVest</title>
+
 <style>
-body{font-family:Arial;margin:0;background:#f3f3f3;}
-.header{background:red;color:#fff;padding:15px;text-align:center;font-size:22px;font-weight:bold;}
-.card{background:#fff;margin:15px;padding:15px;border-radius:10px;box-shadow:0 0 5px rgba(0,0,0,0.1);}
-.btn{background:red;color:#fff;padding:12px;border:none;border-radius:8px;width:100%;font-size:16px;margin-top:10px;}
-input,select{width:100%;padding:12px;margin-top:10px;border-radius:8px;border:1px solid #ccc;}
-.nav{position:fixed;bottom:0;width:100%;background:#fff;display:flex;justify-content:space-around;padding:10px 0;}
-.nav div{font-size:14px;}
-.big{font-size:20px;font-weight:bold;}
+body{
+  margin:0;
+  font-family:Arial;
+  background:#f5f5f5;
+}
+
+.container{
+  max-width:420px;
+  margin:auto;
+  padding:15px;
+}
+
+.card{
+  background:#fff;
+  padding:20px;
+  border-radius:15px;
+  margin-bottom:15px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.1);
+}
+
+.title{
+  font-size:22px;
+  font-weight:bold;
+  text-align:center;
+}
+
+input{
+  width:100%;
+  padding:14px;
+  margin:8px 0;
+  border-radius:10px;
+  border:1px solid #ccc;
+}
+
+button{
+  width:100%;
+  padding:15px;
+  background:#ff0000;
+  color:#fff;
+  border:none;
+  border-radius:10px;
+  font-size:16px;
+  margin-top:10px;
+}
+
+.hidden{display:none;}
+
+.balance{
+  font-size:28px;
+  font-weight:bold;
+  text-align:center;
+}
+
+.nav{
+  position:fixed;
+  bottom:0;
+  width:100%;
+  max-width:420px;
+  display:flex;
+  background:#fff;
+  border-top:1px solid #ccc;
+}
+
+.nav button{
+  flex:1;
+  background:none;
+  color:black;
+  font-size:14px;
+}
 </style>
 </head>
 
 <body>
 
-<div class="header">PrimeVest</div>
+<div class="container">
 
-<div id="app"></div>
+<!-- REGISTER -->
+<div id="register">
+<div class="card">
+<div class="title">Create Account</div>
 
-<div class="nav">
-<div onclick="show('home')">Home</div>
-<div onclick="show('products')">Products</div>
-<div onclick="show('team')">Team</div>
-<div onclick="show('profile')">Profile</div>
+<input id="r_user" placeholder="Username">
+<input id="r_pass" placeholder="Password">
+<input id="r_ref" placeholder="Referral Code">
+
+<button onclick="register()">Register</button>
+<p onclick="showLogin()">Login</p>
+</div>
+</div>
+
+<!-- LOGIN -->
+<div id="login" class="hidden">
+<div class="card">
+<div class="title">Login</div>
+
+<input id="l_user" placeholder="Username">
+<input id="l_pass" placeholder="Password">
+
+<button onclick="login()">Login</button>
+<p onclick="showRegister()">Register</p>
+</div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="hidden">
+
+<div id="home">
+<div class="card">
+<div class="title">PrimeVest</div>
+<div class="balance">₦<span id="bal">0</span></div>
+</div>
+
+<div class="card">
+<button onclick="showPage('deposit')">Deposit</button>
+<button onclick="showPage('withdraw')">Withdraw</button>
+<button onclick="showPage('products')">Products</button>
+<button onclick="showPage('gift')">Gift Code</button>
+</div>
+</div>
+
+<!-- DEPOSIT -->
+<div id="deposit" class="hidden">
+<div class="card">
+<div class="title">Deposit</div>
+<input id="depAmount" placeholder="Amount">
+<button onclick="doDeposit()">Deposit Now</button>
+</div>
+</div>
+
+<!-- WITHDRAW -->
+<div id="withdraw" class="hidden">
+<div class="card">
+<div class="title">Withdraw</div>
+<input id="withAmount" placeholder="Amount">
+<button onclick="doWithdraw()">Withdraw</button>
+</div>
+</div>
+
+<!-- PRODUCTS -->
+<div id="products" class="hidden">
+<div class="card">
+<div class="title">Investment Plans</div>
+<button onclick="buy(5000)">Buy ₦5,000 Plan (+₦500 daily)</button>
+<button onclick="buy(10000)">Buy ₦10,000 Plan (+₦1000 daily)</button>
+<button onclick="buy(50000)">Buy ₦50,000 Plan (+₦5000 daily)</button>
+</div>
+</div>
+
+<!-- GIFT -->
+<div id="gift" class="hidden">
+<div class="card">
+<div class="title">Gift Code</div>
+<input id="giftCode" placeholder="Enter Code">
+<button onclick="redeem()">Redeem</button>
+</div>
+</div>
+
+<!-- REFERRAL -->
+<div id="ref" class="hidden">
+<div class="card">
+<div class="title">Referral</div>
+<input id="refLink" readonly>
+</div>
+</div>
+
+<!-- TRANSACTIONS -->
+<div id="txPage" class="hidden">
+<div class="card">
+<div class="title">Transactions</div>
+<ul id="tx"></ul>
+</div>
+</div>
+
+</div>
+
+</div>
+
+<!-- NAV -->
+<div class="nav hidden" id="nav">
+<button onclick="nav('home')">Home</button>
+<button onclick="nav('products')">Products</button>
+<button onclick="nav('ref')">Share</button>
+<button onclick="nav('txPage')">Profile</button>
 </div>
 
 <script>
-let user = JSON.parse(localStorage.getItem("user")) || null;
 
-function save(){ localStorage.setItem("user", JSON.stringify(user)); }
+let currentUser=null;
 
-function show(page){
-if(!user && page!="login" && page!="register"){
-page="login";
+function saveUsers(u){
+localStorage.setItem("users", JSON.stringify(u));
 }
 
-if(page=="login"){
-app.innerHTML=`
-<div class="card">
-<h2>Login</h2>
-<input id="u" placeholder="Username">
-<input id="p" placeholder="Password" type="password">
-<button class="btn" onclick="login()">Login</button>
-<p onclick="show('register')">Create account</p>
-</div>`;
-}
-
-if(page=="register"){
-app.innerHTML=`
-<div class="card">
-<h2>Register</h2>
-<input id="phone" placeholder="Phone">
-<input id="user" placeholder="Username">
-<input id="name" placeholder="Full Name">
-<input id="pass" placeholder="Password" type="password">
-<button class="btn" onclick="register()">Register</button>
-</div>`;
-}
-
-if(page=="home"){
-app.innerHTML=`
-<div class="card">
-<div class="big">Balance: ₦${user.balance}</div>
-<button class="btn" onclick="show('deposit')">Deposit</button>
-<button class="btn" onclick="show('withdraw')">Withdraw</button>
-<button class="btn" onclick="show('gift')">Gift Code</button>
-</div>`;
-}
-
-if(page=="products"){
-app.innerHTML=`
-<div class="card">
-<h3>Products</h3>
-<div>Plan 1 - ₦5,000</div>
-<button class="btn" onclick="buy()">Add to Portfolio</button>
-</div>`;
-}
-
-if(page=="deposit"){
-app.innerHTML=`
-<div class="card">
-<h3>Deposit</h3>
-<input placeholder="Enter amount">
-<button class="btn">Deposit Now</button>
-</div>`;
-}
-
-if(page=="withdraw"){
-app.innerHTML=`
-<div class="card">
-<h3>Withdraw</h3>
-<input placeholder="Amount">
-<button class="btn">Withdraw</button>
-</div>`;
-}
-
-if(page=="gift"){
-app.innerHTML=`
-<div class="card">
-<h3>Gift Code</h3>
-<input id="code" placeholder="Enter code">
-<button class="btn" onclick="redeem()">Redeem</button>
-</div>`;
-}
-
-if(page=="team"){
-app.innerHTML=`
-<div class="card">
-<h3>Referral</h3>
-<p>Code: ${user.ref}</p>
-<p>Link: ${location.href}?ref=${user.ref}</p>
-</div>`;
-}
-
-if(page=="profile"){
-app.innerHTML=`
-<div class="card">
-<h3>Profile</h3>
-<button class="btn" onclick="show('bank')">Bank Details</button>
-<button class="btn" onclick="show('transactions')">Transactions</button>
-</div>`;
-}
-
-if(page=="bank"){
-app.innerHTML=`
-<div class="card">
-<h3>Bank</h3>
-<input placeholder="Account Number">
-<input placeholder="Bank Name">
-<input placeholder="Account Name">
-<button class="btn">Save</button>
-</div>`;
-}
-
-if(page=="transactions"){
-app.innerHTML=`
-<div class="card">
-<h3>Transactions</h3>
-<p>No transactions</p>
-</div>`;
-}
-
+function getUsers(){
+return JSON.parse(localStorage.getItem("users")||"{}");
 }
 
 function register(){
-user={
-username:user.value,
-password:pass.value,
+let u=getUsers();
+let user=r_user.value;
+
+if(u[user]) return alert("User exists");
+
+u[user]={
+password:r_pass.value,
 balance:0,
-ref:Math.random().toString(36).substring(2,10)
+ref:Math.random().toString(36).substr(2,8),
+tx:[]
 };
-save();
-show('home');
+
+saveUsers(u);
+alert("Registered");
+showLogin();
 }
 
 function login(){
-if(u.value==user.username && p.value==user.password){
-show('home');
-}else{
+let u=getUsers();
+let user=l_user.value;
+
+if(!u[user] || u[user].password!=l_pass.value){
 alert("Wrong login");
-}
+return;
 }
 
-function buy(){
-alert("Product added (demo)");
+currentUser=user;
+
+document.getElementById("login").classList.add("hidden");
+document.getElementById("dashboard").classList.remove("hidden");
+document.getElementById("nav").classList.remove("hidden");
+
+updateUI();
+}
+
+function updateUI(){
+let u=getUsers();
+bal.innerText=u[currentUser].balance;
+
+refLink.value=location.href+"?ref="+u[currentUser].ref;
+
+let list="";
+u[currentUser].tx.forEach(t=>{
+list+="<li>"+t+"</li>";
+});
+tx.innerHTML=list;
+}
+
+function doDeposit(){
+let u=getUsers();
+let amt=parseInt(depAmount.value);
+
+u[currentUser].balance+=amt;
+u[currentUser].tx.push("Deposit ₦"+amt);
+
+saveUsers(u);
+updateUI();
+}
+
+function doWithdraw(){
+let u=getUsers();
+let amt=parseInt(withAmount.value);
+
+if(u[currentUser].balance<amt) return alert("Low balance");
+
+u[currentUser].balance-=amt;
+u[currentUser].tx.push("Withdraw ₦"+amt);
+
+saveUsers(u);
+updateUI();
+}
+
+function buy(price){
+let u=getUsers();
+
+if(u[currentUser].balance<price) return alert("No money");
+
+u[currentUser].balance-=price;
+u[currentUser].tx.push("Bought plan ₦"+price);
+
+saveUsers(u);
+updateUI();
 }
 
 function redeem(){
-if(code.value=="FREE100"){
-user.balance+=100;
-save();
-alert("₦100 added");
+if(giftCode.value=="FREE100"){
+let u=getUsers();
+u[currentUser].balance+=100;
+u[currentUser].tx.push("Gift ₦100");
+saveUsers(u);
+updateUI();
 }
 }
 
-show('login');
+function nav(page){
+showPage(page);
+}
+
+function showPage(p){
+["home","deposit","withdraw","products","gift","ref","txPage"].forEach(id=>{
+document.getElementById(id).classList.add("hidden");
+});
+document.getElementById(p).classList.remove("hidden");
+}
+
+function showLogin(){
+register.classList.add("hidden");
+login.classList.remove("hidden");
+}
+
+function showRegister(){
+login.classList.add("hidden");
+register.classList.remove("hidden");
+}
+
 </script>
 
 </body>

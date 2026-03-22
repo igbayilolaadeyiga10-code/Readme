@@ -5,75 +5,17 @@
 <title>PrimeVest</title>
 
 <style>
-body{
-  margin:0;
-  font-family:Arial;
-  background:#f5f5f5;
-}
-
-.container{
-  max-width:420px;
-  margin:auto;
-  padding:15px;
-}
-
-.card{
-  background:#fff;
-  padding:20px;
-  border-radius:15px;
-  margin-bottom:15px;
-  box-shadow:0 2px 8px rgba(0,0,0,0.1);
-}
-
-.title{
-  font-size:22px;
-  font-weight:bold;
-  text-align:center;
-}
-
-input{
-  width:100%;
-  padding:14px;
-  margin:8px 0;
-  border-radius:10px;
-  border:1px solid #ccc;
-}
-
-button{
-  width:100%;
-  padding:15px;
-  background:#ff0000;
-  color:#fff;
-  border:none;
-  border-radius:10px;
-  font-size:16px;
-  margin-top:10px;
-}
-
+body{margin:0;font-family:Arial;background:#f5f5f5;}
+.container{max-width:420px;margin:auto;padding:15px;}
+.card{background:#fff;padding:20px;border-radius:15px;margin-bottom:15px;}
+.title{font-size:22px;font-weight:bold;text-align:center;}
+input{width:100%;padding:14px;margin:8px 0;border-radius:10px;border:1px solid #ccc;}
+button{width:100%;padding:14px;background:red;color:#fff;border:none;border-radius:10px;margin-top:10px;}
 .hidden{display:none;}
-
-.balance{
-  font-size:28px;
-  font-weight:bold;
-  text-align:center;
-}
-
-.nav{
-  position:fixed;
-  bottom:0;
-  width:100%;
-  max-width:420px;
-  display:flex;
-  background:#fff;
-  border-top:1px solid #ccc;
-}
-
-.nav button{
-  flex:1;
-  background:none;
-  color:black;
-  font-size:14px;
-}
+.balance{font-size:28px;font-weight:bold;text-align:center;}
+.nav{position:fixed;bottom:0;width:100%;max-width:420px;display:flex;background:#fff;border-top:1px solid #ccc;}
+.nav button{flex:1;background:none;color:black;}
+img{width:100px;margin-top:5px;}
 </style>
 </head>
 
@@ -82,27 +24,22 @@ button{
 <div class="container">
 
 <!-- REGISTER -->
-<div id="register">
+<div id="registerPage">
 <div class="card">
-<div class="title">Create Account</div>
-
+<div class="title">Register</div>
 <input id="r_user" placeholder="Username">
 <input id="r_pass" placeholder="Password">
-<input id="r_ref" placeholder="Referral Code">
-
 <button onclick="register()">Register</button>
 <p onclick="showLogin()">Login</p>
 </div>
 </div>
 
 <!-- LOGIN -->
-<div id="login" class="hidden">
+<div id="loginPage" class="hidden">
 <div class="card">
 <div class="title">Login</div>
-
 <input id="l_user" placeholder="Username">
 <input id="l_pass" placeholder="Password">
-
 <button onclick="login()">Login</button>
 <p onclick="showRegister()">Register</p>
 </div>
@@ -114,14 +51,14 @@ button{
 <div id="home">
 <div class="card">
 <div class="title">PrimeVest</div>
-<div class="balance">₦<span id="bal">0</span></div>
+<div class="balance" onclick="tapAdmin()">₦<span id="bal">0</span></div>
 </div>
 
 <div class="card">
 <button onclick="showPage('deposit')">Deposit</button>
 <button onclick="showPage('withdraw')">Withdraw</button>
 <button onclick="showPage('products')">Products</button>
-<button onclick="showPage('gift')">Gift Code</button>
+<button onclick="showPage('profile')">Profile</button>
 </div>
 </div>
 
@@ -130,7 +67,8 @@ button{
 <div class="card">
 <div class="title">Deposit</div>
 <input id="depAmount" placeholder="Amount">
-<button onclick="doDeposit()">Deposit Now</button>
+<input id="depProof" type="file">
+<button onclick="submitDeposit()">Submit Deposit</button>
 </div>
 </div>
 
@@ -139,38 +77,28 @@ button{
 <div class="card">
 <div class="title">Withdraw</div>
 <input id="withAmount" placeholder="Amount">
-<button onclick="doWithdraw()">Withdraw</button>
+<button onclick="submitWithdraw()">Withdraw</button>
 </div>
 </div>
 
 <!-- PRODUCTS -->
 <div id="products" class="hidden">
 <div class="card">
-<div class="title">Investment Plans</div>
-<button onclick="buy(5000)">Buy ₦5,000 Plan (+₦500 daily)</button>
-<button onclick="buy(10000)">Buy ₦10,000 Plan (+₦1000 daily)</button>
-<button onclick="buy(50000)">Buy ₦50,000 Plan (+₦5000 daily)</button>
+<div class="title">Plans</div>
+<button onclick="buy(1500,450)">₦1500 → ₦450/day</button>
+<button onclick="buy(3000,750)">₦3000 → ₦750/day</button>
 </div>
 </div>
 
-<!-- GIFT -->
-<div id="gift" class="hidden">
+<!-- PROFILE -->
+<div id="profile" class="hidden">
 <div class="card">
-<div class="title">Gift Code</div>
-<input id="giftCode" placeholder="Enter Code">
-<button onclick="redeem()">Redeem</button>
+<button onclick="showPage('txPage')">Transactions</button>
+<button onclick="logout()">Logout</button>
 </div>
 </div>
 
-<!-- REFERRAL -->
-<div id="ref" class="hidden">
-<div class="card">
-<div class="title">Referral</div>
-<input id="refLink" readonly>
-</div>
-</div>
-
-<!-- TRANSACTIONS -->
+<!-- TX -->
 <div id="txPage" class="hidden">
 <div class="card">
 <div class="title">Transactions</div>
@@ -178,147 +106,243 @@ button{
 </div>
 </div>
 
+<!-- ADMIN -->
+<div id="admin" class="hidden">
+<div class="card">
+<div class="title">ADMIN PANEL</div>
+
+<h3>Deposits</h3>
+<div id="adminDeposits"></div>
+
+<h3>Withdrawals</h3>
+<div id="adminWithdrawals"></div>
+
+<h3>Users</h3>
+<div id="adminUsers"></div>
+
+<input id="creditUser" placeholder="Username">
+<input id="creditAmount" placeholder="Amount">
+<button onclick="creditUserFunc()">Credit User</button>
+
+</div>
 </div>
 
 </div>
 
-<!-- NAV -->
+</div>
+
 <div class="nav hidden" id="nav">
 <button onclick="nav('home')">Home</button>
 <button onclick="nav('products')">Products</button>
-<button onclick="nav('ref')">Share</button>
-<button onclick="nav('txPage')">Profile</button>
+<button onclick="nav('profile')">Profile</button>
 </div>
 
 <script>
 
 let currentUser=null;
+let tapCount=0;
 
-function saveUsers(u){
-localStorage.setItem("users", JSON.stringify(u));
-}
+function getUsers(){return JSON.parse(localStorage.getItem("users")||"{}");}
+function saveUsers(u){localStorage.setItem("users",JSON.stringify(u));}
 
-function getUsers(){
-return JSON.parse(localStorage.getItem("users")||"{}");
-}
+function getDeposits(){return JSON.parse(localStorage.getItem("deposits")||"[]");}
+function saveDeposits(d){localStorage.setItem("deposits",JSON.stringify(d));}
 
+function getWithdraws(){return JSON.parse(localStorage.getItem("withdraws")||"[]");}
+function saveWithdraws(w){localStorage.setItem("withdraws",JSON.stringify(w));}
+
+/* REGISTER */
 function register(){
 let u=getUsers();
-let user=r_user.value;
+if(u[r_user.value])return alert("Exists");
 
-if(u[user]) return alert("User exists");
-
-u[user]={
-password:r_pass.value,
-balance:0,
-ref:Math.random().toString(36).substr(2,8),
-tx:[]
-};
-
+u[r_user.value]={password:r_pass.value,balance:500,tx:[]};
 saveUsers(u);
 alert("Registered");
 showLogin();
 }
 
+/* LOGIN */
 function login(){
 let u=getUsers();
-let user=l_user.value;
+if(!u[l_user.value]||u[l_user.value].password!==l_pass.value)return alert("Wrong");
 
-if(!u[user] || u[user].password!=l_pass.value){
-alert("Wrong login");
-return;
-}
-
-currentUser=user;
-
-document.getElementById("login").classList.add("hidden");
-document.getElementById("dashboard").classList.remove("hidden");
-document.getElementById("nav").classList.remove("hidden");
+currentUser=l_user.value;
+loginPage.classList.add("hidden");
+dashboard.classList.remove("hidden");
+nav.classList.remove("hidden");
 
 updateUI();
 }
 
+/* UI */
 function updateUI(){
-let u=getUsers();
-bal.innerText=u[currentUser].balance;
+let u=getUsers()[currentUser];
+bal.innerText=u.balance;
 
-refLink.value=location.href+"?ref="+u[currentUser].ref;
+let t="";
+u.tx.forEach(x=>t+="<li>"+x+"</li>");
+tx.innerHTML=t;
+}
 
-let list="";
-u[currentUser].tx.forEach(t=>{
-list+="<li>"+t+"</li>";
+/* DEPOSIT SUBMIT */
+function submitDeposit(){
+let file=depProof.files[0];
+if(!file)return alert("Upload proof");
+
+let reader=new FileReader();
+reader.onload=()=>{
+let d=getDeposits();
+d.push({user:currentUser,amount:depAmount.value,proof:reader.result,status:"pending"});
+saveDeposits(d);
+alert("Deposit submitted");
+};
+reader.readAsDataURL(file);
+}
+
+/* WITHDRAW */
+function submitWithdraw(){
+let w=getWithdraws();
+w.push({user:currentUser,amount:withAmount.value,status:"pending"});
+saveWithdraws(w);
+alert("Withdraw requested");
+}
+
+/* ADMIN ACCESS */
+function tapAdmin(){
+tapCount++;
+if(tapCount>=10){
+tapCount=0;
+if(prompt("PIN")=="2000"){
+showPage("admin");
+loadAdmin();
+}
+}
+}
+
+/* LOAD ADMIN */
+function loadAdmin(){
+
+let d=getDeposits();
+let depHTML="";
+d.forEach((x,i)=>{
+depHTML+=`
+<div>
+<p>${x.user} ₦${x.amount}</p>
+<img src="${x.proof}">
+<button onclick="approveDeposit(${i})">Approve</button>
+<button onclick="rejectDeposit(${i})">Reject</button>
+</div>`;
 });
-tx.innerHTML=list;
+adminDeposits.innerHTML=depHTML;
+
+/* WITHDRAW */
+let w=getWithdraws();
+let wHTML="";
+w.forEach((x,i)=>{
+wHTML+=`
+<div>
+<p>${x.user} ₦${x.amount}</p>
+<button onclick="approveWithdraw(${i})">Approve</button>
+<button onclick="rejectWithdraw(${i})">Reject</button>
+</div>`;
+});
+adminWithdrawals.innerHTML=wHTML;
+
+/* USERS */
+let u=getUsers();
+let uHTML="";
+for(let k in u){
+uHTML+=`<p>${k} - ₦${u[k].balance}</p>`;
+}
+adminUsers.innerHTML=uHTML;
 }
 
-function doDeposit(){
+/* APPROVE DEPOSIT */
+function approveDeposit(i){
+let d=getDeposits();
 let u=getUsers();
-let amt=parseInt(depAmount.value);
 
-u[currentUser].balance+=amt;
-u[currentUser].tx.push("Deposit ₦"+amt);
+let dep=d[i];
+u[dep.user].balance+=Number(dep.amount);
+u[dep.user].tx.push("Deposit approved ₦"+dep.amount);
+
+d.splice(i,1);
 
 saveUsers(u);
-updateUI();
+saveDeposits(d);
+loadAdmin();
 }
 
-function doWithdraw(){
-let u=getUsers();
-let amt=parseInt(withAmount.value);
-
-if(u[currentUser].balance<amt) return alert("Low balance");
-
-u[currentUser].balance-=amt;
-u[currentUser].tx.push("Withdraw ₦"+amt);
-
-saveUsers(u);
-updateUI();
+/* REJECT DEPOSIT */
+function rejectDeposit(i){
+let d=getDeposits();
+d.splice(i,1);
+saveDeposits(d);
+loadAdmin();
 }
 
-function buy(price){
+/* APPROVE WITHDRAW */
+function approveWithdraw(i){
+let w=getWithdraws();
 let u=getUsers();
 
-if(u[currentUser].balance<price) return alert("No money");
+let wd=w[i];
+u[wd.user].balance-=Number(wd.amount);
+u[wd.user].tx.push("Withdraw approved ₦"+wd.amount);
 
-u[currentUser].balance-=price;
-u[currentUser].tx.push("Bought plan ₦"+price);
+w.splice(i,1);
 
 saveUsers(u);
-updateUI();
+saveWithdraws(w);
+loadAdmin();
 }
 
-function redeem(){
-if(giftCode.value=="FREE100"){
+/* REJECT WITHDRAW */
+function rejectWithdraw(i){
+let w=getWithdraws();
 let u=getUsers();
-u[currentUser].balance+=100;
-u[currentUser].tx.push("Gift ₦100");
+
+let wd=w[i];
+u[wd.user].tx.push("Withdraw rejected ₦"+wd.amount);
+
+w.splice(i,1);
+
 saveUsers(u);
-updateUI();
-}
-}
-
-function nav(page){
-showPage(page);
+saveWithdraws(w);
+loadAdmin();
 }
 
+/* CREDIT USER */
+function creditUserFunc(){
+let u=getUsers();
+let name=creditUser.value;
+let amt=parseInt(creditAmount.value);
+
+if(!u[name])return alert("No user");
+
+u[name].balance+=amt;
+u[name].tx.push("Admin credit ₦"+amt);
+
+saveUsers(u);
+alert("Done");
+loadAdmin();
+}
+
+/* NAV */
+function nav(p){showPage(p);}
 function showPage(p){
-["home","deposit","withdraw","products","gift","ref","txPage"].forEach(id=>{
+["home","deposit","withdraw","products","profile","txPage","admin"].forEach(id=>{
 document.getElementById(id).classList.add("hidden");
 });
 document.getElementById(p).classList.remove("hidden");
 }
 
-function showLogin(){
-register.classList.add("hidden");
-login.classList.remove("hidden");
-}
-
-function showRegister(){
-login.classList.add("hidden");
-register.classList.remove("hidden");
-}
+function showLogin(){registerPage.classList.add("hidden");loginPage.classList.remove("hidden");}
+function showRegister(){loginPage.classList.add("hidden");registerPage.classList.remove("hidden");}
+function logout(){location.reload();}
 
 </script>
 
 </body>
-</html>
+  </html>

@@ -1,724 +1,257 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <title>Naira Hope</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EASYPAY</title>
 
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
-        :root { 
-            --bg: #ffffff; 
-            --card: #f8fafc; 
-            --accent: #4f46e5; 
-            --text: #0f172a; 
-            --border: #e2e8f0;
-        }
-        body { 
-            background: var(--bg); color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; 
-            margin: 0; padding: 0; font-size: 10.5px; user-select: none; -webkit-tap-highlight-color: transparent; 
-            overflow-x: hidden;
-        }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .nav-bar { background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(20px); border-top: 1px solid var(--border); }
-        .standard-card { background: var(--card); border-radius: 12px; border: 1px solid var(--border); padding: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-        .btn-primary { background: var(--accent); color: #fff; font-weight: 800; border-radius: 8px; padding: 10px; width: 100%; font-size: 11px; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 5px; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.15); border: none; outline: none; }
-        .btn-primary:active { transform: scale(0.96); }
-        .btn-primary:disabled { opacity: 0.4; pointer-events: none; }
-        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); font-weight: 600; border-radius: 8px; padding: 7px 12px; font-size: 10.5px; }
-        .input-field { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; color: var(--text); outline: none; width: 100%; font-size: 11px; transition: border 0.2s; }
-        .input-field:focus { border-color: var(--accent); }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-slide { animation: slideUp 0.2s cubic-bezier(0, 0, 0.2, 1) forwards; }
-        .header-avatar { width: 32px; height: 32px; border-radius: 10px; background: var(--accent); color: #fff; font-weight: 900; display: flex; align-items: center; justify-content: center; font-size: 14px; box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3); }
-        .grad-accent { background: linear-gradient(135deg, #4f46e5 0%, #0ea5e9 100%); }
-        .status-chip { font-size: 7px; font-weight: 800; text-transform: uppercase; padding: 3px 6px; border-radius: 5px; }
-        .broadcast-banner { background: #4f46e5; color: white; padding: 10px 14px; border-radius: 12px; font-weight: 700; display: flex; align-items: center; gap: 10px; font-size: 10px; line-height: 1.4; border: 2px solid rgba(255,255,255,0.1); box-shadow: 0 8px 15px rgba(79, 70, 229, 0.2); }
-    </style>
-<link rel="stylesheet" href="/index.css">
+<style>
+body {
+  margin:0;
+  font-family:Arial;
+  background:#f5f5f5;
+}
+
+/* Auth */
+.auth-container {
+  max-width:400px;
+  margin:50px auto;
+  padding:20px;
+  background:white;
+  border-radius:10px;
+}
+
+input,button {
+  width:100%;
+  padding:10px;
+  margin:8px 0;
+}
+
+.btn {
+  background:#6f42c1;
+  color:white;
+  border:none;
+}
+
+.hidden { display:none; }
+
+/* Dashboard */
+.dashboard {
+  padding:20px;
+}
+
+.card {
+  background:white;
+  padding:15px;
+  margin:10px 0;
+  border-radius:10px;
+}
+
+/* Sidebar */
+.sidebar {
+  position:fixed;
+  left:-200px;
+  top:0;
+  width:200px;
+  height:100%;
+  background:#222;
+  color:white;
+  padding:20px;
+  transition:0.3s;
+}
+.sidebar.active { left:0; }
+
+.hamburger {
+  position:fixed;
+  top:10px;
+  left:10px;
+  font-size:24px;
+  cursor:pointer;
+}
+</style>
 </head>
+
 <body>
-    <div id="toast-layer"></div>
-    <div id="root"></div>
 
-    <script type="text/babel">
-        const { useState, useEffect, useMemo, useCallback, useRef } = React;
-        const tg = window.Telegram?.WebApp;
-        if(tg) { tg.ready(); tg.expand(); }
+<div class="hamburger" onclick="toggleMenu()">☰</div>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyDVqS3DAdCk8HT37RlTJesVKKK2ZnULz1Y",
-            authDomain: "beast4ton.firebaseapp.com",
-            databaseURL: "https://beast4ton-default-rtdb.firebaseio.com",
-            projectId: "beast4ton",
-            storageBucket: "beast4ton.firebasestorage.app",
-            messagingSenderId: "530797704489",
-            appId: "1:530797704489:web:6fe06f31e27c902048b338"
-        };
+<div id="sidebar" class="sidebar">
+  <p onclick="showDashboard()">🏠 Dashboard</p>
+  <p onclick="showWithdraw()">💸 Withdraw</p>
+  <p onclick="logout()">🚪 Logout</p>
+</div>
 
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+<!-- AUTH -->
+<div id="auth" class="auth-container">
+  <h2>Register</h2>
+  <input id="regUser" placeholder="Username">
+  <input id="regPass" placeholder="Password">
+  <input id="ref" placeholder="Referral (optional)">
+  <button class="btn" onclick="register()">Sign Up</button>
 
-        const showToast = (msg, icon = "✨") => {
-            const container = document.getElementById('toast-layer');
-            const toast = document.createElement('div');
-            toast.className = 'fixed top-4 left-1/2 -translate-x-1/2 w-[90%] bg-indigo-600 text-white p-3 rounded-xl flex items-center gap-3 shadow-2xl z-[90000] font-bold text-[11px] animate-slide';
-            toast.innerHTML = `<span>${icon}</span> <span>${msg}</span>`;
-            container.appendChild(toast);
-            setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = '0.3s'; setTimeout(() => toast.remove(), 300); }, 2500);
-        };
+  <h3>Login</h3>
+  <input id="logUser" placeholder="Username">
+  <input id="logPass" placeholder="Password">
+  <button class="btn" onclick="login()">Login</button>
+</div>
 
-        const App = () => {
-            const [user, setUser] = useState(null);
-            const [config, setConfig] = useState({ 
-                appName: 'NAIRA HOPE', currency: 'Points', minWithdrawal: 100, minTasksForWithdrawal: 5,
-                adminPin: '8888', devPin: '0000', adminTelegramId: '7420541258', devTelegramId: '7420541258',
-                referralReward: 10, referralCommissionPercent: 5, minTasksForValidReferral: 3, nairaRate: 10, adReward: 2, adCooldown: 5,
-                adminAdLink: '', devAdLink: '', 
-                broadcastMessage: '', submissionChannelId: '', payoutChannelId: '', botToken: '',
-                botUsername: '', appShortName: '', 
-                mandatoryChannels: [], categories: ['Socials', 'Tasks', 'Videos']
-            });
-            const [tasks, setTasks] = useState([]);
-            const [submissions, setSubmissions] = useState({});
-            const [userWithdrawals, setUserWithdrawals] = useState([]);
-            const [leaderboard, setLeaderboard] = useState({ earners: [], recruiters: [] });
-            const [tab, setTab] = useState('home');
-            const [lbType, setLbType] = useState('earners'); 
-            const [loading, setLoading] = useState(true);
-            const [adminTaps, setAdminTaps] = useState(0);
-            const [devTaps, setDevTaps] = useState(0);
-            const [showPin, setShowPin] = useState(false);
-            const [pinType, setPinType] = useState('admin');
-            const [showAdmin, setShowAdmin] = useState(false);
-            const [showDev, setShowDev] = useState(false);
-            const [activeTask, setActiveTask] = useState(null);
-            const [isSubmitting, setIsSubmitting] = useState(false);
-            const [adTimer, setAdTimer] = useState(0);
-            const [hasAcceptedChannels, setHasAcceptedChannels] = useState(() => {
-                try { return localStorage.getItem('eh_gate_v25') === 'true'; } catch(e) { return false; }
-            });
+<!-- DASHBOARD -->
+<div id="dashboard" class="dashboard hidden">
+  <h2>Welcome <span id="userName"></span></h2>
 
-            const [currentTgId, setCurrentTgId] = useState(() => {
-                const id = tg?.initDataUnsafe?.user?.id?.toString() || localStorage.getItem('eh_id') || '0';
-                if(id !== '0') localStorage.setItem('eh_id', id);
-                return id;
-            });
+  <div class="card">
+    Balance: ₦<span id="balance">0</span>
+  </div>
 
-            const getBotAppLink = useCallback((uid = '') => {
-                const botUser = config?.botUsername || 'EarnHubBot';
-                const appName = config?.appShortName || 'app';
-                const base = `https://t.me/${botUser}/${appName}`;
-                return uid && uid !== '0' ? `${base}?startapp=ref_${uid}` : base;
-            }, [config]);
+  <div class="card">
+    Daily Bonus: ₦50  
+    <button onclick="claimBonus()">Claim</button>
+  </div>
 
-            const sendTelegramNotification = useCallback(async (text, chatId, file = null, buttons = null) => {
-                if (!config?.botToken || !chatId) return;
-                let targetId = chatId.trim();
-                if (!targetId.startsWith('-') && targetId.length > 5) targetId = `-100${targetId}`;
-                try {
-                    let url = `https://api.telegram.org/bot${config.botToken}/sendMessage`;
-                    let body;
-                    const reply_markup = buttons ? JSON.stringify({ inline_keyboard: buttons }) : undefined;
-                    if (file) {
-                        url = `https://api.telegram.org/bot${config.botToken}/sendPhoto`;
-                        const formData = new FormData();
-                        formData.append('chat_id', targetId);
-                        formData.append('caption', text);
-                        formData.append('parse_mode', 'HTML');
-                        formData.append('photo', file);
-                        if (reply_markup) formData.append('reply_markup', reply_markup);
-                        body = formData;
-                    } else {
-                        const payload = { chat_id: targetId, text: text, parse_mode: 'HTML' };
-                        if (reply_markup) payload.reply_markup = JSON.parse(reply_markup);
-                        body = JSON.stringify(payload);
-                    }
-                    await fetch(url, { method: 'POST', body: body, headers: file ? {} : { 'Content-Type': 'application/json' } });
-                } catch (error) { console.error("Notify failed", error); }
-            }, [config]);
+  <div class="card">
+    Referral Link:
+    <input id="refLink" readonly>
+    <button onclick="copyRef()">Copy</button>
+  </div>
 
-            // Sync Telegram Username to Database
-            useEffect(() => {
-                if (user && tg?.initDataUnsafe?.user) {
-                    const tgUser = tg.initDataUnsafe.user;
-                    const realName = tgUser.username || (tgUser.first_name + (tgUser.last_name ? " " + tgUser.last_name : ""));
-                    if (realName && (user.username?.startsWith('Agent_') || !user.username)) {
-                        db.ref(`users/${currentTgId}/username`).set(realName);
-                    }
-                }
-            }, [user, currentTgId]);
+  <button onclick="earn()">+ Earn ₦100</button>
+</div>
 
-            useEffect(() => {
-                const configRef = db.ref('app_config');
-                const userRef = db.ref(`users/${currentTgId}`);
-                const tasksRef = db.ref('tasks');
-                const subsRef = db.ref('submissions').orderByChild('uid').equalTo(currentTgId);
-                const usersRef = db.ref('users');
-                const withdrawalsRef = db.ref('withdrawals').orderByChild('uid').equalTo(currentTgId);
+<!-- WITHDRAW -->
+<div id="withdrawPage" class="hidden">
+  <h2>Withdraw</h2>
+  <p>Balance: ₦<span id="wbal"></span></p>
+  <input id="amount" placeholder="Amount">
+  <button onclick="withdraw()">Withdraw</button>
+</div>
 
-                configRef.on('value', snap => { if (snap.exists()) setConfig(prev => ({ ...prev, ...snap.val() })); });
+<script>
 
-                userRef.on('value', snap => {
-                    if (snap.exists()) {
-                        setUser(snap.val());
-                        setLoading(false);
-                    } else if (currentTgId !== '0') {
-                        const tgUser = tg?.initDataUnsafe?.user;
-                        const detectedName = tgUser?.username || (tgUser?.first_name ? (tgUser.first_name + (tgUser.last_name ? " " + tgUser.last_name : "")) : null) || 'Agent_' + currentTgId.slice(-4);
-                        const newUser = {
-                            uid: currentTgId, username: detectedName, points: 0, referrals: 0, completedTasksCount: 0,
-                            referredBy: (tg?.initDataUnsafe?.start_param?.startsWith('ref_') ? tg.initDataUnsafe.start_param.replace('ref_', '') : null),
-                            refAwarded: false, lastAdWatched: 0, lastActive: Date.now(), timestamp: Date.now()
-                        };
-                        userRef.set(newUser).then(() => setUser(newUser));
-                        setLoading(false);
-                    } else { setLoading(false); }
-                }, () => setLoading(false));
+// ===== STORAGE =====
+let user = null;
+let users = JSON.parse(localStorage.getItem("users")) || {};
 
-                tasksRef.on('value', snap => setTasks(snap.val() ? Object.values(snap.val()) : []));
-                subsRef.on('value', snap => setSubmissions(snap.val() || {}));
-                withdrawalsRef.on('value', snap => snap.exists() ? setUserWithdrawals(Object.values(snap.val()).sort((a,b) => b.timestamp - a.timestamp)) : setUserWithdrawals([]));
-                
-                // Optimized Leaderboard Listener (Top 5 Only)
-                usersRef.on('value', snap => {
-                    if (snap.exists()) {
-                        const allUsers = Object.values(snap.val());
-                        setLeaderboard({
-                            earners: [...allUsers].sort((a, b) => (b.points || 0) - (a.points || 0)).slice(0, 5),
-                            recruiters: [...allUsers].sort((a, b) => (b.referrals || 0) - (a.referrals || 0)).slice(0, 5)
-                        });
-                    }
-                });
-                return () => { configRef.off(); userRef.off(); tasksRef.off(); subsRef.off(); usersRef.off(); withdrawalsRef.off(); };
-            }, [currentTgId]);
+// ===== REGISTER =====
+function register(){
+  let u = regUser.value;
+  let p = regPass.value;
+  let r = ref.value;
 
-            const triggerAccess = (type) => {
-                const ids = type === 'admin' ? config?.adminTelegramId : config?.devTelegramId;
-                const list = ids ? ids.split(',').map(i => i.trim()).filter(Boolean) : [];
-                if (list.length === 0 || list.includes(currentTgId)) {
-                    setPinType(type); setShowPin(true);
-                } else { showToast("Unauthorized Node", "🚫"); }
-            };
+  if(users[u]){
+    alert("User exists");
+    return;
+  }
 
-            const startAd = () => {
-                const now = Date.now();
-                const cooldownMs = (config?.adCooldown || 5) * 60000;
-                if (now - (user?.lastAdWatched || 0) < cooldownMs) return showToast(`Node charging...`, "⏳");
-                const links = [config?.adminAdLink, config?.devAdLink].filter(l => l && l.trim() !== "");
-                if (links.length > 0) window.open(links[Math.floor(Math.random() * links.length)], '_blank');
-                setAdTimer(15);
-                const interval = setInterval(() => {
-                    setAdTimer(prev => {
-                        if (prev <= 1) {
-                            clearInterval(interval);
-                            db.ref(`users/${currentTgId}`).transaction(u => {
-                                if(u) {
-                                    u.points = (u.points || 0) + (config?.adReward || 20);
-                                    u.lastAdWatched = Date.now();
-                                }
-                                return u;
-                            });
-                            showToast(`Earned +${config?.adReward}!`, "📺");
-                            return 0;
-                        }
-                        return prev - 1;
-                    });
-                }, 1000);
-            };
+  users[u] = {
+    password:p,
+    balance:0,
+    ref:r,
+    bonusDate:null
+  };
 
-            if (loading) return <div className="fixed inset-0 bg-white flex flex-col items-center justify-center"><div className="w-10 h-10 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div><p className="mt-4 font-black text-indigo-900 text-[9px] uppercase tracking-widest">Waking EarnHub...</p></div>;
+  localStorage.setItem("users", JSON.stringify(users));
+  alert("Registered!");
+}
 
-            if (!hasAcceptedChannels && config?.mandatoryChannels?.length > 0) {
-                return (
-                    <div className="fixed inset-0 bg-white z-[30000] flex flex-col items-center justify-center p-8 animate-slide uppercase">
-                        <div className="header-avatar w-16 h-16 text-3xl mb-6 shadow-xl grad-accent">📢</div>
-                        <h2 className="text-lg font-black mb-2 text-center tracking-tight">Access Controlled</h2>
-                        <p className="text-[9px] text-slate-400 mb-6 text-center px-4 font-bold">Authenticate by joining our networks.</p>
-                        <div className="w-full space-y-2 mb-8 max-h-[40vh] overflow-y-auto no-scrollbar">
-                            {(config.mandatoryChannels || []).map((c, i) => (
-                                <div key={i} className="standard-card flex justify-between items-center p-3 border-slate-100">
-                                    <span className="font-black truncate w-2/3">{c?.name || 'Network'}</span>
-                                    <button onClick={() => window.open(c?.link, '_blank')} className="btn-primary w-auto px-4 py-1.5 text-[8px] uppercase">JOIN</button>
-                                </div>
-                            ))}
-                        </div>
-                        <button onClick={() => { try { localStorage.setItem('eh_gate_v25', 'true'); } catch(e) {} setHasAcceptedChannels(true); }} className="btn-primary w-2/3 py-4 uppercase font-black">AUTHENTICATE</button>
-                    </div>
-                );
-            }
+// ===== LOGIN =====
+function login(){
+  let u = logUser.value;
+  let p = logPass.value;
 
-            return (
-                <div className="max-w-md mx-auto min-h-screen bg-white pb-24">
-                    {showPin && (
-                        <div className="fixed inset-0 bg-white/95 z-[60000] flex items-center justify-center p-8">
-                            <div className="standard-card w-full p-8 text-center border-indigo-100 shadow-2xl">
-                                <h3 className="text-[8px] font-black text-indigo-600 uppercase mb-6 tracking-widest">ACCESS CODE REQUIRED</h3>
-                                <input type="password" autoFocus className="input-field text-center text-2xl tracking-[1.5em] mb-4" maxLength={4} 
-                                    onChange={e => {
-                                        if (e.target.value === (pinType === 'dev' ? config?.devPin : config?.adminPin)) {
-                                            if (pinType === 'dev') setShowDev(true); else setShowAdmin(true);
-                                            setShowPin(false);
-                                        }
-                                    }} />
-                                <button onClick={() => setShowPin(false)} className="text-[8px] text-slate-300 uppercase font-black">ABORT</button>
-                            </div>
-                        </div>
-                    )}
+  if(users[u] && users[u].password === p){
+    user = u;
+    startApp();
+  } else {
+    alert("Invalid");
+  }
+}
 
-                    {showAdmin && <AdminPanel config={config} db={db} onClose={() => setShowAdmin(false)} />}
-                    {showDev && <DeveloperPanel config={config} db={db} onClose={() => setShowDev(false)} />}
+// ===== START APP =====
+function startApp(){
+  auth.classList.add("hidden");
+  dashboard.classList.remove("hidden");
 
-                    <header className="px-5 py-4 flex justify-between items-center sticky top-0 bg-white/80 backdrop-blur-xl z-[10000] border-b border-slate-100">
-                        <div className="flex items-center gap-3" onClick={() => setAdminTaps(v => v+1 >= 15 ? (triggerAccess('admin'), 0) : v+1)}>
-                            <div className="header-avatar grad-accent">{(user?.username || 'A')[0]}</div>
-                            <div className="leading-tight">
-                                <h1 className="text-[11px] font-black text-slate-900 truncate max-w-[140px]">@{user?.username || 'agent'}</h1>
-                                <p className="text-[8px] text-indigo-500 font-bold uppercase">{(user?.points || 0).toFixed(0)} {config?.currency || 'PTS'} (₦{((user?.points || 0) * (config?.nairaRate || 10)).toLocaleString()})</p>
-                            </div>
-                        </div>
-                        <div onClick={() => setDevTaps(v => v+1 >= 15 ? (triggerAccess('dev'), 0) : v+1)}>
-                            <div className="bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-100"><span className="text-[7px] font-black text-indigo-600 uppercase tracking-widest">ACTIVE NODE</span></div>
-                        </div>
-                    </header>
+  userName.textContent = user;
+  updateUI();
 
-                    <main className="px-4 py-6 space-y-6 animate-slide">
-                        {tab === 'home' && (
-                            <div className="space-y-6 uppercase font-black">
-                                {config?.broadcastMessage && <div className="broadcast-banner animate-slide"><span className="text-xl">📢</span><div className="flex-1 pr-2">{config.broadcastMessage}</div></div>}
-                                <div className="standard-card py-8 px-6 text-center grad-accent text-white border-0 shadow-2xl relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 -rotate-45 translate-x-12 -translate-y-12 rounded-full"></div>
-                                    <p className="text-[8px] font-black opacity-60 uppercase tracking-[0.4em] mb-2">Total Equity</p>
-                                    <h2 className="text-3xl font-black tracking-tight">{(user?.points || 0).toFixed(0)} <span className="text-xs opacity-50 uppercase font-bold">{config?.currency || 'PTS'}</span></h2>
-                                    <p className="text-[10px] opacity-80 mt-1">≈ ₦{((user?.points || 0) * (config?.nairaRate || 10)).toLocaleString()}</p>
-                                    <div className="grid grid-cols-2 gap-4 mt-8 pt-6 border-t border-white/10 uppercase">
-                                        <div><p className="text-sm font-black">{user?.referrals || 0}</p><p className="text-[7px] opacity-50 font-black">SQUAD</p></div>
-                                        <div><p className="text-sm font-black">{user?.completedTasksCount || 0}</p><p className="text-[7px] opacity-50 font-black">MISSIONS</p></div>
-                                    </div>
-                                </div>
-                                <div className="standard-card p-4 bg-indigo-50 border-indigo-100 flex justify-between items-center shadow-none">
-                                    <div className="w-2/3"><h4 className="font-black text-indigo-900 text-[10px]">Daily Ad Reward</h4><p className="text-[8px] text-indigo-400 font-bold">Earn +{config?.adReward || 0} PTS (₦{(config?.adReward * (config?.nairaRate || 10)).toLocaleString()})</p></div>
-                                    <button onClick={startAd} disabled={adTimer > 0} className="btn-primary w-24 py-2 uppercase font-black">{adTimer > 0 ? `${adTimer}s` : 'START'}</button>
-                                </div>
-                                <button onClick={() => setTab('tasks')} className="btn-primary py-4 text-[12px] uppercase font-black tracking-widest">BROWSE BOUNTIES</button>
-                            </div>
-                        )}
+  // referral link
+  refLink.value = location.href + "?ref=" + user;
+}
 
-                        {tab === 'tasks' && (
-                            <div className="space-y-8 uppercase">
-                                {(config?.categories || ['Socials']).map(cat => {
-                                    const catTasks = tasks.filter(t => (t?.category || 'General') === cat);
-                                    if (catTasks.length === 0) return null;
-                                    return (
-                                        <div key={cat} className="space-y-3">
-                                            <h3 className="text-[10px] font-black text-indigo-600 uppercase tracking-widest border-l-4 border-indigo-600 pl-3">{cat} MISSIONS</h3>
-                                            <div className="space-y-2.5">
-                                                {catTasks.map(t => {
-                                                    const sub = submissions[`${currentTgId}_${t?.id}`];
-                                                    const blocked = sub && (sub.status === 'pending' || sub.status === 'approved');
-                                                    return (
-                                                        <div key={t?.id} className={`standard-card p-3 flex justify-between items-center ${blocked ? 'opacity-40 pointer-events-none' : ''}`} onClick={() => setActiveTask(t)}>
-                                                            <div className="flex items-center gap-3.5 w-3/4 truncate">
-                                                                <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center text-xl">{t?.icon || '🎯'}</div>
-                                                                <div className="truncate leading-tight font-black">
-                                                                    <h5 className="text-[11px] text-slate-900 truncate">{t?.title || 'Mission'}</h5>
-                                                                    <p className="text-[8.5px] text-indigo-500 tracking-tighter">+{t?.reward || 0} PTS (₦{(t?.reward * (config?.nairaRate || 10)).toLocaleString()})</p>
-                                                                </div>
-                                                            </div>
-                                                            {sub ? <span className="status-chip bg-amber-100 text-amber-600 px-2 py-1 rounded-lg">{sub.status}</span> : <div className="text-[7px] font-black text-indigo-600">START</div>}
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
+// ===== UPDATE UI =====
+function updateUI(){
+  balance.textContent = users[user].balance;
+  wbal.textContent = users[user].balance;
+}
 
-                        {tab === 'stats' && (
-                            <div className="space-y-6">
-                                <div className="flex bg-slate-100 p-1 rounded-xl">
-                                    <button onClick={() => setLbType('earners')} className={`flex-1 py-2 rounded-lg text-[9px] font-black uppercase transition-all ${lbType === 'earners' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-400'}`}>TOP 5 EARNERS</button>
-                                    <button onClick={() => setLbType('recruiters')} className={`flex-1 py-2 rounded-lg text-[9px] font-black uppercase transition-all ${lbType === 'recruiters' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-400'}`}>TOP 5 SQUAD LEADS</button>
-                                </div>
-                                <div className="space-y-3">
-                                    {(lbType === 'earners' ? (leaderboard.earners || []) : (leaderboard.recruiters || [])).map((e, i) => (
-                                        <div key={e?.uid || i} className="standard-card flex justify-between items-center py-2.5 uppercase font-black">
-                                            <div className="flex items-center gap-3 font-bold text-[10px]"><span className="text-slate-300">#{i+1}</span><span className="truncate w-32">@{e?.username || 'agent'}</span></div>
-                                            <span className="text-indigo-600 text-[10px]">{lbType === 'earners' ? `${(e?.points || 0).toFixed(0)} PTS` : `${e?.referrals || 0} REFS`}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+// ===== EARN =====
+function earn(){
+  users[user].balance += 100;
+  save();
+}
 
-                        {tab === 'ref' && (
-                            <div className="text-center py-6 space-y-6 animate-slide uppercase font-black">
-                                <div className="w-20 h-20 grad-accent rounded-3xl flex items-center justify-center mx-auto text-4xl shadow-2xl border-4 border-white">💎</div>
-                                <div className="space-y-3 px-6"><h3 className="text-xl tracking-tight">Expand the Squad</h3><p className="text-[10px] text-slate-400 font-bold">Earn +{config?.referralReward || 0} PTS (₦{(config?.referralReward * (config?.nairaRate || 10)).toLocaleString()}) + {config?.referralCommissionPercent || 0}% Com.</p></div>
-                                <div className="standard-card bg-indigo-50 border-indigo-100 text-left space-y-3">
-                                    <h4 className="text-[9px] text-indigo-600 uppercase tracking-widest">Requirements</h4>
-                                    <div className="flex justify-between items-center text-[10px] font-bold">
-                                        <span className="text-slate-500">Your Referrals</span>
-                                        <span className="text-indigo-600">{user?.referrals || 0} Agents</span>
-                                    </div>
-                                    <div className="p-3 bg-white rounded-xl border border-indigo-100">
-                                        <p className="text-[8px] text-slate-400 font-bold uppercase leading-relaxed">
-                                            Invite friends. They must finish <span className="text-indigo-600">{config?.minTasksForValidReferral || 3} missions</span> for the reward node to trigger.
-                                        </p>
-                                    </div>
-                                </div>
-                                <button onClick={() => { try { navigator.clipboard.writeText(getBotAppLink(currentTgId)); showToast("Link Copied!", "📋"); } catch(e) { showToast("Copy Failed", "❌"); } }} className="btn-primary w-full py-4 uppercase font-black tracking-widest">COPY SQUAD LINK</button>
-                            </div>
-                        )}
+// ===== BONUS =====
+function claimBonus(){
+  let today = new Date().toDateString();
 
-                        {tab === 'vault' && (
-                            <div className="space-y-6 uppercase font-black">
-                                <div className="standard-card py-6 text-center bg-emerald-50 border-emerald-100 uppercase shadow-none">
-                                    <p className="text-[8px] text-emerald-600 font-black mb-1">Liquid Equity</p>
-                                    <h2 className="text-2xl font-black text-emerald-950">{(user?.points || 0).toFixed(0)} PTS</h2>
-                                    <p className="text-[10px] text-emerald-600">≈ ₦{((user?.points || 0) * (config?.nairaRate || 10)).toLocaleString()}</p>
-                                    <p className="text-[8px] font-black text-emerald-400 mt-4 tracking-tighter">{user?.completedTasksCount || 0}/{config?.minTasksForWithdrawal || 5} Milestones Reached</p>
-                                </div>
-                                <div className="space-y-2">
-                                    <input id="w-amt" type="number" className="input-field" placeholder="Points Amount" />
-                                    <input id="w-bank" className="input-field" placeholder="Bank Name" />
-                                    <input id="w-acc" type="number" className="input-field" placeholder="Account Number" />
-                                    <button onClick={async () => {
-                                        const pts = parseFloat(document.getElementById('w-amt').value);
-                                        const bank = document.getElementById('w-bank').value;
-                                        const acc = document.getElementById('w-acc').value;
-                                        if(currentTgId === '0') return showToast("Auth Fail", "⏳");
-                                        if(!pts || !bank || !acc) return showToast("Empty Fields", "⚠️");
-                                        if(pts < (config?.minWithdrawal || 100)) return showToast(`Min: ${config?.minWithdrawal || 100}`, "⚠️");
-                                        if(pts > (user?.points || 0)) return showToast("Insufficient Funds", "❌");
-                                        if((user?.completedTasksCount || 0) < (config?.minTasksForWithdrawal || 5)) return showToast(`Need ${config?.minTasksForWithdrawal || 5} tasks`, "🔒");
-                                        
-                                        const wid = `wd_${Date.now()}`;
-                                        const nairaValue = pts * (config?.nairaRate || 10);
-                                        try {
-                                            await db.ref(`withdrawals/${wid}`).set({ id: wid, uid: currentTgId, username: user?.username || 'agent', amount: pts, naira: nairaValue, status: 'pending', bank, account: acc, timestamp: Date.now() });
-                                            await db.ref(`users/${currentTgId}/points`).transaction(c => (c || 0) - pts);
-                                            const msg = `💎 <b>PREMIUM CASHOUT ALERT!</b> 💎\n\n👤 <b>AGENT:</b> @${user?.username || 'user'}\n💰 <b>ASSET:</b> <b>${pts} PTS</b>\n🇳🇬 <b>LIQUIDITY:</b> <b>₦${nairaValue.toLocaleString()}</b>\n━━━━━━━━━━━━━━━━━━━━━━\n🏦 <b>ESTATE:</b> ${bank}\n💳 <b>VAULT:</b> <code>${acc}</code>\n━━━━━━━━━━━━━━━━━━━━━━\n⏳ <i>Status: Verifying Assets...</i>\n\n#EarnHub #Payday #WealthTransfer`;
-                                            await sendTelegramNotification(msg, config?.payoutChannelId, null, [[{ text: "💰 Start Earning", url: getBotAppLink() }]]);
-                                            document.getElementById('w-amt').value = ''; document.getElementById('w-bank').value = ''; document.getElementById('w-acc').value = '';
-                                            showToast("Payout Logged!", "💰");
-                                        } catch (e) { showToast("Sync Error", "❌"); }
-                                    }} className="btn-primary py-4 uppercase font-black">PROCESS CASHOUT</button>
-                                </div>
-                                <div className="space-y-3">
-                                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">TRANSACTION LOGS</h3>
-                                    {userWithdrawals.length === 0 ? <div className="standard-card p-6 text-center text-slate-300 font-bold uppercase text-[9px]">No transactions yet.</div> : (
-                                        <div className="space-y-2">
-                                            {userWithdrawals.map(w => (
-                                                <div key={w?.id || Math.random()} className="standard-card p-3 flex justify-between items-center border-slate-100 bg-slate-50/50">
-                                                    <div className="space-y-1 text-left">
-                                                        <p className="text-[10px] font-black text-slate-800">₦{(w?.naira || (w?.amount || 0) * (config?.nairaRate || 10)).toLocaleString()}</p>
-                                                        <p className="text-[7px] text-slate-400 font-bold uppercase">{w?.timestamp ? new Date(w.timestamp).toLocaleDateString() : 'recent'}</p>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <span className={`status-chip px-2 py-1 rounded-lg ${w?.status === 'approved' ? 'bg-emerald-100 text-emerald-600' : w?.status === 'declined' ? 'bg-rose-100 text-rose-600' : 'bg-amber-100 text-amber-600'}`}>{w?.status || 'pending'}</span>
-                                                        <p className="text-[7px] text-slate-400 font-bold mt-1 uppercase">{w?.amount || 0} PTS</p>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-                    </main>
+  if(users[user].bonusDate === today){
+    alert("Already claimed today");
+    return;
+  }
 
-                    <nav className="fixed bottom-4 left-4 right-4 h-16 nav-bar rounded-2xl flex items-center justify-around z-[20000] border border-slate-100 shadow-2xl px-1">
-                        {[{id:'home', icon:'🏠', label:'DASH'}, {id:'tasks', icon:'🎯', label:'EARN'}, {id:'stats', icon:'🏆', label:'HALL'}, {id:'ref', icon:'👥', label:'SQUAD'}, {id:'vault', icon:'💰', label:'VAULT'}].map(m => (
-                            <button key={m.id} onClick={() => setTab(m.id)} className={`flex flex-col items-center gap-1 p-2.5 rounded-xl transition-all ${tab === m.id ? 'text-indigo-600 bg-indigo-50' : 'text-slate-300'}`}>
-                                <span className="text-xl">{m.icon}</span>
-                                <span className="text-[7px] font-black uppercase">{m.label}</span>
-                            </button>
-                        ))}
-                    </nav>
+  users[user].balance += 50;
+  users[user].bonusDate = today;
 
-                    {activeTask && (
-                        <div className="fixed inset-0 bg-white z-[40000] p-6 flex flex-col justify-center animate-slide uppercase">
-                            <div className="standard-card p-6 space-y-6 shadow-2xl">
-                                <div className="text-center font-black"><h3 className="text-lg">{activeTask?.title || 'Mission'}</h3><p className="text-[8px] text-indigo-500 mt-1">{activeTask?.category}</p></div>
-                                <p className="text-[10px] text-slate-400 text-center px-4 font-bold leading-relaxed">{activeTask?.description || 'Follow instructions carefully to secure bounty.'}</p>
-                                <button onClick={() => window.open(activeTask?.link, '_blank')} className="btn-primary py-3 bg-indigo-50 text-indigo-600 shadow-none border border-indigo-100 uppercase font-black">OPEN MISSION PORTAL</button>
-                                <input id="p-shot" type="file" accept="image/*" className="hidden" />
-                                <button onClick={() => document.getElementById('p-shot').click()} className="input-field border-dashed border-2 py-4 text-center font-bold text-slate-400 uppercase tracking-tighter">ATTACH SCREENSHOT PROOF</button>
-                                <div className="flex gap-3">
-                                    <button onClick={() => setActiveTask(null)} className="btn-outline flex-1 uppercase font-black">BACK</button>
-                                    <button onClick={async () => {
-                                        if (isSubmitting) return;
-                                        const file = document.getElementById('p-shot').files[0];
-                                        if(currentTgId === '0') return showToast("Auth Fail", "⏳");
-                                        if(!file) return showToast("Proof missing", "⚠️");
-                                        setIsSubmitting(true);
-                                        const sid = `${currentTgId}_${activeTask?.id}`;
-                                        const pts = activeTask?.reward || 0;
-                                        const naira = pts * (config?.nairaRate || 10);
-                                        try {
-                                            await db.ref(`submissions/${sid}`).set({ id: sid, uid: currentTgId, username: user?.username || 'agent', task_id: activeTask?.id, task_title: activeTask?.title, reward: pts, status: 'pending', timestamp: Date.now() });
-                                            const msg = `🚀 <b>BOUNTY CLAIMED!</b> 🚀\n\n👤 <b>AGENT:</b> @${user?.username || 'user'}\n🎯 <b>MISSION:</b> <code>${activeTask?.title}</code>\n💰 <b>PAYOUT:</b> <b>${pts} PTS (₦${naira.toLocaleString()})</b>\n━━━━━━━━━━━━━━━━━━━━━━\n⏳ <i>Status: Verification Pipeline...</i>\n💎 <i>Wealth is proof of work.</i>\n\n#EarnHub #MissionSuccess #BountyHunter`;
-                                            await sendTelegramNotification(msg, config?.submissionChannelId, file, [[{ text: "🔥 Join the Squad", url: getBotAppLink() }]]);
-                                            setIsSubmitting(false); setActiveTask(null); showToast("Proof Logged!", "✅");
-                                        } catch (e) { setIsSubmitting(false); showToast("Sync Error", "❌"); }
-                                    }} disabled={isSubmitting} className="btn-primary flex-[2] uppercase font-black">{isSubmitting ? 'SYNCING...' : 'SUBMIT PROOF'}</button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            );
-        };
+  save();
+}
 
-        const AdminPanel = ({ config, db, onClose }) => {
-            const [atab, setAtab] = useState('subs');
-            const [allSubs, setAllSubs] = useState([]);
-            const [pW, setPW] = useState([]);
-            const [tL, setTL] = useState([]);
-            const [loc, setLoc] = useState({...config});
-            const [edT, setEdT] = useState(null);
-            const [broadcast, setBroadcast] = useState(config?.broadcastMessage || '');
+// ===== WITHDRAW =====
+function withdraw(){
+  let amt = parseInt(amount.value);
 
-            useEffect(() => {
-                db.ref('submissions').on('value', snap => setAllSubs(snap.val() ? Object.values(snap.val()) : []));
-                db.ref('withdrawals').orderByChild('status').equalTo('pending').on('value', snap => setPW(snap.val() ? Object.values(snap.val()) : []));
-                db.ref('tasks').on('value', snap => setTL(snap.val() ? Object.values(snap.val()) : []));
-            }, []);
+  if(amt > users[user].balance){
+    alert("Insufficient");
+    return;
+  }
 
-            const taskStats = useMemo(() => {
-                const stats = {};
-                allSubs.forEach(s => {
-                    if(!stats[s.task_id]) stats[s.task_id] = { pending: 0, approved: 0 };
-                    if(s.status === 'pending') stats[s.task_id].pending++;
-                    if(s.status === 'approved') stats[s.task_id].approved++;
-                });
-                return stats;
-            }, [allSubs]);
+  users[user].balance -= amt;
+  save();
 
-            const pS = useMemo(() => allSubs.filter(s => s.status === 'pending'), [allSubs]);
-            const save = async () => { await db.ref('app_config').update(loc); showToast("Config Synced", "💾"); };
+  alert("Withdrawal successful");
+}
 
-            return (
-                <div className="fixed inset-0 bg-white z-[65000] flex flex-col animate-slide uppercase no-scrollbar pb-8">
-                    <header className="p-5 flex justify-between items-center border-b border-slate-100 bg-slate-50">
-                        <h2 className="font-black text-indigo-600 text-[10px]">ADMIN COMMAND</h2>
-                        <button onClick={onClose} className="text-2xl text-slate-300">✕</button>
-                    </header>
-                    <div className="flex border-b border-slate-100 bg-white overflow-x-auto no-scrollbar">
-                        {['subs', 'payouts', 'tasks', 'broadcast', 'rules'].map(t => (
-                            <button key={t} onClick={() => setAtab(t)} className={`flex-none px-6 py-4 text-[8px] font-black ${atab === t ? 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50' : 'text-slate-400'}`}>{t}</button>
-                        ))}
-                    </div>
-                    <div className="flex-1 overflow-y-auto p-5 space-y-4 no-scrollbar">
-                        {atab === 'subs' && pS.map(x => (
-                            <div key={x.id} className="standard-card p-3 space-y-3 border-slate-200">
-                                <p className="font-black text-[10px] text-slate-800">@{x.username} -> {x.task_title}</p>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <button onClick={() => db.ref(`submissions/${x.id}/status`).set('declined')} className="btn-outline text-[9px] text-rose-500 font-black">DECLINE</button>
-                                    <button onClick={async () => {
-                                        await db.ref(`submissions/${x.id}`).update({ status: 'approved' });
-                                        db.ref(`users/${x.uid}`).transaction(u => {
-                                            if (u) { 
-                                                u.points = (u.points || 0) + (x.reward || 0); 
-                                                u.completedTasksCount = (u.completedTasksCount || 0) + 1;
-                                                if (u.referredBy && !u.refAwarded && u.completedTasksCount >= (config?.minTasksForValidReferral || 3)) {
-                                                    db.ref(`users/${u.referredBy}/points`).transaction(p => (p || 0) + (config?.referralReward || 0));
-                                                    db.ref(`users/${u.referredBy}/referrals`).transaction(r => (r || 0) + 1);
-                                                    u.refAwarded = true;
-                                                }
-                                                if (u.referredBy && (config?.referralCommissionPercent || 0) > 0) {
-                                                    const comm = (x.reward || 0) * (config.referralCommissionPercent / 100);
-                                                    db.ref(`users/${u.referredBy}/points`).transaction(p => (p || 0) + comm);
-                                                }
-                                            }
-                                            return u;
-                                        });
-                                        showToast("Verified", "✅");
-                                    }} className="btn-primary py-2 text-[9px] font-black">APPROVE</button>
-                                </div>
-                            </div>
-                        ))}
-                        {atab === 'payouts' && pW.map(y => (
-                            <div key={y.id} className="standard-card p-4 space-y-3 bg-emerald-50 border-emerald-100">
-                                <div className="flex justify-between font-black text-[11px] text-emerald-700"><span>@{y.username}</span><span>₦{(y.amount * (config?.nairaRate || 10)).toLocaleString()}</span></div>
-                                <p className="text-[8px] font-mono text-slate-500">{y.bank} | {y.account}</p>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <button onClick={() => { db.ref(`withdrawals/${y.id}/status`).set('declined'); db.ref(`users/${y.uid}/points`).transaction(c => (c || 0) + y.amount); }} className="btn-outline text-rose-500 font-black">REFUND</button>
-                                    <button onClick={() => db.ref(`withdrawals/${y.id}/status`).set('approved')} className="btn-primary bg-emerald-600 font-black">SET PAID</button>
-                                </div>
-                            </div>
-                        ))}
-                        {atab === 'tasks' && (
-                            <div className="space-y-4">
-                                <button onClick={() => setEdT({title:'', reward:0, icon:'🎯', description:'', link:'', category: (config?.categories?.[0] || 'Socials')})} className="btn-primary py-3 text-[9px] font-black">+ NEW BOUNTY</button>
-                                {tL.map(t => (
-                                    <div key={t.id} className="standard-card p-3 flex justify-between items-center text-[10px] border-slate-100 shadow-none">
-                                        <div className="w-2/3 truncate"><span className="font-black text-slate-800 block truncate">{t.title}</span><div className="text-[7px] text-indigo-500 font-bold uppercase">App: {taskStats[t.id]?.approved || 0} | Pend: {taskStats[t.id]?.pending || 0}</div></div>
-                                        <div className="flex gap-2"><button onClick={() => setEdT(t)} className="text-indigo-600 font-black">EDIT</button><button onClick={() => db.ref(`tasks/${t.id}`).remove()} className="text-rose-500 font-black">DEL</button></div>
-                                    </div>
-                                ))}
-                                {edT && (
-                                    <div className="fixed inset-0 bg-white/95 z-[70000] p-6 flex flex-col justify-center animate-slide">
-                                        <div className="standard-card p-4 space-y-3 bg-indigo-50 border-indigo-100 shadow-2xl">
-                                            <input className="input-field" placeholder="Title" value={edT.title} onChange={e => setEdT({...edT, title: e.target.value})} />
-                                            <div className="grid grid-cols-2 gap-3">
-                                                <input className="input-field" type="number" placeholder="Points" value={edT.reward} onChange={e => setEdT({...edT, reward: parseFloat(e.target.value)})} />
-                                                <select className="input-field" value={edT.category} onChange={e => setEdT({...edT, category: e.target.value})}>
-                                                    {(config?.categories || ['Socials']).map(c => <option key={c} value={c}>{c}</option>)}
-                                                </select>
-                                            </div>
-                                            <input className="input-field" placeholder="Mission Link" value={edT.link} onChange={e => setEdT({...edT, link: e.target.value})} />
-                                            <textarea className="input-field h-20" placeholder="Instructions..." value={edT.description} onChange={e => setEdT({...edT, description: e.target.value})} />
-                                            <div className="grid grid-cols-2 gap-3">
-                                                <button onClick={() => setEdT(null)} className="btn-outline font-black">ABORT</button>
-                                                <button onClick={async () => { const id = edT.id || `t_${Date.now()}`; await db.ref(`tasks/${id}`).set({...edT, id}); setEdT(null); showToast("Sync Complete", "🎯"); }} className="btn-primary font-black uppercase">SYNC</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                        {atab === 'broadcast' && (
-                            <div className="space-y-4">
-                                <h4 className="text-[8px] font-black text-slate-400 ml-1">Live Feed Banner</h4>
-                                <textarea className="input-field h-32" placeholder="Message to agents..." value={broadcast} onChange={e => setBroadcast(e.target.value)} />
-                                <div className="grid grid-cols-2 gap-3">
-                                    <button onClick={async () => { await db.ref('app_config/broadcastMessage').set(''); setBroadcast(''); showToast("Cleared", "🗑️"); }} className="btn-outline text-[9px] uppercase font-black">KILL FEED</button>
-                                    <button onClick={async () => { await db.ref('app_config/broadcastMessage').set(broadcast); showToast("Transmitting", "📢"); }} className="btn-primary py-2 text-[9px] uppercase font-black">BROADCAST</button>
-                                </div>
-                            </div>
-                        )}
-                        {atab === 'rules' && (
-                            <div className="space-y-4">
-                                <div className="space-y-1"><p className="text-[7.5px] font-black text-slate-400 ml-1">PTS TO NAIRA RATE</p><input className="input-field" type="number" value={loc.nairaRate} onChange={e => setLoc({...loc, nairaRate: parseFloat(e.target.value)})} /></div>
-                                <div className="space-y-1"><p className="text-[7.5px] font-black text-slate-400 ml-1">MIN CASHOUT (PTS)</p><input className="input-field" type="number" value={loc.minWithdrawal} onChange={e => setLoc({...loc, minWithdrawal: parseFloat(e.target.value)})} /></div>
-                                <div className="space-y-1"><p className="text-[7.5px] font-black text-slate-400 ml-1">MISSIONS REQUIRED TO UNLOCK</p><input className="input-field" type="number" value={loc.minTasksForWithdrawal} onChange={e => setLoc({...loc, minTasksForWithdrawal: parseInt(e.target.value)})} /></div>
-                                <div className="space-y-1"><p className="text-[7.5px] font-black text-slate-400 ml-1">REFERRAL REWARD (PTS)</p><input className="input-field" type="number" value={loc.referralReward} onChange={e => setLoc({...loc, referralReward: parseFloat(e.target.value)})} /></div>
-                                <div className="space-y-1"><p className="text-[7.5px] font-black text-slate-400 ml-1">REFERRAL COMMISSION %</p><input className="input-field" type="number" value={loc.referralCommissionPercent} onChange={e => setLoc({...loc, referralCommissionPercent: parseFloat(e.target.value)})} /></div>
-                                <div className="space-y-1"><p className="text-[7.5px] font-black text-slate-400 ml-1">MILESTONE FOR VALID REF</p><input className="input-field" type="number" value={loc.minTasksForValidReferral} onChange={e => setLoc({...loc, minTasksForValidReferral: parseInt(e.target.value)})} /></div>
-                                <button onClick={save} className="btn-primary py-4 uppercase font-black mt-4">SYNC CONFIG</button>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            );
-        };
+// ===== SAVE =====
+function save(){
+  localStorage.setItem("users", JSON.stringify(users));
+  updateUI();
+}
 
-        const DeveloperPanel = ({ config, db, onClose }) => {
-            const [loc, setLoc] = useState({...config});
-            const [users, setUsers] = useState([]);
-            const [gateName, setGateName] = useState('');
-            const [gateLink, setGateLink] = useState('');
+// ===== UI =====
+function toggleMenu(){
+  sidebar.classList.toggle("active");
+}
 
-            useEffect(() => {
-                db.ref('users').on('value', snap => setUsers(snap.val() ? Object.values(snap.val()) : []));
-            }, []);
+function showWithdraw(){
+  dashboard.classList.add("hidden");
+  withdrawPage.classList.remove("hidden");
+}
 
-            const analytics = useMemo(() => {
-                const now = Date.now();
-                const active24h = now - (24 * 60 * 60 * 1000);
-                return { total: users.length, active: users.filter(u => (u.lastActive || 0) >= active24h).length };
-            }, [users]);
+function showDashboard(){
+  withdrawPage.classList.add("hidden");
+  dashboard.classList.remove("hidden");
+}
 
-            const wipeData = async (node) => {
-                if(!confirm(`CORE WIPE: Delete all ${node}?`)) return;
-                await db.ref(node).remove();
-                showToast(`${node} wiped.`, "💀");
-            };
+function logout(){
+  location.reload();
+}
 
-            const save = async () => { await db.ref('app_config').update(loc); showToast("Kernels Synced", "💾"); };
+// ===== COPY =====
+function copyRef(){
+  navigator.clipboard.writeText(refLink.value);
+  alert("Copied!");
+}
 
-            return (
-                <div className="fixed inset-0 bg-white z-[65000] flex flex-col animate-slide uppercase no-scrollbar pb-8 font-black">
-                    <header className="p-5 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
-                        <h2 className="text-indigo-600 text-[10px]">DEVELOPER KERNEL</h2>
-                        <button onClick={onClose} className="text-2xl text-slate-300">✕</button>
-                    </header>
-                    <div className="flex-1 overflow-y-auto p-5 space-y-6 no-scrollbar">
-                        <div className="standard-card p-5 space-y-4 bg-indigo-50/20 border-indigo-50 shadow-none">
-                            <h4 className="text-[9px] text-indigo-600 tracking-widest">Global Analytics</h4>
-                            <div className="grid grid-cols-2 gap-3 text-center">
-                                <div className="bg-white p-2 rounded-xl border border-indigo-100 shadow-sm"><p className="text-[12px]">{analytics.total}</p><p className="text-[6px] text-slate-400">Total Users</p></div>
-                                <div className="bg-white p-2 rounded-xl border border-indigo-100 shadow-sm"><p className="text-[12px]">{analytics.active}</p><p className="text-[6px] text-slate-400">24h Active</p></div>
-                            </div>
-                        </div>
+</script>
 
-                        <div className="standard-card p-5 space-y-4 border-amber-100 bg-amber-50/20 shadow-none">
-                            <h4 className="text-[9px] text-amber-600 tracking-widest">Barrier Security (Gate)</h4>
-                            <div className="space-y-3">
-                                <div className="grid grid-cols-2 gap-2">
-                                    <input className="input-field" placeholder="Channel Name" value={gateName} onChange={e => setGateName(e.target.value)} />
-                                    <input className="input-field" placeholder="t.me/link" value={gateLink} onChange={e => setGateLink(e.target.value)} />
-                                </div>
-                                <button onClick={() => {
-                                    if(gateName && gateLink) {
-                                        const up = {...loc, mandatoryChannels: [...(loc.mandatoryChannels || []), {name: gateName, link: gateLink}]};
-                                        setLoc(up); setGateName(''); setGateLink('');
-                                    }
-                                }} className="btn-primary py-2 text-[8px] bg-amber-600">ADD BARRIER NODE</button>
-                            </div>
-                            <div className="space-y-2">
-                                {(loc.mandatoryChannels || []).map((c, i) => (
-                                    <div key={i} className="flex justify-between items-center p-3 bg-white border border-amber-100 rounded-xl text-[9px]">
-                                        <span className="truncate w-3/4">{c.name}</span>
-                                        <button onClick={() => { const up = {...loc}; up.mandatoryChannels.splice(i,1); setLoc(up); }} className="text-rose-500">DEL</button>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="standard-card p-5 space-y-4 border-slate-100 shadow-none">
-                            <h4 className="text-[9px] text-indigo-600 tracking-widest">Protocols</h4>
-                            <div className="space-y-3">
-                                <div className="space-y-1"><p className="text-[7px] text-slate-300 ml-1">Bot API Token</p><input className="input-field" value={loc.botToken} onChange={e => setLoc({...loc, botToken: e.target.value})} /></div>
-                                <div className="space-y-1"><p className="text-[7px] text-slate-300 ml-1">Bot Username</p><input className="input-field" value={loc.botUsername} onChange={e => setLoc({...loc, botUsername: e.target.value})} /></div>
-                                <div className="space-y-1"><p className="text-[7px] text-slate-300 ml-1">App Name</p><input className="input-field" value={loc.appShortName} onChange={e => setLoc({...loc, appShortName: e.target.value})} /></div>
-                                <div className="space-y-1"><p className="text-[7px] text-slate-300 ml-1">Sub Feed ID</p><input className="input-field" value={loc.submissionChannelId} onChange={e => setLoc({...loc, submissionChannelId: e.target.value})} /></div>
-                                <div className="space-y-1"><p className="text-[7px] text-slate-300 ml-1">Payout Feed ID</p><input className="input-field" value={loc.payoutChannelId} onChange={e => setLoc({...loc, payoutChannelId: e.target.value})} /></div>
-                                <div className="space-y-1"><p className="text-[7px] text-slate-300 ml-1">Admin Ad Link</p><input className="input-field" value={loc.adminAdLink} onChange={e => setLoc({...loc, adminAdLink: e.target.value})} /></div>
-                                <div className="space-y-1"><p className="text-[7px] text-slate-300 ml-1">Dev Ad Link</p><input className="input-field" value={loc.devAdLink} onChange={e => setLoc({...loc, devAdLink: e.target.value})} /></div>
-                            </div>
-                        </div>
-
-                        <div className="standard-card p-5 space-y-4 border-rose-100 bg-rose-50/20 shadow-none">
-                            <h4 className="text-[9px] text-rose-600 tracking-widest">Danger Zone (Wipe)</h4>
-                            <div className="grid grid-cols-2 gap-2">
-                                <button onClick={() => wipeData('users')} className="btn-outline text-rose-600 text-[8px]">Wipe Users</button>
-                                <button onClick={() => wipeData('submissions')} className="btn-outline text-rose-600 text-[8px]">Wipe Subs</button>
-                                <button onClick={() => wipeData('withdrawals')} className="btn-outline text-rose-600 text-[8px]">Wipe Payouts</button>
-                                <button onClick={() => wipeData('tasks')} className="btn-outline text-rose-600 text-[8px]">Wipe Tasks</button>
-                            </div>
-                        </div>
-
-                        <div className="standard-card p-5 space-y-4 border-slate-100 shadow-none">
-                            <h4 className="text-[9px] text-indigo-600 tracking-widest">Auth Master</h4>
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-1"><p className="text-[7px] text-slate-300 ml-1">Admin PIN</p><input className="input-field" value={loc.adminPin} onChange={e => setLoc({...loc, adminPin: e.target.value})} /></div>
-                                <div className="space-y-1"><p className="text-[7px] text-slate-300 ml-1">Dev PIN</p><input className="input-field" value={loc.devPin} onChange={e => setLoc({...loc, devPin: e.target.value})} /></div>
-                            </div>
-                            <div className="space-y-1"><p className="text-[7px] text-slate-300 ml-1">Admin IDs (CSV)</p><input className="input-field" value={loc.adminTelegramId} onChange={e => setLoc({...loc, adminTelegramId: e.target.value})} /></div>
-                            <div className="space-y-1"><p className="text-[7px] text-slate-300 ml-1">Dev IDs (CSV)</p><input className="input-field" value={loc.devTelegramId} onChange={e => setLoc({...loc, devTelegramId: e.target.value})} /></div>
-                        </div>
-                        <button onClick={save} className="btn-primary py-5 uppercase grad-accent">SYNC CORE</button>
-                    </div>
-                </div>
-            );
-        };
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
-<script type="module" src="/index.tsx"></script>
 </body>
 </html>

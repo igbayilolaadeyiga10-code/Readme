@@ -7,6 +7,11 @@
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<style>
+body{font-size:18px;font-weight:700;}
+button{border-radius:8px;}
+</style>
 </head>
 
 <body class="bg-gray-100">
@@ -14,259 +19,274 @@
 
 <script type="text/babel">
 
-const { useState } = React;
+const {useState} = React;
 
-/* PACKAGES */
-const packages = [
- {id:1,name:"Package 1",price:1500,daily:450,duration:100},
- {id:2,name:"Package 2",price:3000,daily:750,duration:100},
- {id:3,name:"Package 3",price:5000,daily:1200,duration:100},
- {id:4,name:"Package 4",price:10000,daily:2200,duration:100},
- {id:5,name:"Package 5",price:15000,daily:3400,duration:100},
- {id:6,name:"Package 6",price:20000,daily:4200,duration:100},
- {id:7,name:"Package 7",price:50000,daily:5500,duration:100}
+const getData=k=>JSON.parse(localStorage.getItem(k)||"[]");
+const setData=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+
+const packages=[
+{id:1,name:"Package 1",price:1500,daily:450},
+{id:2,name:"Package 2",price:3000,daily:750},
+{id:3,name:"Package 3",price:5000,daily:1200},
+{id:4,name:"Package 4",price:10000,daily:2200},
+{id:5,name:"Package 5",price:15000,daily:3400},
+{id:6,name:"Package 6",price:20000,daily:4200},
+{id:7,name:"Package 7",price:50000,daily:5500}
 ];
 
 function App(){
 
-const [page,setPage] = useState("register");
-const [users,setUsers] = useState(JSON.parse(localStorage.getItem("users")||"[]"));
-const [user,setUser] = useState(null);
-const [investments,setInvestments] = useState(JSON.parse(localStorage.getItem("investments")||"[]"));
+const [page,setPage]=useState("register");
+const [users,setUsers]=useState(getData("users"));
+const [user,setUser]=useState(null);
+const [deposits,setDeposits]=useState(getData("deposits"));
+const [withdrawals,setWithdrawals]=useState(getData("withdrawals"));
+const [investments,setInvestments]=useState(getData("investments"));
+const [tap,setTap]=useState(0);
 
-/* UPDATE USER */
-function updateUser(u){
-  const updated = users.map(x=>x.username===u.username?u:x);
-  setUsers(updated);
-  localStorage.setItem("users",JSON.stringify(updated));
-  setUser({...u});
+/* SAVE USER */
+function saveUser(u){
+const all=users.map(x=>x.username===u.username?u:x);
+setUsers(all);setData("users",all);setUser({...u});
+}
+
+/* AUTO EARNINGS */
+function processEarnings(u){
+let updatedUsers=[...users];
+let updatedInvestments=[...investments];
+
+updatedInvestments.forEach(inv=>{
+if(inv.user!==u.username)return;
+
+let now=Date.now();
+let last=inv.lastPaid||inv.start;
+
+let diff=Math.floor((now-last)/86400000);
+
+if(diff>0){
+let usr=updatedUsers.find(x=>x.username===inv.user);
+
+for(let i=0;i<diff;i++){
+usr.balance+=inv.daily;
+}
+
+inv.lastPaid=last+diff*86400000;
+}
+});
+
+setUsers(updatedUsers);
+setData("users",updatedUsers);
+setInvestments(updatedInvestments);
+setData("investments",updatedInvestments);
+setUser(updatedUsers.find(x=>x.username===u.username));
 }
 
 /* REGISTER */
-function register(username,phone,password){
-  if(users.find(u=>u.username===username)){
-    alert("User exists");
-    return;
-  }
+function register(u,pn,p){
+if(users.find(x=>x.username===u))return alert("User exists");
 
-  const newUser={
-    username,
-    phone,
-    password,
-    balance:500, // welcome bonus
-    lastBonus:0,
-    bonusLocked:500,
-    hasDeposited:false
-  };
+const newU={
+username:u,
+phone:pn,
+password:p,
+balance:500,
+bonusLocked:500,
+hasDeposited:false,
+bank:null,
+lastBonus:0
+};
 
-  const all=[...users,newUser];
-  setUsers(all);
-  localStorage.setItem("users",JSON.stringify(all));
+const all=[...users,newU];
+setUsers(all);setData("users",all);
 
-  alert("Registered successfully! Login now");
-  setPage("login");
+alert("Registered successfully");
+setPage("login");
 }
 
 /* LOGIN */
-function login(username,password){
-  const u=users.find(x=>x.username===username && x.password===password);
-  if(!u) return alert("Invalid login");
+function login(u,p){
+const f=users.find(x=>x.username===u && x.password===p);
+if(!f)return alert("Invalid login");
 
-  setUser(u);
-  setPage("home");
-
-  setTimeout(showPopup,500);
+processEarnings(f);
+setUser(f);
+setPage("home");
+setTimeout(showPopup,300);
 }
 
 /* POPUP */
 function showPopup(){
-  const pop=document.createElement("div");
-  pop.style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:9999";
-
-  pop.innerHTML=`
-  <div style="background:#fff;padding:20px;border-radius:10px;text-align:center;width:90%;max-width:300px;">
-    <h3>Welcome 👋</h3>
-    <p>🎁 Daily Bonus: ₦100</p>
-    <p>🎉 Welcome Bonus: ₦500</p>
-
-    <button id="tgBtn" style="background:#0088cc;color:#fff;padding:10px;width:100%;border:none;border-radius:5px;margin-top:10px;">
-      Join our Telegram
-    </button>
-
-    <button id="closeBtn" style="margin-top:10px;padding:8px;width:100%;">
-      Continue
-    </button>
-  </div>
-  `;
-
-  document.body.appendChild(pop);
-
-  document.getElementById("tgBtn").onclick=()=>{
-    window.open("https://t.me/+-9f-M7aXoOBiOTRk","_blank");
-  };
-
-  document.getElementById("closeBtn").onclick=()=>{
-    pop.remove();
-  };
+const d=document.createElement("div");
+d.innerHTML=`<div style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0008;display:flex;align-items:center;justify-content:center;">
+<div style="background:#fff;padding:20px;border-radius:10px;text-align:center;">
+<h3>Welcome 👋</h3>
+<p>Daily Bonus ₦100</p>
+<p>Welcome Bonus ₦500</p>
+<button onclick="window.open('https://t.me/+-9f-M7aXoOBiOTRk')">Join Telegram</button>
+<button onclick="this.parentElement.parentElement.remove()">Continue</button>
+</div></div>`;
+document.body.appendChild(d);
 }
 
-/* DAILY BONUS */
-function claimBonus(){
-  if(Date.now()-user.lastBonus<86400000){
-    alert("Come back tomorrow");
-    return;
-  }
-  user.balance+=100;
-  user.lastBonus=Date.now();
-  updateUser(user);
+/* BONUS */
+function bonus(){
+if(Date.now()-user.lastBonus<86400000)return alert("Come tomorrow");
+user.balance+=100;
+user.lastBonus=Date.now();
+saveUser(user);
 }
 
-/* BUY PACKAGE */
-function buyPack(p){
-  if(user.balance<p.price) return alert("Insufficient balance");
+/* BUY */
+function buy(p){
+if(user.balance<p.price)return alert("Insufficient balance");
 
-  user.balance-=p.price;
+user.balance-=p.price;
 
-  const inv={
-    user:user.username,
-    name:p.name,
-    daily:p.daily,
-    duration:p.duration,
-    start:Date.now()
-  };
+const inv={
+id:Date.now(),
+user:user.username,
+name:p.name,
+daily:p.daily,
+start:Date.now(),
+lastPaid:Date.now()
+};
 
-  const all=[...investments,inv];
-  setInvestments(all);
-  localStorage.setItem("investments",JSON.stringify(all));
+const all=[...investments,inv];
+setInvestments(all);
+setData("investments",all);
 
-  updateUser(user);
-}
-
-/* CALC EARN */
-function calc(inv){
-  const days=Math.floor((Date.now()-inv.start)/86400000);
-  return Math.min(days,inv.duration)*inv.daily;
+saveUser(user);
 }
 
 /* DEPOSIT */
-function deposit(amount){
-  user.balance+=Number(amount);
-  user.hasDeposited=true;
-  user.bonusLocked=0;
-  updateUser(user);
-  alert("Deposit successful");
+function deposit(amount,file){
+if(!file)return alert("Upload proof");
+
+const reader=new FileReader();
+reader.onload=()=>{
+const dep={
+id:Date.now(),
+user:user.username,
+amount,
+proof:reader.result,
+status:"pending"
+};
+const all=[...deposits,dep];
+setDeposits(all);
+setData("deposits",all);
+alert("Deposit submitted, wait for approval");
+};
+reader.readAsDataURL(file);
 }
 
 /* WITHDRAW */
 function withdraw(amount){
-  if(user.balance<amount) return alert("Insufficient");
+if(!user.bank)return alert("Set bank first");
+if(amount<500)return alert("Minimum ₦500");
+if(user.balance<amount)return alert("Insufficient");
 
-  if(user.bonusLocked>0 && !user.hasDeposited){
-    alert("Deposit required before withdrawing bonus");
-    return;
-  }
+if(user.bonusLocked>0 && !user.hasDeposited){
+alert("Deposit required before withdrawing bonus");
+return;
+}
 
-  user.balance-=amount;
-  updateUser(user);
-  alert("Withdrawal successful");
+const wd={id:Date.now(),user:user.username,amount,status:"pending"};
+setWithdrawals([...withdrawals,wd]);
+setData("withdrawals",[...withdrawals,wd]);
+
+alert("Withdrawal request sent");
+}
+
+/* ADMIN ACCESS */
+function adminView(){
+if(prompt("Enter Admin PIN")!=="2000")return;
+setPage("admin");
 }
 
 /* UI */
 return(
-<div className="max-w-md mx-auto p-4">
+<div className="p-4">
 
-{/* REGISTER */}
-{page==="register" && (
-<div>
-<h2 className="text-xl font-bold">Register</h2>
-<input id="ru" placeholder="Username" className="border p-2 w-full mt-2"/>
-<input id="rph" placeholder="Phone Number" className="border p-2 w-full mt-2"/>
-<input id="rp" type="password" placeholder="Password" className="border p-2 w-full mt-2"/>
-<button onClick={()=>register(ru.value,rph.value,rp.value)} className="bg-green-500 text-white p-2 w-full mt-2">Register</button>
-<p onClick={()=>setPage("login")} className="text-blue-500 mt-2">Login</p>
-</div>
-)}
+{page==="register"&&<>
+<h2 className="text-xl">Register</h2>
+<input id="ru" placeholder="Username" className="border p-3 w-full"/>
+<input id="rp" placeholder="Phone" className="border p-3 w-full mt-2"/>
+<input id="rps" placeholder="Password" className="border p-3 w-full mt-2"/>
+<button onClick={()=>register(ru.value,rp.value,rps.value)} className="bg-green-500 text-white p-3 w-full mt-2">Register</button>
+<p onClick={()=>setPage("login")}>Login</p>
+</>}
 
-{/* LOGIN */}
-{page==="login" && (
-<div>
-<h2 className="text-xl font-bold">Login</h2>
-<input id="lu" placeholder="Username" className="border p-2 w-full mt-2"/>
-<input id="lp" type="password" placeholder="Password" className="border p-2 w-full mt-2"/>
-<button onClick={()=>login(lu.value,lp.value)} className="bg-blue-500 text-white p-2 w-full mt-2">Login</button>
-</div>
-)}
+{page==="login"&&<>
+<h2 className="text-xl">Login</h2>
+<input id="lu" className="border p-3 w-full"/>
+<input id="lp" className="border p-3 w-full mt-2"/>
+<button onClick={()=>login(lu.value,lp.value)} className="bg-blue-500 text-white p-3 w-full mt-2">Login</button>
+</>}
 
-{/* HOME */}
-{user && page==="home" && (
-<div>
-<h2 className="text-xl font-bold">₦{user.balance}</h2>
+{user&&page==="home"&&<>
+<h2 onClick={()=>{
+const newTap=tap+1;
+setTap(newTap);
+if(newTap>=10){setTap(0);adminView();}
+}}>
+₦{user.balance}
+</h2>
 
-<button onClick={claimBonus} className="bg-yellow-500 p-2 w-full mt-2">
-Daily Bonus ₦100
-</button>
+<img src="https://t.me/fjejvjdjjc/35" className="w-full mt-2 rounded"/>
 
-<div className="grid grid-cols-3 gap-2 mt-4">
-<button onClick={()=>setPage("invest")} className="bg-blue-500 text-white p-2">Invest</button>
-<button onClick={()=>setPage("deposit")} className="bg-green-500 text-white p-2">Deposit</button>
-<button onClick={()=>setPage("withdraw")} className="bg-red-500 text-white p-2">Withdraw</button>
-<button onClick={()=>setPage("products")} className="bg-purple-500 text-white p-2">Products</button>
-</div>
-</div>
-)}
+<button onClick={bonus} className="bg-yellow-500 p-3 w-full mt-2">Daily Bonus</button>
 
-{/* INVEST */}
-{page==="invest" && (
-<div>
+<button onClick={()=>setPage("deposit")} className="bg-green-500 p-3 w-full mt-2">Deposit</button>
+<button onClick={()=>setPage("withdraw")} className="bg-red-500 p-3 w-full mt-2">Withdraw</button>
+<button onClick={()=>setPage("invest")} className="bg-blue-500 p-3 w-full mt-2">Invest</button>
+</>}
+
+{page==="invest"&&<>
 <h2>Packages</h2>
-{packages.map(p=>(
-<div key={p.id} className="border p-2 mt-2">
-<p>{p.name}</p>
-<p>₦{p.price}</p>
-<p>₦{p.daily}/day</p>
-<button onClick={()=>buyPack(p)} className="bg-blue-500 text-white p-1">Buy</button>
-</div>
-))}
-<button onClick={()=>setPage("home")}>Back</button>
-</div>
-)}
+{packages.map(p=><div key={p.id} className="mt-2 border p-2">
+<p>{p.name} ₦{p.price} | ₦{p.daily}/day</p>
+<button onClick={()=>buy(p)} className="bg-blue-500 text-white p-2 mt-1">Buy</button>
+</div>)}
+</>}
 
-{/* PRODUCTS */}
-{page==="products" && (
-<div>
-<h2>My Products</h2>
-{investments.filter(i=>i.user===user.username).map((i,index)=>(
-<div key={index} className="border p-2 mt-2">
-<p>{i.name}</p>
-<p>Earned: ₦{calc(i)}</p>
-</div>
-))}
-<button onClick={()=>setPage("home")}>Back</button>
-</div>
-)}
-
-{/* DEPOSIT */}
-{page==="deposit" && (
-<div>
+{page==="deposit"&&<>
 <h2>Deposit</h2>
-<p>Kuda Bank</p>
-<p>Adesewa Adebanjo</p>
-<p>2079026767</p>
-<input id="dep" placeholder="Amount" className="border p-2 w-full mt-2"/>
-<button onClick={()=>deposit(dep.value)} className="bg-green-500 text-white p-2 w-full mt-2">Submit</button>
-<button onClick={()=>setPage("home")}>Back</button>
-</div>
-)}
+<input id="da" placeholder="Amount" className="border p-3 w-full"/>
+<input id="df" type="file" className="mt-2"/>
+<button onClick={()=>deposit(da.value,df.files[0])} className="bg-green-500 text-white p-3 w-full mt-2">Submit Proof</button>
+</>}
 
-{/* WITHDRAW */}
-{page==="withdraw" && (
-<div>
+{page==="withdraw"&&<>
 <h2>Withdraw</h2>
-<input id="wd" placeholder="Amount" className="border p-2 w-full mt-2"/>
-<button onClick={()=>withdraw(wd.value)} className="bg-red-500 text-white p-2 w-full mt-2">Withdraw</button>
-<button onClick={()=>setPage("home")}>Back</button>
-</div>
-)}
+<input id="wa" placeholder="Amount" className="border p-3 w-full"/>
+<button onClick={()=>withdraw(wa.value)} className="bg-red-500 text-white p-3 w-full mt-2">Withdraw</button>
+</>}
+
+{page==="admin"&&<>
+<h2>Admin Panel</h2>
+
+<h3>Deposits</h3>
+{deposits.map(d=><div key={d.id}>
+<p>{d.user} ₦{d.amount}</p>
+<img src={d.proof} width="100"/>
+<button onClick={()=>{
+d.status="approved";
+const u=users.find(x=>x.username===d.user);
+u.balance+=Number(d.amount);
+u.hasDeposited=true;
+u.bonusLocked=0;
+saveUser(u);
+setData("deposits",deposits);
+}}>Approve</button>
+</div>)}
+
+<h3>Withdrawals</h3>
+{withdrawals.map(w=><div key={w.id}>
+<p>{w.user} ₦{w.amount}</p>
+<button onClick={()=>{w.status="approved";setData("withdrawals",withdrawals);}}>Approve</button>
+</div>)}
+
+</>}
 
 </div>
 );

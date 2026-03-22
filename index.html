@@ -1,257 +1,279 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EASYPAY</title>
-
-<style>
-body {
-  margin:0;
-  font-family:Arial;
-  background:#f5f5f5;
-}
-
-/* Auth */
-.auth-container {
-  max-width:400px;
-  margin:50px auto;
-  padding:20px;
-  background:white;
-  border-radius:10px;
-}
-
-input,button {
-  width:100%;
-  padding:10px;
-  margin:8px 0;
-}
-
-.btn {
-  background:#6f42c1;
-  color:white;
-  border:none;
-}
-
-.hidden { display:none; }
-
-/* Dashboard */
-.dashboard {
-  padding:20px;
-}
-
-.card {
-  background:white;
-  padding:15px;
-  margin:10px 0;
-  border-radius:10px;
-}
-
-/* Sidebar */
-.sidebar {
-  position:fixed;
-  left:-200px;
-  top:0;
-  width:200px;
-  height:100%;
-  background:#222;
-  color:white;
-  padding:20px;
-  transition:0.3s;
-}
-.sidebar.active { left:0; }
-
-.hamburger {
-  position:fixed;
-  top:10px;
-  left:10px;
-  font-size:24px;
-  cursor:pointer;
-}
-</style>
+<title>Prime Vest</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 
-<body>
+<body class="bg-gray-100">
+<div id="root"></div>
 
-<div class="hamburger" onclick="toggleMenu()">☰</div>
+<script type="text/babel">
 
-<div id="sidebar" class="sidebar">
-  <p onclick="showDashboard()">🏠 Dashboard</p>
-  <p onclick="showWithdraw()">💸 Withdraw</p>
-  <p onclick="logout()">🚪 Logout</p>
-</div>
+const { useState } = React;
 
-<!-- AUTH -->
-<div id="auth" class="auth-container">
-  <h2>Register</h2>
-  <input id="regUser" placeholder="Username">
-  <input id="regPass" placeholder="Password">
-  <input id="ref" placeholder="Referral (optional)">
-  <button class="btn" onclick="register()">Sign Up</button>
+/* PACKAGES */
+const packages = [
+ {id:1,name:"Package 1",price:1500,daily:450,duration:100},
+ {id:2,name:"Package 2",price:3000,daily:750,duration:100},
+ {id:3,name:"Package 3",price:5000,daily:1200,duration:100},
+ {id:4,name:"Package 4",price:10000,daily:2200,duration:100},
+ {id:5,name:"Package 5",price:15000,daily:3400,duration:100},
+ {id:6,name:"Package 6",price:20000,daily:4200,duration:100},
+ {id:7,name:"Package 7",price:50000,daily:5500,duration:100}
+];
 
-  <h3>Login</h3>
-  <input id="logUser" placeholder="Username">
-  <input id="logPass" placeholder="Password">
-  <button class="btn" onclick="login()">Login</button>
-</div>
+function App(){
 
-<!-- DASHBOARD -->
-<div id="dashboard" class="dashboard hidden">
-  <h2>Welcome <span id="userName"></span></h2>
+const [page,setPage] = useState("register");
+const [users,setUsers] = useState(JSON.parse(localStorage.getItem("users")||"[]"));
+const [user,setUser] = useState(null);
+const [investments,setInvestments] = useState(JSON.parse(localStorage.getItem("investments")||"[]"));
 
-  <div class="card">
-    Balance: ₦<span id="balance">0</span>
-  </div>
+/* UPDATE USER */
+function updateUser(u){
+  const updated = users.map(x=>x.username===u.username?u:x);
+  setUsers(updated);
+  localStorage.setItem("users",JSON.stringify(updated));
+  setUser({...u});
+}
 
-  <div class="card">
-    Daily Bonus: ₦50  
-    <button onclick="claimBonus()">Claim</button>
-  </div>
-
-  <div class="card">
-    Referral Link:
-    <input id="refLink" readonly>
-    <button onclick="copyRef()">Copy</button>
-  </div>
-
-  <button onclick="earn()">+ Earn ₦100</button>
-</div>
-
-<!-- WITHDRAW -->
-<div id="withdrawPage" class="hidden">
-  <h2>Withdraw</h2>
-  <p>Balance: ₦<span id="wbal"></span></p>
-  <input id="amount" placeholder="Amount">
-  <button onclick="withdraw()">Withdraw</button>
-</div>
-
-<script>
-
-// ===== STORAGE =====
-let user = null;
-let users = JSON.parse(localStorage.getItem("users")) || {};
-
-// ===== REGISTER =====
-function register(){
-  let u = regUser.value;
-  let p = regPass.value;
-  let r = ref.value;
-
-  if(users[u]){
+/* REGISTER */
+function register(username,phone,password){
+  if(users.find(u=>u.username===username)){
     alert("User exists");
     return;
   }
 
-  users[u] = {
-    password:p,
-    balance:0,
-    ref:r,
-    bonusDate:null
+  const newUser={
+    username,
+    phone,
+    password,
+    balance:500, // welcome bonus
+    lastBonus:0,
+    bonusLocked:500,
+    hasDeposited:false
   };
 
-  localStorage.setItem("users", JSON.stringify(users));
-  alert("Registered!");
+  const all=[...users,newUser];
+  setUsers(all);
+  localStorage.setItem("users",JSON.stringify(all));
+
+  alert("Registered successfully! Login now");
+  setPage("login");
 }
 
-// ===== LOGIN =====
-function login(){
-  let u = logUser.value;
-  let p = logPass.value;
+/* LOGIN */
+function login(username,password){
+  const u=users.find(x=>x.username===username && x.password===password);
+  if(!u) return alert("Invalid login");
 
-  if(users[u] && users[u].password === p){
-    user = u;
-    startApp();
-  } else {
-    alert("Invalid");
-  }
+  setUser(u);
+  setPage("home");
+
+  setTimeout(showPopup,500);
 }
 
-// ===== START APP =====
-function startApp(){
-  auth.classList.add("hidden");
-  dashboard.classList.remove("hidden");
+/* POPUP */
+function showPopup(){
+  const pop=document.createElement("div");
+  pop.style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:9999";
 
-  userName.textContent = user;
-  updateUI();
+  pop.innerHTML=`
+  <div style="background:#fff;padding:20px;border-radius:10px;text-align:center;width:90%;max-width:300px;">
+    <h3>Welcome 👋</h3>
+    <p>🎁 Daily Bonus: ₦100</p>
+    <p>🎉 Welcome Bonus: ₦500</p>
 
-  // referral link
-  refLink.value = location.href + "?ref=" + user;
+    <button id="tgBtn" style="background:#0088cc;color:#fff;padding:10px;width:100%;border:none;border-radius:5px;margin-top:10px;">
+      Join our Telegram
+    </button>
+
+    <button id="closeBtn" style="margin-top:10px;padding:8px;width:100%;">
+      Continue
+    </button>
+  </div>
+  `;
+
+  document.body.appendChild(pop);
+
+  document.getElementById("tgBtn").onclick=()=>{
+    window.open("https://t.me/+-9f-M7aXoOBiOTRk","_blank");
+  };
+
+  document.getElementById("closeBtn").onclick=()=>{
+    pop.remove();
+  };
 }
 
-// ===== UPDATE UI =====
-function updateUI(){
-  balance.textContent = users[user].balance;
-  wbal.textContent = users[user].balance;
-}
-
-// ===== EARN =====
-function earn(){
-  users[user].balance += 100;
-  save();
-}
-
-// ===== BONUS =====
+/* DAILY BONUS */
 function claimBonus(){
-  let today = new Date().toDateString();
-
-  if(users[user].bonusDate === today){
-    alert("Already claimed today");
+  if(Date.now()-user.lastBonus<86400000){
+    alert("Come back tomorrow");
     return;
   }
-
-  users[user].balance += 50;
-  users[user].bonusDate = today;
-
-  save();
+  user.balance+=100;
+  user.lastBonus=Date.now();
+  updateUser(user);
 }
 
-// ===== WITHDRAW =====
-function withdraw(){
-  let amt = parseInt(amount.value);
+/* BUY PACKAGE */
+function buyPack(p){
+  if(user.balance<p.price) return alert("Insufficient balance");
 
-  if(amt > users[user].balance){
-    alert("Insufficient");
+  user.balance-=p.price;
+
+  const inv={
+    user:user.username,
+    name:p.name,
+    daily:p.daily,
+    duration:p.duration,
+    start:Date.now()
+  };
+
+  const all=[...investments,inv];
+  setInvestments(all);
+  localStorage.setItem("investments",JSON.stringify(all));
+
+  updateUser(user);
+}
+
+/* CALC EARN */
+function calc(inv){
+  const days=Math.floor((Date.now()-inv.start)/86400000);
+  return Math.min(days,inv.duration)*inv.daily;
+}
+
+/* DEPOSIT */
+function deposit(amount){
+  user.balance+=Number(amount);
+  user.hasDeposited=true;
+  user.bonusLocked=0;
+  updateUser(user);
+  alert("Deposit successful");
+}
+
+/* WITHDRAW */
+function withdraw(amount){
+  if(user.balance<amount) return alert("Insufficient");
+
+  if(user.bonusLocked>0 && !user.hasDeposited){
+    alert("Deposit required before withdrawing bonus");
     return;
   }
 
-  users[user].balance -= amt;
-  save();
-
+  user.balance-=amount;
+  updateUser(user);
   alert("Withdrawal successful");
 }
 
-// ===== SAVE =====
-function save(){
-  localStorage.setItem("users", JSON.stringify(users));
-  updateUI();
+/* UI */
+return(
+<div className="max-w-md mx-auto p-4">
+
+{/* REGISTER */}
+{page==="register" && (
+<div>
+<h2 className="text-xl font-bold">Register</h2>
+<input id="ru" placeholder="Username" className="border p-2 w-full mt-2"/>
+<input id="rph" placeholder="Phone Number" className="border p-2 w-full mt-2"/>
+<input id="rp" type="password" placeholder="Password" className="border p-2 w-full mt-2"/>
+<button onClick={()=>register(ru.value,rph.value,rp.value)} className="bg-green-500 text-white p-2 w-full mt-2">Register</button>
+<p onClick={()=>setPage("login")} className="text-blue-500 mt-2">Login</p>
+</div>
+)}
+
+{/* LOGIN */}
+{page==="login" && (
+<div>
+<h2 className="text-xl font-bold">Login</h2>
+<input id="lu" placeholder="Username" className="border p-2 w-full mt-2"/>
+<input id="lp" type="password" placeholder="Password" className="border p-2 w-full mt-2"/>
+<button onClick={()=>login(lu.value,lp.value)} className="bg-blue-500 text-white p-2 w-full mt-2">Login</button>
+</div>
+)}
+
+{/* HOME */}
+{user && page==="home" && (
+<div>
+<h2 className="text-xl font-bold">₦{user.balance}</h2>
+
+<button onClick={claimBonus} className="bg-yellow-500 p-2 w-full mt-2">
+Daily Bonus ₦100
+</button>
+
+<div className="grid grid-cols-3 gap-2 mt-4">
+<button onClick={()=>setPage("invest")} className="bg-blue-500 text-white p-2">Invest</button>
+<button onClick={()=>setPage("deposit")} className="bg-green-500 text-white p-2">Deposit</button>
+<button onClick={()=>setPage("withdraw")} className="bg-red-500 text-white p-2">Withdraw</button>
+<button onClick={()=>setPage("products")} className="bg-purple-500 text-white p-2">Products</button>
+</div>
+</div>
+)}
+
+{/* INVEST */}
+{page==="invest" && (
+<div>
+<h2>Packages</h2>
+{packages.map(p=>(
+<div key={p.id} className="border p-2 mt-2">
+<p>{p.name}</p>
+<p>₦{p.price}</p>
+<p>₦{p.daily}/day</p>
+<button onClick={()=>buyPack(p)} className="bg-blue-500 text-white p-1">Buy</button>
+</div>
+))}
+<button onClick={()=>setPage("home")}>Back</button>
+</div>
+)}
+
+{/* PRODUCTS */}
+{page==="products" && (
+<div>
+<h2>My Products</h2>
+{investments.filter(i=>i.user===user.username).map((i,index)=>(
+<div key={index} className="border p-2 mt-2">
+<p>{i.name}</p>
+<p>Earned: ₦{calc(i)}</p>
+</div>
+))}
+<button onClick={()=>setPage("home")}>Back</button>
+</div>
+)}
+
+{/* DEPOSIT */}
+{page==="deposit" && (
+<div>
+<h2>Deposit</h2>
+<p>Kuda Bank</p>
+<p>Adesewa Adebanjo</p>
+<p>2079026767</p>
+<input id="dep" placeholder="Amount" className="border p-2 w-full mt-2"/>
+<button onClick={()=>deposit(dep.value)} className="bg-green-500 text-white p-2 w-full mt-2">Submit</button>
+<button onClick={()=>setPage("home")}>Back</button>
+</div>
+)}
+
+{/* WITHDRAW */}
+{page==="withdraw" && (
+<div>
+<h2>Withdraw</h2>
+<input id="wd" placeholder="Amount" className="border p-2 w-full mt-2"/>
+<button onClick={()=>withdraw(wd.value)} className="bg-red-500 text-white p-2 w-full mt-2">Withdraw</button>
+<button onClick={()=>setPage("home")}>Back</button>
+</div>
+)}
+
+</div>
+);
 }
 
-// ===== UI =====
-function toggleMenu(){
-  sidebar.classList.toggle("active");
-}
-
-function showWithdraw(){
-  dashboard.classList.add("hidden");
-  withdrawPage.classList.remove("hidden");
-}
-
-function showDashboard(){
-  withdrawPage.classList.add("hidden");
-  dashboard.classList.remove("hidden");
-}
-
-function logout(){
-  location.reload();
-}
-
-// ===== COPY =====
-function copyRef(){
-  navigator.clipboard.writeText(refLink.value);
-  alert("Copied!");
-}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 
 </script>
-
 </body>
 </html>

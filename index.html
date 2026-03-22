@@ -1,317 +1,184 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<title>Prime Vest</title>
-
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PrimeVest</title>
 <style>
-body{font-weight:600}
-.nav{position:fixed;bottom:0;width:100%;background:#fff;display:flex;justify-content:space-around;padding:10px;border-top:1px solid #ddd;}
-.card{background:#fff;padding:15px;border-radius:10px;margin-top:10px;}
+body{font-family:Arial;margin:0;background:#f3f3f3;}
+.header{background:red;color:#fff;padding:15px;text-align:center;font-size:22px;font-weight:bold;}
+.card{background:#fff;margin:15px;padding:15px;border-radius:10px;box-shadow:0 0 5px rgba(0,0,0,0.1);}
+.btn{background:red;color:#fff;padding:12px;border:none;border-radius:8px;width:100%;font-size:16px;margin-top:10px;}
+input,select{width:100%;padding:12px;margin-top:10px;border-radius:8px;border:1px solid #ccc;}
+.nav{position:fixed;bottom:0;width:100%;background:#fff;display:flex;justify-content:space-around;padding:10px 0;}
+.nav div{font-size:14px;}
+.big{font-size:20px;font-weight:bold;}
 </style>
 </head>
 
-<body class="bg-gray-100">
-<div id="root"></div>
+<body>
 
-<script type="text/babel">
+<div class="header">PrimeVest</div>
 
-const {useState,useEffect}=React;
+<div id="app"></div>
 
-const get=(k)=>JSON.parse(localStorage.getItem(k)||"[]");
-const set=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+<div class="nav">
+<div onclick="show('home')">Home</div>
+<div onclick="show('products')">Products</div>
+<div onclick="show('team')">Team</div>
+<div onclick="show('profile')">Profile</div>
+</div>
 
-const pkgs=[
-{name:"Package 1",price:1500,daily:450},
-{name:"Package 2",price:3000,daily:750},
-{name:"Package 3",price:5000,daily:1200},
-{name:"Package 4",price:10000,daily:2200},
-{name:"Package 5",price:15000,daily:3400},
-{name:"Package 6",price:20000,daily:4200},
-{name:"Package 7",price:50000,daily:5500}
-];
+<script>
+let user = JSON.parse(localStorage.getItem("user")) || null;
 
-function App(){
+function save(){ localStorage.setItem("user", JSON.stringify(user)); }
 
-const [page,setPage]=useState("register");
-const [users,setUsers]=useState(get("users"));
-const [user,setUser]=useState(null);
-const [deps,setDeps]=useState(get("deps"));
-const [wds,setWds]=useState(get("wds"));
-const [invs,setInvs]=useState(get("invs"));
-const [tap,setTap]=useState(0);
-
-/* REF DETECT */
-const params=new URLSearchParams(location.search);
-const ref=params.get("ref");
-
-/* REGISTER */
-function register(){
-let u=ru.value;
-if(users.find(x=>x.username===u))return alert("Exists");
-
-let newU={
-username:u,
-phone:rp.value,
-fullname:rf.value,
-password:rps.value,
-balance:500,
-bonusLocked:500,
-hasDeposited:false,
-refBy:rr.value||ref||"",
-bank:null,
-code:"REF"+Math.floor(Math.random()*9999),
-lastBonus:0
-};
-
-set("users",[...users,newU]);
-alert("Registered");
-setPage("login");
+function show(page){
+if(!user && page!="login" && page!="register"){
+page="login";
 }
 
-/* LOGIN */
-function login(){
-let f=users.find(x=>x.username===lu.value||x.phone===lu.value && x.password===lp.value);
-if(!f)return alert("Wrong");
-
-setUser(f);
-setPage("home");
-}
-
-/* SAVE */
-function save(u){
-let all=users.map(x=>x.username===u.username?u:x);
-setUsers(all);set("users",all);setUser({...u});
-}
-
-/* BONUS */
-function bonus(){
-if(Date.now()-user.lastBonus<86400000)return alert("Wait 24hrs");
-user.balance+=100;
-user.lastBonus=Date.now();
-save(user);
-}
-
-/* BUY */
-function buy(p){
-if(user.balance<p.price)return alert("Low balance");
-
-user.balance-=p.price;
-
-let inv={user:user.username,...p,start:Date.now(),last:Date.now()};
-setInvs([...invs,inv]);set("invs",[...invs,inv]);
-
-save(user);
-}
-
-/* AUTO EARN */
-useEffect(()=>{
-if(!user)return;
-
-let newInv=[...invs];
-let u={...user};
-
-newInv.forEach(i=>{
-if(i.user!==u.username)return;
-
-let diff=Math.floor((Date.now()-i.last)/86400000);
-if(diff>0){
-u.balance+=i.daily*diff;
-i.last=Date.now();
-}
-});
-
-save(u);
-setInvs(newInv);set("invs",newInv);
-},[]);
-
-/* DEPOSIT */
-function deposit(){
-let file=df.files[0];
-if(!file)return alert("Upload proof");
-
-let r=new FileReader();
-r.onload=()=>{
-let d={user:user.username,amount:da.value,proof:r.result,status:"pending"};
-setDeps([...deps,d]);set("deps",[...deps,d]);
-alert("Submitted");
-};
-r.readAsDataURL(file);
-}
-
-/* WITHDRAW */
-function withdraw(){
-if(!user.bank)return alert("Set bank");
-if(wa.value<500)return alert("Min 500");
-if(user.balance<wa.value)return alert("Low");
-
-if(user.bonusLocked && !user.hasDeposited){
-alert("Deposit first");
-return;
-}
-
-let w={user:user.username,amount:wa.value,status:"pending"};
-setWds([...wds,w]);set("wds",[...wds,w]);
-
-alert("Sent");
-}
-
-/* ADMIN */
-function admin(){
-if(prompt("PIN")!=="2000")return;
-setPage("admin");
-}
-
-/* REF SHARE */
-function share(){
-let link=location.origin+"?ref="+user.code;
-navigator.clipboard.writeText(link);
-alert("Link copied");
-}
-
-/* UI */
-
-return(
-<div className="p-3 pb-20">
-
-{/* REGISTER */}
-{page==="register"&&<div className="card">
-<h2>Create Account</h2>
-<input id="rp" placeholder="Phone" className="border p-2 w-full mt-2"/>
-<input id="ru" placeholder="Username" className="border p-2 w-full mt-2"/>
-<input id="rf" placeholder="Full Name" className="border p-2 w-full mt-2"/>
-<input id="rr" placeholder="Referral" defaultValue={ref} className="border p-2 w-full mt-2"/>
-<input id="rps" placeholder="Password" className="border p-2 w-full mt-2"/>
-<button onClick={register} className="bg-red-500 text-white p-3 w-full mt-2">Register</button>
-<p onClick={()=>setPage("login")}>Login</p>
-</div>}
-
-{/* LOGIN */}
-{page==="login"&&<div className="card">
+if(page=="login"){
+app.innerHTML=`
+<div class="card">
 <h2>Login</h2>
-<input id="lu" placeholder="Username/Phone" className="border p-2 w-full mt-2"/>
-<input id="lp" placeholder="Password" className="border p-2 w-full mt-2"/>
-<button onClick={login} className="bg-red-500 text-white p-3 w-full mt-2">Login</button>
-</div>}
-
-{/* HOME */}
-{user&&page==="home"&&<>
-<h2 onClick={()=>{let t=tap+1;setTap(t);if(t>=10){setTap(0);admin();}}}>
-₦{user.balance}
-</h2>
-
-<div className="card bg-red-500 text-white">
-Income drops every 24hrs
-</div>
-
-<button onClick={()=>setPage("deposit")} className="bg-green-500 p-3 w-full mt-2">Deposit</button>
-<button onClick={()=>setPage("withdraw")} className="bg-blue-500 p-3 w-full mt-2">Withdraw</button>
-<button onClick={()=>setPage("products")} className="bg-yellow-500 p-3 w-full mt-2">Products</button>
-<button onClick={bonus} className="bg-purple-500 p-3 w-full mt-2">Daily Bonus</button>
-</>}
-
-{/* PRODUCTS */}
-{page==="products"&&<>
-<h2>Products</h2>
-{pkgs.map(p=><div className="card">
-<p>{p.name} ₦{p.price}</p>
-<p>₦{p.daily}/day</p>
-<button onClick={()=>buy(p)} className="bg-red-500 text-white p-2 mt-2">Add</button>
-</div>)}
-</>}
-
-{/* PROFILE */}
-{page==="profile"&&<>
-<div className="card">
-<h3>Balance ₦{user.balance}</h3>
-<button onClick={()=>setPage("deposit")}>Deposit</button>
-<button onClick={()=>setPage("withdraw")}>Withdraw</button>
-<button onClick={()=>setPage("invite")}>Invite</button>
-</div>
-</>}
-
-{/* INVITE */}
-{page==="invite"&&<>
-<div className="card">
-<p>Code: {user.code}</p>
-<p>Link: {location.origin+"?ref="+user.code}</p>
-<button onClick={share}>Copy</button>
-</div>
-</>}
-
-{/* DEPOSIT */}
-{page==="deposit"&&<>
-<div className="card">
-<p>Kuda Bank</p>
-<p>Adesewa Adebanjo</p>
-<p>2079026767</p>
-
-<input id="da" placeholder="Amount" className="border p-2 w-full"/>
-<input id="df" type="file" className="mt-2"/>
-<button onClick={deposit} className="bg-green-500 p-3 w-full mt-2">Submit</button>
-</div>
-</>}
-
-{/* WITHDRAW */}
-{page==="withdraw"&&<>
-<div className="card">
-<input id="wa" placeholder="Amount" className="border p-2 w-full"/>
-<button onClick={withdraw} className="bg-red-500 p-3 w-full mt-2">Withdraw</button>
-</div>
-</>}
-
-{/* ADMIN */}
-{page==="admin"&&<>
-<h2>Admin</h2>
-
-{deps.map(d=><div className="card">
-<p>{d.user} ₦{d.amount}</p>
-<img src={d.proof} width="100"/>
-<button onClick={()=>{
-d.status="ok";
-let u=users.find(x=>x.username===d.user);
-u.balance+=Number(d.amount);
-u.hasDeposited=true;
-u.bonusLocked=0;
-
-/* REF BONUS */
-let refUser=users.find(x=>x.code===u.refBy);
-if(refUser){
-refUser.balance+=d.amount*0.2;
-save(refUser);
+<input id="u" placeholder="Username">
+<input id="p" placeholder="Password" type="password">
+<button class="btn" onclick="login()">Login</button>
+<p onclick="show('register')">Create account</p>
+</div>`;
 }
 
-save(u);
-set("deps",deps);
-}}>Approve</button>
-</div>)}
-
-{wds.map(w=><div className="card">
-<p>{w.user} ₦{w.amount}</p>
-<button onClick={()=>{w.status="ok";set("wds",wds);}}>Approve</button>
-</div>)}
-
-</>}
-
-{/* NAV */}
-{user&&<div className="nav">
-<button onClick={()=>setPage("home")}>Home</button>
-<button onClick={()=>setPage("products")}>Products</button>
-<button onClick={()=>setPage("invite")}>Share</button>
-<button onClick={()=>setPage("profile")}>Profile</button>
-</div>}
-
-</div>
-);
+if(page=="register"){
+app.innerHTML=`
+<div class="card">
+<h2>Register</h2>
+<input id="phone" placeholder="Phone">
+<input id="user" placeholder="Username">
+<input id="name" placeholder="Full Name">
+<input id="pass" placeholder="Password" type="password">
+<button class="btn" onclick="register()">Register</button>
+</div>`;
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+if(page=="home"){
+app.innerHTML=`
+<div class="card">
+<div class="big">Balance: ₦${user.balance}</div>
+<button class="btn" onclick="show('deposit')">Deposit</button>
+<button class="btn" onclick="show('withdraw')">Withdraw</button>
+<button class="btn" onclick="show('gift')">Gift Code</button>
+</div>`;
+}
 
+if(page=="products"){
+app.innerHTML=`
+<div class="card">
+<h3>Products</h3>
+<div>Plan 1 - ₦5,000</div>
+<button class="btn" onclick="buy()">Add to Portfolio</button>
+</div>`;
+}
+
+if(page=="deposit"){
+app.innerHTML=`
+<div class="card">
+<h3>Deposit</h3>
+<input placeholder="Enter amount">
+<button class="btn">Deposit Now</button>
+</div>`;
+}
+
+if(page=="withdraw"){
+app.innerHTML=`
+<div class="card">
+<h3>Withdraw</h3>
+<input placeholder="Amount">
+<button class="btn">Withdraw</button>
+</div>`;
+}
+
+if(page=="gift"){
+app.innerHTML=`
+<div class="card">
+<h3>Gift Code</h3>
+<input id="code" placeholder="Enter code">
+<button class="btn" onclick="redeem()">Redeem</button>
+</div>`;
+}
+
+if(page=="team"){
+app.innerHTML=`
+<div class="card">
+<h3>Referral</h3>
+<p>Code: ${user.ref}</p>
+<p>Link: ${location.href}?ref=${user.ref}</p>
+</div>`;
+}
+
+if(page=="profile"){
+app.innerHTML=`
+<div class="card">
+<h3>Profile</h3>
+<button class="btn" onclick="show('bank')">Bank Details</button>
+<button class="btn" onclick="show('transactions')">Transactions</button>
+</div>`;
+}
+
+if(page=="bank"){
+app.innerHTML=`
+<div class="card">
+<h3>Bank</h3>
+<input placeholder="Account Number">
+<input placeholder="Bank Name">
+<input placeholder="Account Name">
+<button class="btn">Save</button>
+</div>`;
+}
+
+if(page=="transactions"){
+app.innerHTML=`
+<div class="card">
+<h3>Transactions</h3>
+<p>No transactions</p>
+</div>`;
+}
+
+}
+
+function register(){
+user={
+username:user.value,
+password:pass.value,
+balance:0,
+ref:Math.random().toString(36).substring(2,10)
+};
+save();
+show('home');
+}
+
+function login(){
+if(u.value==user.username && p.value==user.password){
+show('home');
+}else{
+alert("Wrong login");
+}
+}
+
+function buy(){
+alert("Product added (demo)");
+}
+
+function redeem(){
+if(code.value=="FREE100"){
+user.balance+=100;
+save();
+alert("₦100 added");
+}
+}
+
+show('login');
 </script>
+
 </body>
 </html>

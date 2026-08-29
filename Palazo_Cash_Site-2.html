@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Palazo Cash♥️♥️♥️</title>
+<style>
+:root{--g:#16a34a;--g2:#22c55e;--bg:#f6faf7;--text:#17251c;--muted:#718078;--line:#dfeae2;--red:#dc2626}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px Arial,sans-serif}
+button,input,textarea{font:inherit}button{cursor:pointer}.app{max-width:520px;margin:auto;min-height:100vh;padding-bottom:90px}
+header{position:sticky;top:0;z-index:10;background:#ffffffee;backdrop-filter:blur(12px);border-bottom:1px solid var(--line);padding:14px 16px;display:flex;justify-content:space-between;align-items:center}
+.brand{display:flex;gap:10px;align-items:center}.logo{width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,var(--g),var(--g2));color:#fff;display:grid;place-items:center;font-weight:900}.brand h1{font-size:15px;margin:0}.brand p{margin:3px 0 0;color:var(--muted);font-size:10px}
+.balance{background:#ecfdf3;color:#166534;padding:9px 12px;border-radius:20px;font-weight:800;font-size:11px}
+main{padding:16px}.card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:16px;margin-bottom:14px;box-shadow:0 7px 25px #1665340d}
+.hero{background:linear-gradient(135deg,#15803d,#22c55e);color:#fff}.hero h2{font-size:31px;margin:5px 0}.hero p{margin:4px 0;opacity:.85;font-size:11px}.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:15px}.stat{background:#ffffff1c;padding:11px;border-radius:13px}.stat small{display:block;font-size:9px;opacity:.8}.stat b{font-size:17px}
+.ad{padding:20px;text-align:center;border:2px solid #9ae6b4;background:linear-gradient(145deg,#ecfdf3,#fff)}.adIcon{width:72px;height:72px;margin:auto;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--g),#4ade80);color:#fff;font-size:30px}
+.ad h2{margin:12px 0 4px;font-size:21px}.ad p{color:var(--muted);font-size:11px}.btn{width:100%;border:0;border-radius:13px;padding:13px;font-weight:800;font-size:12px;background:linear-gradient(135deg,var(--g),var(--g2));color:#fff}.btn:disabled{opacity:.55}.btn.secondary{background:#f0faf3;color:#166534;border:1px solid #bfe3c9}.btn.danger{background:#fff1f2;color:#b91c1c;border:1px solid #fecdd3}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}.input{width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fbfefc;outline:none;margin-bottom:8px}.input:focus{border-color:#86efac}.tabs{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);width:min(490px,calc(100% - 24px));height:65px;background:#fff;border:1px solid var(--line);border-radius:20px;display:flex;justify-content:space-around;align-items:center;box-shadow:0 12px 35px #10221820;z-index:20}.tab{border:0;background:none;color:#89968e;font-size:9px;font-weight:800}.tab.active{color:var(--g)}.tab span{display:block;font-size:21px;margin-bottom:3px}.title{font-size:20px;font-weight:900;margin:5px 0 12px}.muted{color:var(--muted);font-size:11px}.row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid #edf3ee}.row:last-child{border-bottom:0}.pill{padding:5px 8px;border-radius:99px;font-size:8px;font-weight:900}.pending{background:#fff7ed;color:#c2410c}.paid{background:#ecfdf3;color:#15803d}.declined{background:#fff1f2;color:#be123c}.modal{position:fixed;inset:0;background:#0005;display:grid;place-items:center;z-index:100;padding:20px}.modalBox{background:#fff;border-radius:20px;padding:20px;width:min(400px,100%);max-height:90vh;overflow:auto}.hidden{display:none}.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#17351f;color:#fff;padding:11px 15px;border-radius:12px;font-size:11px;font-weight:800;z-index:200}.adminHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.close{border:0;background:#f1f5f2;border-radius:50%;width:34px;height:34px}.section{font-size:10px;color:#166534;text-transform:uppercase;font-weight:900;margin:4px 0 9px}
+</style>
+</head>
+<body>
+<div id="app" class="app"></div>
+<div id="modal" class="modal hidden"></div>
+<script>
+/* Palazo Cash - standalone, no React/Babel/Tailwind required.
+   Firebase is optional: the site remains visible if Firebase is unavailable. */
+const DEFAULT={appName:"Palazo Cash♥️♥️♥️",currency:"₦",pointsPerNaira:10,adReward:10,referralReward:50,minWithdrawal:100,adminPin:"2025",devPin:"5050",adminUid:"",payoutChannelId:"",botToken:"",botUsername:"",appShortName:"",adSdkName:"show_11136660"};
+let config=Object.assign({},DEFAULT), user=null, tasks=[], withdrawals=[], tab="home", fb=null, db=null;
+const uid=(()=>{try{return window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString()||localStorage.getItem("palazo_uid")||"u_"+Math.random().toString(36).slice(2,10)}catch(e){return "u_"+Math.random().toString(36).slice(2,10)}})();
+try{localStorage.setItem("palazo_uid",uid)}catch(e){}
+function toast(m){const x=document.createElement("div");x.className="toast";x.textContent=m;document.body.appendChild(x);setTimeout(()=>x.remove(),2500)}
+function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+function money(n){return "₦"+Number(n||0).toLocaleString(undefined,{maximumFractionDigits:2})}
+function loadFirebase(){
+ if(window.firebase){
+  try{
+   const fc={apiKey:"AIzaSyBsmL_7imO05XfylLKMVaVx4ZbAR2nkyHQ",authDomain:"mini-app-1-f37c8.firebaseapp.com",databaseURL:"https://mini-app-1-f37c8-default-rtdb.firebaseio.com",projectId:"mini-app-1-f37c8",storageBucket:"mini-app-1-f37c8.firebasestorage.app",messagingSenderId:"131989971721",appId:"1:131989971721:web:1fc562896d85bb468ae9d8"};
+   if(!firebase.apps.length)firebase.initializeApp(fc);db=firebase.database();sync();return;
+  }catch(e){console.warn(e)}
+ }
+ render();toast("Site loaded in offline mode")
+}
+function sync(){
+ const c=db.ref("config/app"); c.on("value",s=>{config=Object.assign({},DEFAULT,s.val()||{});render()});
+ const u=db.ref("users/"+uid);u.on("value",s=>{if(s.exists())user=s.val();else{user={uid,username:window.Telegram?.WebApp?.initDataUnsafe?.user?.username||"user_"+uid.slice(-4),points:0,cashBalance:0,referrals:0,referralsList:{},banned:false,adsWatched:0};u.set(user)};render()});
+ db.ref("tasks").on("value",s=>{tasks=s.exists()?Object.values(s.val()):[];render()});
+}
+function setTab(x){tab=x;render()}
+function render(){
+ if(!user)user={uid,username:"user_"+uid.slice(-4),points:0,cashBalance:0,referrals:0,banned:false,adsWatched:0};
+ if(user.banned){document.getElementById("app").innerHTML='<div style="padding:60px 25px;text-align:center"><div style="font-size:60px">🚫</div><h2>Account Banned</h2><p class="muted">Your account has been restricted by the administrator.</p></div>';return}
+ let body="";
+ if(tab==="home")body=`<div class="card hero"><p>Total Points</p><h2>${Number(user.points||0).toLocaleString()}</h2><p>Points available</p><div class="stats"><div class="stat"><small>Cash Balance</small><b>${money(user.cashBalance)}</b></div><div class="stat"><small>Referrals</small><b>${user.referrals||0}</b></div></div></div>
+ <div class="card ad"><div class="adIcon">▶</div><h2>Watch Ads & Earn</h2><p>Watch an ad and earn <b>${config.adReward} Points</b>.</p><button id="watch" class="btn">WATCH AD +${config.adReward} POINTS</button><p>Unlimited ads • Reward only after successful completion</p></div>
+ <div class="card"><div class="section">Quick Actions</div><div class="grid2"><button class="btn secondary" onclick="setTab('convert')">Convert Points</button><button class="btn secondary" onclick="setTab('wallet')">Withdraw Cash</button></div></div>`;
+ if(tab==="earn")body=`<h2 class="title">Earn Points</h2><div class="card ad"><div class="adIcon">▶</div><h2>Watch Ads</h2><p>Earn ${config.adReward} Points per completed ad.</p><button id="watch" class="btn">WATCH AD +${config.adReward}</button></div>${tasks.map(t=>`<div class="card"><b>${esc(t.icon||"🎯")} ${esc(t.title)}</b><p class="muted">${esc(t.description||"Complete this mission.")}</p><b style="color:#15803d">+${Number(t.reward||0)} Points</b>${t.link?`<button class="btn secondary" style="margin-top:10px" onclick="window.open('${esc(t.link)}','_blank')">OPEN TASK</button>`:""}<button class="btn" style="margin-top:8px" onclick="submitTask('${esc(t.id)}')">SUBMIT TASK</button></div>`).join("")}`;
+ if(tab==="referrals"){const rs=Object.values(user.referralsList||{});body=`<h2 class="title">Referrals</h2><div class="card hero"><p>Referral Bonus</p><h2>${Number(config.referralReward||0)} Points</h2><p>For each valid referral</p><button class="btn" style="background:#fff;color:#166534;margin-top:12px" onclick="copyRef()">COPY REFERRAL LINK</button></div><div class="card"><div class="section">Your Referrals & Earnings</div>${rs.length?rs.map(r=>`<div class="row"><div><b>@${esc(r.username||"user")}</b><div class="muted">UID: ${esc(r.uid)}</div></div><b style="color:#15803d">${Number(r.earned||0)} P</b></div>`).join(""):'<p class="muted" style="text-align:center;padding:20px">No referrals yet.</p>'}</div>`}
+ if(tab==="convert"){const rate=Number(config.pointsPerNaira||10);body=`<h2 class="title">Convert Points</h2><div class="card"><p class="muted">Current rate</p><h2>${rate} Points = ₦1</h2><p>Your Points: <b>${Number(user.points||0).toLocaleString()}</b></p><input id="conv" class="input" type="number" placeholder="Points to convert"><div id="cashPreview" class="card" style="background:#f0faf3;text-align:center">Receive ₦0</div><button class="btn" onclick="convertPoints()">CONVERT TO CASH</button></div>`}
+ if(tab==="wallet"){body=`<h2 class="title">Cash Wallet</h2><div class="card hero"><p>Withdrawable Cash</p><h2>${money(user.cashBalance)}</h2><p>Minimum withdrawal: ${money(config.minWithdrawal)}</p></div><div class="card"><input id="wa" class="input" type="number" placeholder="Withdrawal amount"><input id="bank" class="input" placeholder="Bank Name"><input id="acc" class="input" inputmode="numeric" maxlength="10" placeholder="10-Digit Account Number"><button class="btn" onclick="withdraw()">REQUEST WITHDRAWAL</button></div><div class="card"><div class="section">Recent Withdrawals</div><div id="history"><p class="muted">Loading...</p></div></div>`}
+ document.getElementById("app").innerHTML=`<header><div class="brand" onclick="adminTap()"><div class="logo">P</div><div><h1>${esc(config.appName)}</h1><p>@${esc(user.username||"user")}</p></div></div><div class="balance">${money(user.cashBalance)}</div></header><main>${body}</main><nav class="tabs">${[["home","⌂","Home"],["earn","▶","Earn"],["referrals","♧","Referrals"],["convert","↔","Convert"],["wallet","₦","Wallet"]].map(x=>`<button class="tab ${tab===x[0]?"active":""}" onclick="setTab('${x[0]}')"><span>${x[1]}</span>${x[2]}</button>`).join("")}</nav>`;
+ const w=document.getElementById("watch");if(w)w.onclick=watchAd;
+ const cv=document.getElementById("conv");if(cv)cv.oninput=()=>{document.getElementById("cashPreview").textContent="Receive "+money(Number(cv.value||0)/Number(config.pointsPerNaira||10))};
+ if(tab==="wallet")loadHistory();
+}
+async function watchAd(){
+ const b=document.getElementById("watch");if(!b)return;b.disabled=true;b.textContent="LOADING AD...";
+ try{
+  const fn=window[config.adSdkName||"show_11136660"];
+  if(typeof fn!=="function"){toast("Ad service is not ready. Try again.");return}
+  await fn();
+  const r=Number(config.adReward||10);
+  if(db){await db.ref("users/"+uid+"/points").transaction(v=>Number(v||0)+r);await db.ref("users/"+uid+"/adsWatched").transaction(v=>Number(v||0)+1);await db.ref("stats/adsWatched").transaction(v=>Number(v||0)+1)}
+  else{user.points=Number(user.points||0)+r;user.adsWatched=Number(user.adsWatched||0)+1}
+  toast("Ad completed! +"+r+" Points");render();
+ }catch(e){toast("Ad was not completed. No Points added.")}finally{b.disabled=false}
+}
+function convertPoints(){
+ const n=Number(document.getElementById("conv")?.value||0),rate=Number(config.pointsPerNaira||10);
+ if(!n||n>Number(user.points||0))return toast("Invalid Point amount");
+ const cash=n/rate;
+ if(db){db.ref("users/"+uid+"/points").transaction(v=>{if(Number(v||0)<n)return;return Number(v)-n}).then(r=>{if(!r.committed)return toast("Insufficient Points");return db.ref("users/"+uid+"/cashBalance").transaction(v=>Number(v||0)+cash)}).then(()=>toast("Cash added successfully")).catch(()=>toast("Conversion failed"))}
+ else{user.points-=n;user.cashBalance=Number(user.cashBalance||0)+cash;toast("Cash added successfully");render()}
+}
+function copyRef(){const link=`https://t.me/${config.botUsername||""}/${config.appShortName||""}?startapp=u_${uid}`;navigator.clipboard?.writeText(link);toast("Referral link copied")}
+function withdraw(){
+ const n=Number(document.getElementById("wa")?.value||0),bank=document.getElementById("bank")?.value.trim(),acc=document.getElementById("acc")?.value.trim();
+ if(n<Number(config.minWithdrawal||100)||n>Number(user.cashBalance||0)||!bank||!/^\d{10}$/.test(acc))return toast("Check amount, bank and account number");
+ const id="wd_"+Date.now();
+ const w={id,uid,username:user.username,amount:n,bankName:bank,accountNumber:acc,status:"pending",createdAt:Date.now()};
+ if(db){db.ref("users/"+uid+"/cashBalance").transaction(v=>{if(Number(v||0)<n)return;return Number(v)-n}).then(r=>{if(!r.committed)throw Error();return db.ref("withdrawals/"+id).set(w)}).then(()=>toast("Withdrawal request submitted")).catch(()=>toast("Withdrawal failed"))}
+ else{user.cashBalance-=n;withdrawals.unshift(w);toast("Withdrawal request submitted");render()}
+}
+function loadHistory(){if(!db){const h=document.getElementById("history");if(h)h.innerHTML=withdrawals.slice(0,10).map(x=>`<div class="row"><b>${money(x.amount)}</b><span class="pill ${x.status}">${x.status}</span></div>`).join("")||'<p class="muted">No withdrawals yet.</p>';return}
+ db.ref("withdrawals").orderByChild("uid").equalTo(uid).once("value").then(s=>{const a=s.exists()?Object.values(s.val()).sort((x,y)=>(y.createdAt||0)-(x.createdAt||0)):[];const h=document.getElementById("history");if(h)h.innerHTML=a.slice(0,10).map(x=>`<div class="row"><div><b>${money(x.amount)}</b><div class="muted">${esc(x.bankName)} • ${esc(x.accountNumber)}</div></div><span class="pill ${x.status}">${x.status}</span></div>`).join("")||'<p class="muted">No withdrawals yet.</p>'})}
+function submitTask(id){if(!db)return toast("Task submitted in offline preview");const t=tasks.find(x=>x.id===id);if(!t)return;const sid="sub_"+Date.now();db.ref("submissions/"+sid).set({id:sid,uid,username:user.username,taskId:id,taskTitle:t.title,reward:t.reward,status:"pending",createdAt:Date.now()}).then(()=>toast("Task sent for review")).catch(()=>toast("Could not submit"))}
+let adminTapsN=0,devTapsN=0;
+function adminTap(){adminTapsN++;if(adminTapsN>=7){adminTapsN=0;pinModal("Admin Panel",config.adminPin,"admin")}}
+function devTap(){devTapsN++;if(devTapsN>=7){devTapsN=0;pinModal("Developer Panel",config.devPin,"dev")}}
+function pinModal(title,correct,type){document.getElementById("modal").classList.remove("hidden");document.getElementById("modal").innerHTML=`<div class="modalBox"><h2>${title}</h2><p class="muted">Enter the access code to continue.</p><input id="pin" class="input" type="password" maxlength="8" placeholder="Access code"><div class="grid2"><button class="btn secondary" onclick="closeModal()">Cancel</button><button class="btn" onclick="checkPin('${esc(correct)}','${type}')">Enter</button></div></div>`}
+function checkPin(c,t){if(document.getElementById("pin").value!==c)return toast("Wrong access code");closeModal();t==="admin"?adminPanel():devPanel()}
+function closeModal(){document.getElementById("modal").classList.add("hidden")}
+async function adminPanel(){
+ let users=[],ws=[];if(db){const [u,w]=await Promise.all([db.ref("users").once("value"),db.ref("withdrawals").once("value")]);users=u.exists()?Object.values(u.val()):[];ws=w.exists()?Object.values(w.val()):[]}
+ const pending=ws.filter(x=>x.status==="pending"),paid=ws.filter(x=>x.status==="paid").reduce((a,x)=>a+Number(x.amount||0),0);
+ document.getElementById("modal").classList.remove("hidden");document.getElementById("modal").innerHTML=`<div class="modalBox"><div class="adminHead"><div><div class="section">Control Center</div><h2 style="margin:0">Admin Panel</h2></div><button class="close" onclick="closeModal()">✕</button></div>
+ <div class="stats" style="margin-bottom:14px">${[["Total Users",users.length],["Banned Users",users.filter(x=>x.banned).length],["Withdrawals",ws.length],["Pending",pending.length],["Total Paid",money(paid)],["Ads Watched",users.reduce((a,x)=>a+Number(x.adsWatched||0),0)]].map(x=>`<div class="stat" style="background:#f0f9f2;color:#17251c"><small>${x[0]}</small><b>${x[1]}</b></div>`).join("")}</div>
+ <div class="card"><div class="section">Settings</div><input id="rbonus" class="input" type="number" value="${config.referralReward}" placeholder="Referral bonus (Points)"><input id="rate" class="input" type="number" value="${config.pointsPerNaira}" placeholder="Points per ₦1"><input id="adreward" class="input" type="number" value="${config.adReward}" placeholder="Ad reward Points"><input id="minw" class="input" type="number" value="${config.minWithdrawal}" placeholder="Minimum withdrawal"><button class="btn" onclick="saveAdminSettings()">SAVE SETTINGS</button></div>
+ <div class="card"><div class="section">Balance Management</div><input id="muid" class="input" placeholder="User Telegram UID"><input id="mamt" class="input" type="number" placeholder="Cash amount"><div class="grid2"><button class="btn" onclick="balanceManage(1)">+ ADD CASH</button><button class="btn secondary" onclick="balanceManage(-1)">− REMOVE CASH</button></div><div class="grid2" style="margin-top:8px"><button class="btn danger" onclick="banUser(true)">BAN USER</button><button class="btn secondary" onclick="banUser(false)">UNBAN USER</button></div></div>
+ <div class="card"><div class="section">Withdrawal Requests</div>${pending.length?pending.map(w=>`<div class="row"><div><b>@${esc(w.username||"user")}</b><div class="muted">${money(w.amount)} • ${esc(w.bankName)} • ${esc(w.accountNumber)}</div></div><div class="grid2" style="min-width:145px"><button class="btn" onclick="processWd('${w.id}','paid')">Approve</button><button class="btn danger" onclick="processWd('${w.id}','declined')">Decline</button></div></div>`).join(""):'<p class="muted">No pending withdrawal requests.</p>'}</div>
+ <div class="card"><div class="section">Users</div>${users.slice(0,30).map(u=>`<div class="row"><div><b>@${esc(u.username||"user")}</b><div class="muted">${esc(u.uid)}</div></div><span class="pill ${u.banned?"declined":"paid"}">${u.banned?"BANNED":"ACTIVE"}</span></div>`).join("")||'<p class="muted">No users.</p>'}</div></div>`;
+}
+function saveAdminSettings(){const s={referralReward:Number(document.getElementById("rbonus").value),pointsPerNaira:Number(document.getElementById("rate").value),adReward:Number(document.getElementById("adreward").value),minWithdrawal:Number(document.getElementById("minw").value)};config=Object.assign(config,s);if(db)db.ref("config/app").update(s);toast("Settings saved");}
+function balanceManage(sign){const id=document.getElementById("muid").value.trim(),a=Number(document.getElementById("mamt").value);if(!id||a<=0)return toast("Enter UID and amount");if(!db)return toast("Firebase is required for admin changes");db.ref("users/"+id+"/cashBalance").transaction(v=>Math.max(0,Number(v||0)+sign*a)).then(()=>toast(sign>0?"Cash added":"Cash removed"))}
+function banUser(v){const id=document.getElementById("muid").value.trim();if(!id||!db)return toast("Enter UID");db.ref("users/"+id+"/banned").set(v).then(()=>toast(v?"User banned":"User unbanned"))}
+function processWd(id,status){if(!db)return;db.ref("withdrawals/"+id).once("value").then(s=>{if(!s.exists())throw Error();const w=s.val();if(w.status!=="pending")return;return db.ref("withdrawals/"+id).update({status,processedAt:Date.now()}).then(()=>status==="declined"?db.ref("users/"+w.uid+"/cashBalance").transaction(v=>Number(v||0)+Number(w.amount||0)):null)}).then(()=>{toast(status==="paid"?"Withdrawal approved":"Withdrawal declined and refunded");adminPanel()}).catch(()=>toast("Could not process withdrawal"))}
+function devPanel(){document.getElementById("modal").classList.remove("hidden");document.getElementById("modal").innerHTML=`<div class="modalBox"><div class="adminHead"><div><div class="section">Technical Area</div><h2 style="margin:0">Developer Panel</h2></div><button class="close" onclick="closeModal()">✕</button></div><div class="card"><div class="section">Instructions</div><p class="muted"><b>Bot Token:</b> Paste the BotFather token here.<br><b>Bot Username:</b> Username without @.<br><b>WebApp Short Name:</b> Exact Telegram Mini App short name.<br><b>Admin IDs:</b> Numeric Telegram IDs separated by commas.<br><b>Payout Channel ID:</b> Private channel/group for withdrawal notifications. Add the bot as admin.<br><b>Ad SDK:</b> Current rewarded-ad function is show_11136660.</p></div><div class="card"><input id="devbot" class="input" placeholder="Bot Token"><input id="devuser" class="input" placeholder="Bot Username"><input id="devapp" class="input" placeholder="WebApp Short Name"><input id="devadmin" class="input" placeholder="Admin Telegram IDs"><input id="devpay" class="input" placeholder="Payout Channel ID"><input id="devsub" class="input" placeholder="Submission Channel ID"><button class="btn" onclick="saveDev()">SAVE DEVELOPER SETTINGS</button></div></div>`}
+function saveDev(){const s={botToken:document.getElementById("devbot").value.trim(),botUsername:document.getElementById("devuser").value.trim(),appShortName:document.getElementById("devapp").value.trim(),adminUid:document.getElementById("devadmin").value.trim(),payoutChannelId:document.getElementById("devpay").value.trim(),submissionChannelId:document.getElementById("devsub").value.trim()};Object.assign(config,s);if(db)db.ref("config/app").update(s);toast("Developer settings saved")}
+document.addEventListener("click",e=>{if(e.target.closest(".balance")){devTapsN++;if(devTapsN>=7){devTapsN=0;pinModal("Developer Panel",config.devPin,"dev")}}});
+try{window.Telegram?.WebApp?.ready();window.Telegram?.WebApp?.expand()}catch(e){}
+render();
+const f1=document.createElement("script");f1.src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js";f1.onload=()=>{const f2=document.createElement("script");f2.src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js";f2.onload=loadFirebase;f2.onerror=()=>toast("Firebase unavailable; site still works");document.head.appendChild(f2)};f1.onerror=()=>toast("Firebase unavailable; site still works");document.head.appendChild(f1);
+const ad=document.createElement("script");ad.async=true;ad.src="https://libtl.com/sdk.js";ad.dataset.zone="11136660";ad.dataset.sdk="show_11136660";document.head.appendChild(ad);
+</script>
+</body>
+</html>

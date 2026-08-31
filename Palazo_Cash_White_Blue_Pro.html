@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2563eb">
+<title>Palazo Cash</title>
+<style>
+:root{
+  --blue:#2563eb;--blue2:#38bdf8;--navy:#10213f;--ink:#14213d;--muted:#718096;
+  --bg:#f6f9ff;--card:#fff;--line:#e7edf7;--green:#16a673;--red:#e53935;
+  --purple:#8b5cf6;--orange:#f59e0b;--pink:#ec4899;--cyan:#06b6d4;
+  --shadow:0 12px 35px rgba(37,99,235,.10);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;color:var(--ink)}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+body:before,body:after{content:"";position:fixed;border-radius:50%;filter:blur(1px);pointer-events:none;z-index:0}
+body:before{width:190px;height:190px;background:rgba(56,189,248,.08);top:18%;left:-70px;animation:floatA 9s ease-in-out infinite}
+body:after{width:240px;height:240px;background:rgba(37,99,235,.06);right:-100px;bottom:18%;animation:floatB 11s ease-in-out infinite}
+@keyframes floatA{50%{transform:translate(45px,80px) scale(1.08)}}
+@keyframes floatB{50%{transform:translate(-45px,-60px) scale(.92)}}
+.hidden{display:none!important}
+#app{min-height:100vh;position:relative;z-index:1}
+.topbar{height:72px;background:rgba(255,255,255,.94);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 18px;position:sticky;top:0;z-index:20}
+.brand{display:flex;align-items:center;gap:10px;user-select:none}
+.brand-logo{width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,#174ee8,#38bdf8);color:#fff;display:grid;place-items:center;font-weight:1000;box-shadow:0 8px 20px rgba(37,99,235,.22)}
+.brand b{font-size:20px}.brand small{display:block;color:var(--muted);font-size:10px;margin-top:2px}
+.top-actions{display:flex;gap:8px}.circle{width:42px;height:42px;border:1px solid var(--line);background:#fff;border-radius:50%;display:grid;place-items:center;font-size:19px}
+main{width:min(760px,100%);margin:auto;padding:18px 16px 105px}
+.card{background:rgba(255,255,255,.97);border:1px solid rgba(224,232,244,.95);border-radius:24px;box-shadow:var(--shadow);padding:19px;margin-bottom:15px}
+.hero{color:#fff;background:linear-gradient(135deg,#183fc1 0%,#2563eb 48%,#38bdf8 100%);border:0;overflow:hidden;position:relative}
+.hero:before,.hero:after{content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.08);pointer-events:none}
+.hero:before{width:170px;height:170px;right:-55px;top:-80px}.hero:after{width:110px;height:110px;left:-45px;bottom:-55px}
+.label,.section{font-size:11px;font-weight:900;letter-spacing:.8px;text-transform:uppercase;color:var(--muted)}
+.hero .label{color:rgba(255,255,255,.78)}
+.balance-head{display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1}
+.balance-big{font-size:40px;line-height:1.05;margin:9px 0 16px;font-weight:950;letter-spacing:-1.4px;position:relative;z-index:1}
+.eye{width:39px;height:39px;border:0;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;display:grid;place-items:center}
+.balance-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;position:relative;z-index:1}
+.balance-box{padding:12px;border-radius:16px;background:rgba(255,255,255,.13);min-width:0}
+.balance-box small{display:block;color:rgba(255,255,255,.74);font-size:10px}.balance-box b{display:block;font-size:15px;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.quick{display:grid;grid-template-columns:repeat(3,1fr);gap:11px}
+.action{border:1px solid var(--line);background:#fff;border-radius:19px;padding:14px 8px;min-height:105px;text-align:center;box-shadow:0 7px 20px rgba(15,23,42,.05);transition:transform .12s,box-shadow .12s}
+.action:active,.btn:active,.nav-btn:active,.circle:active,.icon-btn:active{transform:scale(.96)}
+.action .ico{width:46px;height:46px;border-radius:15px;margin:0 auto 8px;display:grid;place-items:center;font-size:22px;color:#fff}
+.action b{display:block;font-size:13px}.action small{display:block;color:var(--muted);font-size:10px;margin-top:3px}
+.blue{background:linear-gradient(135deg,#2563eb,#38bdf8)}.green{background:linear-gradient(135deg,#10b981,#34d399)}
+.orange{background:linear-gradient(135deg,#f59e0b,#fb923c)}.purple{background:linear-gradient(135deg,#7c3aed,#a78bfa)}
+.pink{background:linear-gradient(135deg,#db2777,#f472b6)}.cyan{background:linear-gradient(135deg,#0891b2,#22d3ee)}
+.red{background:linear-gradient(135deg,#dc2626,#fb7185)}
+.ad-banner{background:linear-gradient(135deg,#0f3cae,#2563eb 55%,#38bdf8);color:#fff;border:0}
+.ad-banner .ad-row{display:flex;align-items:center;gap:13px}.ad-icon{width:54px;height:54px;border-radius:17px;background:rgba(255,255,255,.16);display:grid;place-items:center;font-size:27px}
+.ad-banner h2{margin:0;font-size:19px}.ad-banner p{margin:4px 0 0;color:rgba(255,255,255,.75);font-size:12px}
+.btn{width:100%;border:0;border-radius:15px;padding:13px 15px;background:linear-gradient(135deg,#2450df,#27a9f3);color:#fff;font-weight:900;box-shadow:0 9px 18px rgba(37,99,235,.18);transition:transform .12s,filter .12s}
+.btn.secondary{background:#fff;color:var(--blue);border:1px solid #cfe0ff;box-shadow:none}.btn.danger{background:#e72b31}.btn.green-btn{background:linear-gradient(135deg,#0e9f6e,#34d399)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.input,.select,.textarea{width:100%;border:1px solid #dfe6f0;background:#fbfdff;border-radius:14px;padding:13px 14px;outline:0;color:var(--ink);margin:6px 0 12px}
+.input:focus,.select:focus,.textarea:focus{border-color:#75a5f7;box-shadow:0 0 0 4px rgba(37,99,235,.08)}
+.fieldlabel{font-weight:850;font-size:13px;margin:4px 0}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}.row:last-child{border-bottom:0}
+.muted{color:var(--muted)}.title{font-size:25px;margin:4px 0 15px}
+.pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:6px 10px;font-size:10px;font-weight:900;background:#eef4ff;color:var(--blue)}
+.pill.pending{background:#fff7df;color:#b77900}.pill.paid,.pill.approved{background:#e7faf2;color:#0f8b61}.pill.declined,.pill.rejected{background:#fff0f0;color:#d62f2f}
+.bottom{position:fixed;bottom:0;left:0;right:0;height:78px;background:rgba(255,255,255,.96);backdrop-filter:blur(16px);border-top:1px solid var(--line);z-index:30;display:flex;justify-content:center}
+.nav{width:min(760px,100%);display:grid;grid-template-columns:repeat(5,1fr)}
+.nav-btn{border:0;background:transparent;color:#738096;font-weight:800;font-size:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;transition:transform .12s}
+.nav-btn span{font-size:22px;line-height:1}.nav-btn.active{color:var(--blue)}.nav-dot{width:5px;height:5px;background:var(--blue);border-radius:50%;margin-top:-1px}
+.toast{position:fixed;left:50%;bottom:93px;transform:translateX(-50%);background:#12233e;color:#fff;border-radius:14px;padding:11px 15px;font-size:12px;font-weight:800;z-index:100;box-shadow:0 10px 30px rgba(0,0,0,.2)}
+.modal{position:fixed;inset:0;background:rgba(8,20,45,.48);backdrop-filter:blur(5px);display:grid;place-items:center;padding:16px;z-index:80}
+.modal-box{width:min(620px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:26px;padding:20px;box-shadow:0 30px 70px rgba(0,0,0,.2)}
+.modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.close{width:38px;height:38px;border:0;border-radius:50%;background:#f2f5f9;font-size:22px;color:#526174}
+.loader{width:54px;height:54px;border-radius:50%;border:5px solid #dce8ff;border-top-color:#2563eb;animation:spin .8s linear infinite;margin:8px auto 16px}@keyframes spin{to{transform:rotate(360deg)}}
+.center{text-align:center}.pay-card{background:linear-gradient(135deg,#eef5ff,#fff);border:1px dashed #8fb4f4;border-radius:18px;padding:15px}.code{font-size:23px;letter-spacing:2px;font-weight:950;color:#245fdb}
+.profile-top{text-align:center;padding-top:28px}.avatar{width:108px;height:108px;margin:auto;border-radius:50%;background:linear-gradient(135deg,#eaf0ff,#dfe9ff);display:grid;place-items:center;font-size:52px;color:#5e7190;box-shadow:inset 0 0 0 8px #fff,0 12px 30px rgba(37,99,235,.10)}
+.profile-name{font-size:28px;font-weight:950;margin:16px 0 3px}
+.notice{border-radius:17px;padding:13px;background:#f3f7ff;border:1px solid #d9e7ff;font-size:12px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.stat{background:#f7faff;border:1px solid var(--line);border-radius:16px;padding:12px}.stat small{display:block;color:var(--muted);font-size:10px}.stat b{display:block;font-size:17px;margin-top:4px}
+.option-list .row{padding:16px 0}.option-icon{width:42px;height:42px;border-radius:14px;color:#fff;display:grid;place-items:center;font-size:20px;flex:none}
+.admin-tabs{display:flex;gap:8px;overflow:auto;padding-bottom:4px;margin-bottom:10px}.admin-tab{white-space:nowrap;border:1px solid var(--line);background:#fff;border-radius:12px;padding:9px 12px;font-weight:800;color:var(--muted)}.admin-tab.active{background:#eaf2ff;color:var(--blue);border-color:#c7dcff}
+.price-chip{border:1px solid #dbe6f6;border-radius:13px;padding:12px;background:#fbfdff;display:flex;justify-content:space-between;align-items:center;margin:8px 0}
+.logo-tap{touch-action:manipulation}
+.ripple{position:fixed;width:8px;height:8px;border-radius:50%;background:rgba(37,99,235,.28);pointer-events:none;transform:translate(-50%,-50%);animation:ripple .45s ease-out forwards;z-index:200}
+@keyframes ripple{to{width:85px;height:85px;opacity:0}}
+@media(max-width:430px){
+ main{padding:14px 12px 100px}.card{border-radius:21px;padding:16px}.balance-big{font-size:34px}.quick{gap:8px}.action{min-height:96px;padding:11px 5px}.action .ico{width:42px;height:42px}.brand b{font-size:18px}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="modal" class="modal hidden"></div>
+
+<script>
+const DEFAULT={
+  siteName:"Palazo Cash",
+  referralReward:40,
+  minDeposit:500,
+  minWithdrawal:100,
+  depositPresets:[500,1000,2000,5000,10000],
+  paymentAccount:"9123671483",
+  paymentName:"WISDOM ARAUSI",
+  paymentBank:"Opay",
+  ads:[
+    {id:"wa_group",app:"WhatsApp",category:"WhatsApp Group Join",price:100,icon:"🟢"},
+    {id:"wa_channel",app:"WhatsApp",category:"WhatsApp Channel Join",price:120,icon:"🟢"},
+    {id:"wa_save",app:"WhatsApp",category:"WhatsApp Contact Save",price:80,icon:"🟢"},
+    {id:"fb_follow",app:"Facebook",category:"Facebook Page Follow",price:100,icon:"🔵"},
+    {id:"yt_sub",app:"YouTube",category:"YouTube Subscribe",price:150,icon:"🔴"}
+  ]
+};
+
+let cfg=load("palazo_config",DEFAULT);
+let session=load("palazo_session",null);
+let users=load("palazo_users",[]);
+let currentTab="home";
+let hideBalances=false;
+let adminTaps=0, adminTimer=null;
+
+function load(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}}
+function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+function money(n){return "₦"+Number(n||0).toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2})}
+function now(){return new Date().toLocaleString("en-NG",{dateStyle:"medium",timeStyle:"short"})}
+function toast(m){const x=document.createElement("div");x.className="toast";x.textContent=m;document.body.appendChild(x);setTimeout(()=>x.remove(),2300)}
+function me(){return users.find(u=>u.username===session?.username)||null}
+function persistUser(u){users=users.map(x=>x.username===u.username?u:x);save("palazo_users",users);session={username:u.username};save("palazo_session",session)}
+function ensureUser(u){
+  const base={username:u.username,email:u.email||"",phone:u.phone||"",password:u.password||"",created:"Aug 2026",
+    earning:0,affiliate:0,deposit:0,referrals:0,bank:null,transactions:[],deposits:[],adOrders:[]};
+  return Object.assign(base,u)
+}
+function render(){ if(!session||!me()){renderAuth("login");return} renderApp() }
+
+function renderAuth(mode){
+ document.getElementById("app").innerHTML=`
+ <div style="min-height:100vh;display:grid;place-items:center;padding:22px;position:relative;z-index:1">
+  <div style="width:min(430px,100%)">
+   <div class="center" style="margin-bottom:24px">
+    <div class="brand-logo" style="margin:auto;width:64px;height:64px;font-size:21px">PC</div>
+    <h1 style="margin:15px 0 5px;font-size:31px">${mode==="login"?"Welcome back":"Create account"}</h1>
+    <p class="muted" style="margin:0">${mode==="login"?"Sign in to continue earning":"Start earning in minutes. No activation payment."}</p>
+   </div>
+   <div class="card">
+    ${mode==="login"?`
+      <div class="fieldlabel">Username or Email</div><input id="loginUser" class="input" placeholder="Enter username or email">
+      <div class="fieldlabel">Password</div><input id="loginPass" class="input" type="password" placeholder="Enter password">
+      <button class="btn" onclick="login()">Login →</button>
+      <div class="center muted" style="margin-top:17px">Don't have an account? <b style="color:var(--blue);cursor:pointer" onclick="renderAuth('register')">Create one</b></div>
+    `:`
+      <div class="fieldlabel">Username</div><input id="regUser" class="input" placeholder="e.g. arausi">
+      <div class="fieldlabel">Email Address</div><input id="regEmail" class="input" type="email" placeholder="name@example.com">
+      <div class="fieldlabel">Phone Number</div><input id="regPhone" class="input" placeholder="08123456789">
+      <div class="fieldlabel">Password</div><input id="regPass" class="input" type="password" placeholder="At least 8 characters">
+      <div class="fieldlabel">Referral Code <span class="muted">(Optional)</span></div><input id="regRef" class="input" placeholder="Referral code">
+      <button class="btn" onclick="register()">Create Account →</button>
+      <p class="muted center" style="font-size:11px;margin:12px 0 0">Free sign up • No payment required to activate your account.</p>
+      <div class="center muted" style="margin-top:17px">Already have an account? <b style="color:var(--blue);cursor:pointer" onclick="renderAuth('login')">Login</b></div>
+    `}
+   </div>
+  </div>
+ </div>`;
+}
+
+function register(){
+ const username=document.getElementById("regUser").value.trim().replace(/\s+/g,"_");
+ const email=document.getElementById("regEmail").value.trim(),phone=document.getElementById("regPhone").value.trim(),password=document.getElementById("regPass").value,ref=document.getElementById("regRef").value.trim();
+ if(username.length<3||!email||password.length<8)return toast("Complete all required fields");
+ if(users.some(u=>u.username.toLowerCase()===username.toLowerCase()))return toast("Username already exists");
+ const u=ensureUser({username,email,phone,password,referralCode:ref});
+ users.push(u);save("palazo_users",users);session={username};save("palazo_session",session);
+ // Every successful referral earns ₦40; there is no activation fee.
+ if(ref){const parent=users.find(x=>x.referralCode===ref||x.username.toLowerCase()===ref.toLowerCase());if(parent){parent.affiliate+=Number(cfg.referralReward);parent.referrals=(parent.referrals||0)+1;parent.transactions=parent.transactions||[];parent.transactions.unshift({type:"Referral bonus",amount:Number(cfg.referralReward),balance:"Affiliate Balance",status:"approved",date:now()});save("palazo_users",users)}}
+ toast("Account created successfully");render();
+}
+function login(){
+ const key=document.getElementById("loginUser").value.trim().toLowerCase(),pass=document.getElementById("loginPass").value;
+ const u=users.find(x=String(x.username).toLowerCase()===key||String(x.email).toLowerCase()===key);
+ if(!u||u.password!==pass)return toast("Invalid login details");
+ session={username:u.username};save("palazo_session",session);render();
+}
+function logout(){session=null;save("palazo_session",null);renderAuth("login")}
+
+function header(){
+ return `<header class="topbar">
+  <div class="brand logo-tap" onclick="tapAdmin()">
+   <div class="brand-logo">PC</div><div><b>${esc(cfg.siteName)}</b><small>@${esc(me().username)}</small></div>
+  </div>
+  <div class="top-actions"><button class="circle" onclick="toast('No new notifications')">♧</button><button class="circle" onclick="openMenu()">☰</button></div>
+ </header>`;
+}
+function bottom(){
+ const items=[["home","⌂","Home"],["tasks","☷","Tasks"],["refer","♧","Refer"],["wallet","▣","Wallet"],["profile","●","Profile"]];
+ return `<div class="bottom"><nav class="nav">${items.map(([id,ico,t])=>`<button class="nav-btn ${currentTab===id?"active":""}" onclick="go('${id}')"><span>${ico}</span>${t}${currentTab===id?'<i class="nav-dot"></i>':''}</button>`).join("")}</nav></div>`;
+}
+function go(t){currentTab=t;renderApp();window.scrollTo({top:0,behavior:"smooth"})}
+function renderApp(){
+ const u=me(); if(!u)return renderAuth("login");
+ let body="";
+ if(currentTab==="home")body=home(u);
+ if(currentTab==="tasks")body=tasksPage(u);
+ if(currentTab==="refer")body=referPage(u);
+ if(currentTab==="wallet")body=walletPage(u);
+ if(currentTab==="profile")body=profilePage(u);
+ document.getElementById("app").innerHTML=header()+`<main>${body}</main>`+bottom();
+}
+function bval(n){return hideBalances?"••••••":money(n)}
+
+function home(u){
+ return `<div class="card" style="background:#eafaf3;border-color:#bdebd6">
+   <div style="display:flex;gap:12px;align-items:center"><div style="width:44px;height:44px;border-radius:50%;background:#18a875;color:#fff;display:grid;place-items:center;font-size:22px">✓</div>
+   <div><b style="color:#0c875f;font-size:17px">Account Activated</b><div class="muted" style="font-size:11px">All features unlocked — tasks, withdrawals & referral bonuses enabled.</div></div></div>
+ </div>
+ <div class="card hero">
+  <div class="balance-head"><div class="label">Total Balance</div><button class="eye" onclick="hideBalances=!hideBalances;renderApp()">${hideBalances?"◉":"◌"}</button></div>
+  <div class="balance-big">${bval(u.earning+u.affiliate+u.deposit)}</div>
+  <div class="balance-grid">
+   <div class="balance-box"><small>💰 Earning</small><b>${bval(u.earning)}</b></div>
+   <div class="balance-box"><small>🎁 Affiliate</small><b>${bval(u.affiliate)}</b></div>
+   <div class="balance-box"><small>🏦 Deposit</small><b>${bval(u.deposit)}</b></div>
+  </div>
+ </div>
+ <div class="card"><div class="section" style="margin-bottom:12px">Quick actions</div><div class="quick">
+  <button class="action" onclick="go('tasks')"><div class="ico blue">✓</div><b>Tasks</b><small>Earn now</small></button>
+  <button class="action" onclick="go('refer')"><div class="ico purple">♧</div><b>Refer</b><small>₦${cfg.referralReward} each</small></button>
+  <button class="action" onclick="go('wallet')"><div class="ico green">⇩</div><b>Withdraw</b><small>Cash out</small></button>
+  <button class="action" onclick="depositModal()"><div class="ico cyan">＋</div><b>Deposit</b><small>Fund account</small></button>
+  <button class="action" onclick="placeAds()"><div class="ico orange">📣</div><b>Place Ads</b><small>Promote</small></button>
+  <button class="action" onclick="showHistory()"><div class="ico pink">↔</div><b>History</b><small>Transactions</small></button>
+ </div></div>
+ <div class="card ad-banner"><div class="ad-row"><div class="ad-icon">▶</div><div><h2>Watch Ads & Earn</h2><p>Complete a short ad session and receive your reward.</p></div></div>
+  <button class="btn" style="margin-top:14px;background:#fff;color:#1452cf" onclick="watchAd()">WATCH AD +10 POINTS</button>
+ </div>
+ <div class="card"><div class="section">Balance rules</div><div class="row"><span>💰 Earning Balance</span><b>Withdrawable</b></div><div class="row"><span>🎁 Affiliate Balance</span><b>Withdrawable</b></div><div class="row"><span>🏦 Deposit Balance</span><b class="muted">Not withdrawable</b></div></div>`;
+}
+
+function tasksPage(u){
+ return `<h2 class="title">Tasks</h2>
+ <div class="card"><div class="section">Earn from tasks</div><p class="muted">Complete available tasks and your reward is added to your Earning Balance.</p>
+ ${cfg.ads.length?cfg.ads.slice(0,3).map(a=>`<div class="row"><div><b>${esc(a.icon)} ${esc(a.category)}</b><div class="muted">${esc(a.app)} • Complete and submit proof</div></div><span class="pill">+₦${a.price}</span></div>`).join(""):"<p class='muted'>No tasks available.</p>"}
+ </div>
+ <div class="card"><div class="section">Ad watching</div><div class="center"><div style="font-size:46px">📺</div><h3>Watch Ads</h3><p class="muted">Earn 10 points after the viewing timer completes.</p><button class="btn" onclick="watchAd()">WATCH AD +10 POINTS</button></div></div>`;
+}
+
+function referPage(u){
+ const code=(u.referralCode||u.username).toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,10)||"PALAZO40";
+ const link=location.href.split("?")[0]+"?ref="+code;
+ return `<h2 class="title">Refer & Earn</h2>
+ <div class="card hero"><div class="label">Affiliate Earnings</div><div class="balance-big">${money(u.affiliate)}</div>
+  <div style="background:rgba(255,255,255,.14);padding:13px;border-radius:15px;display:flex;justify-content:space-between;gap:8px"><span>🎁 Referral Bonus</span><b>₦${cfg.referralReward}.00 / successful referral</b></div>
+ </div>
+ <div class="card"><h2 style="margin:0 0 16px">Your Invitation Link</h2>
+  <div class="section">Your Referral Code</div><div class="pay-card" style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b class="code">${esc(code)}</b><button class="btn secondary" style="width:auto" onclick="copyText('${esc(code)}')">▣ Copy</button></div>
+  <div class="section" style="margin-top:16px">Direct Link</div><div class="pay-card" style="display:flex;gap:8px;align-items:center"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;font-size:11px">${esc(link)}</span><button class="btn" style="width:auto" onclick="copyText('${esc(link)}')">Copy</button></div>
+  <div class="grid2" style="margin-top:12px"><button class="btn secondary" style="color:#18a874" onclick="shareRef('WhatsApp','${esc(link)}')">◉ WhatsApp</button><button class="btn secondary" style="color:#1485cc" onclick="shareRef('Telegram','${esc(link)}')">➤ Telegram</button></div>
+  <p class="muted center" style="font-size:11px;margin-bottom:0">No activation payment is required. You earn ₦${cfg.referralReward} for each successful referral.</p>
+ </div>
+ <div class="card"><div class="stats"><div class="stat"><small>TOTAL INVITED</small><b>${u.referrals||0}</b></div><div class="stat"><small>SUCCESSFUL</small><b style="color:#16a673">${u.referrals||0}</b></div><div class="stat"><small>RATE</small><b>₦${cfg.referralReward}</b></div></div></div>`;
+}
+
+function walletPage(u){
+ const withdrawable=Number(u.earning||0)+Number(u.affiliate||0);
+ return `<h2 class="title">Wallet</h2>
+ <div class="card hero"><div class="label">Withdrawable Balance</div><div class="balance-big">${money(withdrawable)}</div><div class="balance-grid"><div class="balance-box"><small>💰 Earning</small><b>${money(u.earning)}</b></div><div class="balance-box"><small>🎁 Affiliate</small><b>${money(u.affiliate)}</b></div><div class="balance-box"><small>🏦 Deposit</small><b>${money(u.deposit)}</b></div></div></div>
+ <div class="card"><div class="grid2"><button class="action" onclick="withdrawModal()"><div class="ico green">⇩</div><b>Withdraw</b><small>Cash out</small></button><button class="action" onclick="depositModal()"><div class="ico cyan">＋</div><b>Deposit</b><small>Fund wallet</small></button></div></div>
+ <div class="card"><h3 style="margin-top:0">Bank Details</h3>${u.bank?`<div class="notice"><b>${esc(u.bank.name)}</b><br><span class="muted">${esc(u.bank.bank)} • ${esc(u.bank.account)}</span></div>`:"<p class='muted'>Add your bank details before requesting a withdrawal.</p>"}<button class="btn secondary" style="margin-top:10px" onclick="addBankModal()">＋ Add / Edit Bank</button></div>
+ <div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0">Transaction History</h3><button class="btn secondary" style="width:auto" onclick="showHistory()">View all</button></div>${historyRows(u.transactions,5)}</div>`;
+}
+
+function profilePage(u){
+ return `<h2 class="title">Profile</h2>
+ <div class="card profile-top"><div class="avatar">●</div><div class="profile-name">@${esc(u.username)}</div><div class="muted">Member since ${esc(u.created||"Aug 2026")}</div></div>
+ <div class="card"><div class="section">Profile Details</div><div class="fieldlabel">Email</div><input id="pEmail" class="input" value="${esc(u.email)}"><div class="fieldlabel">Phone</div><input id="pPhone" class="input" value="${esc(u.phone)}"><button class="btn" onclick="saveProfile()">Save changes</button><p class="muted center" style="font-size:11px">Username can't be changed — it is tied to your account.</p></div>
+ <div class="card option-list">
+  <div class="row" onclick="passwordModal()" style="cursor:pointer"><div style="display:flex;align-items:center;gap:12px"><div class="option-icon purple">🔒</div><div><b>Profile Settings</b><div class="muted">Change your password</div></div></div><span>›</span></div>
+  <div class="row" onclick="showHistory()" style="cursor:pointer"><div style="display:flex;align-items:center;gap:12px"><div class="option-icon blue">↔</div><div><b>Transaction History</b><div class="muted">All balance movements</div></div></div><span>›</span></div>
+  <div class="row" onclick="addBankModal()" style="cursor:pointer"><div style="display:flex;align-items:center;gap:12px"><div class="option-icon green">🏦</div><div><b>Bank Details</b><div class="muted">Manage withdrawal bank</div></div></div><span>›</span></div>
+ </div>
+ <button class="btn danger" onclick="logout()">⇥ Logout</button>`;
+}
+
+function historyRows(arr,n=20){
+ arr=arr||[]; if(!arr.length)return `<p class="muted center">No transactions yet.</p>`;
+ return arr.slice(0,n).map(t=>`<div class="row"><div><b>${esc(t.type)}</b><div class="muted">${esc(t.balance||"Balance")} • ${esc(t.date||"")}</div></div><div style="text-align:right"><b style="color:${Number(t.amount)>=0?"#129669":"#d93030"}">${Number(t.amount)>=0?"+":"-"}${money(Math.abs(t.amount))}</b><div><span class="pill ${t.status||"approved"}">${esc(t.status||"approved")}</span></div></div></div>`).join("");
+}
+
+function showHistory(){
+ const u=me();openModal(`<div class="modal-head"><div><div class="section">All balances</div><h2 style="margin:0">Transaction History</h2></div><button class="close" onclick="closeModal()">×</button></div>${historyRows(u.transactions,100)}`);
+}
+
+function placeAds(){
+ const apps=[...new Set(cfg.ads.map(x=>x.app))];
+ openModal(`<div class="modal-head"><div><div class="section">Advertise</div><h2 style="margin:0">Place Ads</h2></div><button class="close" onclick="closeModal()">×</button></div>
+ <p class="muted">Choose the app where you want to run your campaign.</p>
+ <div id="adApps" class="grid2">${apps.map(a=>`<button class="action" onclick="chooseAdApp('${esc(a)}')"><div class="ico ${a==="WhatsApp"?"green":a==="Facebook"?"blue":"red"}">${a==="WhatsApp"?"◉":a==="Facebook"?"f":"▶"}</div><b>${esc(a)}</b><small>View categories</small></button>`).join("")}</div>
+ <div class="notice" style="margin-top:12px">Prices and categories can be changed from the Admin Panel.</div>`);
+}
+function chooseAdApp(app){
+ const items=cfg.ads.filter(x=>x.app===app);
+ document.getElementById("modal").querySelector(".modal-head").insertAdjacentHTML("afterend",`<div class="card" style="margin-top:8px"><div class="section">${esc(app)} categories</div>${items.map(x=>`<div class="price-chip"><div><b>${esc(x.icon)} ${esc(x.category)}</b><div class="muted">Campaign price</div></div><div style="text-align:right"><b>${money(x.price)}</b><button class="btn" style="width:auto;margin-left:8px;padding:8px 10px" onclick="orderAd('${esc(x.id)}')">Select</button></div></div>`).join("")}</div>`);
+}
+function orderAd(id){
+ const x=cfg.ads.find(a=>a.id===id),u=me(); if(!x)return;
+ if(u.deposit<x.price)return toast("Insufficient Deposit Balance");
+ u.deposit-=x.price;u.adOrders.unshift({category:x.category,app:x.app,price:x.price,status:"pending",date:now()});
+ u.transactions.unshift({type:"Place Ads",amount:-x.price,balance:"Deposit Balance",status:"pending",date:now()});
+ persistUser(u);closeModal();toast("Ad order submitted");
+}
+function watchAd(){
+ openModal(`<div class="center"><div class="loader"></div><h2>Loading ad...</h2><p class="muted">Please wait while the ad session starts.</p></div>`);
+ setTimeout(()=>{const u=me();u.earning+=10;u.transactions.unshift({type:"Ad reward",amount:10,balance:"Earning Balance",status:"approved",date:now()});persistUser(u);closeModal();renderApp();toast("+10 points reward credited");},4500);
+}
+
+function depositModal(){
+ const min=Number(cfg.minDeposit||500), presets=[...new Set((cfg.depositPresets||[]).filter(x=>Number(x)>=min).map(Number))];
+ if(!presets.length)presets.push(min,min*2,min*4);
+ openModal(`<div class="modal-head"><div><div class="section">Deposit Balance</div><h2 style="margin:0">Add Funds</h2></div><button class="close" onclick="closeModal()">×</button></div>
+ <p class="muted">Select an amount to add to your non-withdrawable Deposit Balance.</p>
+ <div class="grid2">${presets.slice(0,8).map((x,i)=>`<button class="action" onclick="selectDeposit(${x})"><div class="ico ${["blue","cyan","purple","green","orange","pink","red","blue"][i]}">₦</div><b>${money(x)}</b><small>Deposit</small></button>`).join("")}</div>
+ <div class="fieldlabel" style="margin-top:15px">Custom amount</div><input id="customDeposit" class="input" type="number" min="${min}" placeholder="Minimum ${money(min)}">
+ <button class="btn" onclick="startDeposit()">Pay Now →</button>
+ <div class="notice" style="margin-top:10px">Minimum deposit: <b>${money(min)}</b></div>`);
+}
+function selectDeposit(n){document.getElementById("customDeposit").value=n}
+function startDeposit(){
+ const n=Number(document.getElementById("customDeposit").value||0);
+ if(n<Number(cfg.minDeposit))return toast("Below minimum deposit");
+ closeModal();
+ openModal(`<div class="center"><div class="loader"></div><h2>Generating payment details</h2><p class="muted">Please wait...</p></div>`);
+ setTimeout(()=>paymentDetails(n),1300);
+}
+function narration(){return "PC-"+Math.random().toString(36).slice(2,8).toUpperCase()+"-"+Math.floor(100+Math.random()*900)}
+function paymentDetails(n){
+ const u=me(), code=narration();
+ openModal(`<div class="modal-head"><div><div class="section">Payment Details</div><h2 style="margin:0">${money(n)}</h2></div><button class="close" onclick="closeModal()">×</button></div>
+ <div class="pay-card">
+  <div class="row"><span>Bank Name</span><b>${esc(cfg.paymentBank)}</b></div>
+  <div class="row"><span>Account Number</span><b>${esc(cfg.paymentAccount)}</b></div>
+  <div class="row"><span>Account Name</span><b>${esc(cfg.paymentName)} (${esc(u.username)} - ${esc(cfg.siteName)})</b></div>
+  <div class="row"><span>Narration Code</span><b class="code">${code}</b></div>
+ </div>
+ <div class="notice" style="margin:12px 0">Send exactly <b>${money(n)}</b> and use the narration code <b>${code}</b> if your bank supports narration/reference.</div>
+ <button class="btn green-btn" onclick="paidDeposit(${n},'${code}')">✓ I Have Made Payment</button>`);
+}
+function paidDeposit(n,code){
+ openModal(`<div class="modal-head"><div><div class="section">Payment Proof</div><h2 style="margin:0">Confirm your deposit</h2></div><button class="close" onclick="closeModal()">×</button></div>
+ <div class="fieldlabel">Your bank account name</div><input id="depName" class="input" placeholder="Name on the account">
+ <div class="fieldlabel">Upload deposit screenshot</div><input id="depFile" class="input" type="file" accept="image/*">
+ <div class="notice">Amount: <b>${money(n)}</b><br>Narration: <b>${code}</b></div>
+ <button class="btn" style="margin-top:12px" onclick="submitDeposit(${n},'${code}')">Done — Submit for Review</button>`);
+}
+function submitDeposit(n,code){
+ const name=document.getElementById("depName").value.trim(),file=document.getElementById("depFile").files[0];
+ if(!name||!file)return toast("Enter account name and upload screenshot");
+ const u=me(),d={id:"dep_"+Date.now(),amount:n,accountName:name,narration:code,fileName:file.name,status:"pending",date:now()};
+ u.deposits.unshift(d);u.transactions.unshift({type:"Deposit request",amount:n,balance:"Deposit Balance",status:"pending",date:now()});persistUser(u);closeModal();renderApp();toast("Deposit submitted for admin review");
+}
+
+function addBankModal(){
+ const u=me(),b=u.bank||{};
+ openModal(`<div class="modal-head"><div><div class="section">Withdrawal</div><h2 style="margin:0">Add Bank</h2></div><button class="close" onclick="closeModal()">×</button></div>
+ <div class="fieldlabel">Account Name</div><input id="bankName" class="input" value="${esc(b.name||"")}" placeholder="Account holder name">
+ <div class="fieldlabel">Bank Name</div><input id="bankBank" class="input" value="${esc(b.bank||"")}" placeholder="e.g. Opay">
+ <div class="fieldlabel">Account Number</div><input id="bankAcc" class="input" inputmode="numeric" maxlength="10" value="${esc(b.account||"")}" placeholder="10-digit account number">
+ <button class="btn" onclick="saveBank()">Save Bank Details</button>`);
+}
+function saveBank(){
+ const n=document.getElementById("bankName").value.trim(),b=document.getElementById("bankBank").value.trim(),a=document.getElementById("bankAcc").value.trim();
+ if(!n||!b||!/^\d{10}$/.test(a))return toast("Enter valid bank details");
+ const u=me();u.bank={name:n,bank:b,account:a};persistUser(u);closeModal();renderApp();toast("Bank details saved");
+}
+function withdrawModal(){
+ const u=me(),max=u.earning+u.affiliate;
+ openModal(`<div class="modal-head"><div><div class="section">Withdraw</div><h2 style="margin:0">Cash Out</h2></div><button class="close" onclick="closeModal()">×</button></div>
+ <div class="notice">Withdrawable: <b>${money(max)}</b><br>Minimum: <b>${money(cfg.minWithdrawal)}</b></div>
+ <div class="fieldlabel" style="margin-top:12px">Amount</div><input id="wdAmount" class="input" type="number" placeholder="Enter amount">
+ ${u.bank?`<div class="pay-card"><b>${esc(u.bank.name)}</b><br><span class="muted">${esc(u.bank.bank)} • ${esc(u.bank.account)}</span></div>`:`<div class="notice">Add your bank details before withdrawing.</div>`}
+ <button class="btn" style="margin-top:12px" onclick="submitWithdrawal()">Request Withdrawal</button>`);
+}
+function submitWithdrawal(){
+ const u=me(),n=Number(document.getElementById("wdAmount").value||0);
+ if(!u.bank)return toast("Add bank details first");
+ if(n<cfg.minWithdrawal||n>u.earning+u.affiliate)return toast("Check withdrawal amount");
+ let left=n;
+ const fromE=Math.min(u.earning,left);u.earning-=fromE;left-=fromE;if(left>0)u.affiliate-=left;
+ u.transactions.unshift({type:"Withdrawal",amount:-n,balance:"Withdrawable Balances",status:"pending",date:now()});
+ u.withdrawals=u.withdrawals||[];u.withdrawals.unshift({amount:n,bank:u.bank,status:"pending",date:now()});
+ persistUser(u);closeModal();renderApp();toast("Withdrawal request submitted");
+}
+function saveProfile(){
+ const u=me();u.email=document.getElementById("pEmail").value.trim();u.phone=document.getElementById("pPhone").value.trim();persistUser(u);toast("Profile saved")
+}
+function passwordModal(){
+ openModal(`<div class="modal-head"><div><div class="section">Security</div><h2 style="margin:0">Change Password</h2></div><button class="close" onclick="closeModal()">×</button></div>
+ <div class="fieldlabel">Current Password</div><input id="oldPass" class="input" type="password">
+ <div class="fieldlabel">New Password</div><input id="newPass" class="input" type="password" placeholder="At least 8 characters">
+ <div class="fieldlabel">Confirm New Password</div><input id="newPass2" class="input" type="password">
+ <button class="btn" onclick="changePassword()">Update Password</button>`);
+}
+function changePassword(){
+ const u=me(),a=document.getElementById("oldPass").value,b=document.getElementById("newPass").value,c=document.getElementById("newPass2").value;
+ if(a!==u.password||b.length<8||b!==c)return toast("Check your password entries");
+ u.password=b;persistUser(u);closeModal();toast("Password changed successfully");
+}
+function copyText(t){navigator.clipboard?.writeText(t);toast("Copied")}
+function shareRef(app,link){copyText(link);toast(app+" sharing link copied")}
+function openModal(content){const m=document.getElementById("modal");m.classList.remove("hidden");m.innerHTML=`<div class="modal-box">${content}</div>`}
+function closeModal(){document.getElementById("modal").classList.add("hidden")}
+function openMenu(){openModal(`<div class="modal-head"><h2 style="margin:0">Menu</h2><button class="close" onclick="closeModal()">×</button></div><button class="btn secondary" onclick="go('profile');closeModal()">Profile Settings</button><button class="btn secondary" style="margin-top:8px" onclick="showHistory()">Transaction History</button><button class="btn secondary" style="margin-top:8px" onclick="addBankModal()">Bank Details</button><button class="btn danger" style="margin-top:8px" onclick="logout()">Logout</button>`)}
+
+function tapAdmin(){
+ adminTaps++;clearTimeout(adminTimer);adminTimer=setTimeout(()=>adminTaps=0,5000);
+ if(adminTaps>=10){adminTaps=0;adminPanel()}
+}
+function adminPanel(){
+ let page="overview";
+ const tabs=["overview","users","deposits","ads","settings"];
+ const renderAdmin=()=>{
+  const ulist=users;
+  let content="";
+  if(page==="overview")content=`<div class="stats"><div class="stat"><small>USERS</small><b>${ulist.length}</b></div><div class="stat"><small>PENDING DEPOSITS</small><b>${ulist.reduce((a,u)=>a+(u.deposits||[]).filter(d=>d.status==="pending").length,0)}</b></div><div class="stat"><small>PENDING WITHDRAWALS</small><b>${ulist.reduce((a,u)=>a+(u.withdrawals||[]).filter(d=>d.status==="pending").length,0)}</b></div></div>
+  <div class="card"><div class="section">Current payment setup</div><div class="row"><span>Bank</span><b>${esc(cfg.paymentBank)}</b></div><div class="row"><span>Account</span><b>${esc(cfg.paymentAccount)}</b></div><div class="row"><span>Min deposit</span><b>${money(cfg.minDeposit)}</b></div><div class="row"><span>Referral reward</span><b>₦${cfg.referralReward}</b></div></div>`;
+  if(page==="users")content=`<div class="card"><div class="section">Users</div>${ulist.map(u=>`<div class="row"><div><b>@${esc(u.username)}</b><div class="muted">${esc(u.email)}</div></div><span class="pill approved">ACTIVE</span></div>`).join("")||"<p class='muted'>No users.</p>"}</div>`;
+  if(page==="deposits")content=depositAdmin();
+  if(page==="ads")content=adsAdmin();
+  if(page==="settings")content=settingsAdmin();
+  document.getElementById("modal").innerHTML=`<div class="modal-box"><div class="modal-head"><div><div class="section">Control Center</div><h2 style="margin:0">Admin Panel</h2></div><button class="close" onclick="closeModal()">×</button></div><div class="admin-tabs">${tabs.map(x=>`<button class="admin-tab ${page===x?"active":""}" onclick="adminPage('${x}')">${x}</button>`).join("")}</div>${content}</div>`;
+ };
+ window.adminPage=(p)=>{page=p;renderAdmin()};
+ window.adminRefresh=renderAdmin;
+ openModal("");renderAdmin();
+}
+function depositAdmin(){
+ return `<div class="card"><div class="section">Deposit Requests</div>${users.flatMap(u=>(u.deposits||[]).map(d=>({u,d}))).map(({u,d})=>`<div class="row"><div><b>@${esc(u.username)} • ${money(d.amount)}</b><div class="muted">${esc(d.accountName)} • ${esc(d.narration)}<br>${esc(d.fileName)}</div></div><div style="display:flex;gap:5px">${d.status==="pending"?`<button class="btn green-btn" style="width:auto;padding:8px" onclick="approveDeposit('${esc(u.username)}','${esc(d.id)}')">Approve</button><button class="btn danger" style="width:auto;padding:8px" onclick="rejectDeposit('${esc(u.username)}','${esc(d.id)}')">Reject</button>`:`<span class="pill ${d.status}">${esc(d.status)}</span>`}</div></div>`).join("")||"<p class='muted'>No deposit requests.</p>"}</div>
+ <div class="card"><div class="section">Withdrawal Requests</div>${users.flatMap(u=>(u.withdrawals||[]).map(d=>({u,d}))).map(({u,d})=>`<div class="row"><div><b>@${esc(u.username)} • ${money(d.amount)}</b><div class="muted">${esc(d.bank?.bank||"")} • ${esc(d.bank?.account||"")}</div></div>${d.status==="pending"?`<button class="btn green-btn" style="width:auto;padding:8px" onclick="approveWithdrawal('${esc(u.username)}',${d.amount})">Approve</button>`:`<span class="pill ${d.status}">${esc(d.status)}</span>`}</div>`).join("")||"<p class='muted'>No withdrawal requests.</p>"}</div>`;
+}
+function approveDeposit(username,id){
+ const u=users.find(x=>x.username===username),d=(u?.deposits||[]).find(x=>x.id===id);if(!u||!d)return;
+ d.status="approved";u.deposit+=Number(d.amount);u.transactions.unshift({type:"Deposit approved",amount:Number(d.amount),balance:"Deposit Balance",status:"approved",date:now()});save("palazo_users",users);toast("Deposit approved");adminPanel()
+}
+function rejectDeposit(username,id){
+ const u=users.find(x=>x.username===username),d=(u?.deposits||[]).find(x=>x.id===id);if(!u||!d)return;d.status="rejected";save("palazo_users",users);toast("Deposit rejected");adminPanel()
+}
+function approveWithdrawal(username,amount){
+ const u=users.find(x=>x.username===username),w=(u?.withdrawals||[]).find(x=>x.amount===amount&&x.status==="pending");if(!u||!w)return;w.status="approved";save("palazo_users",users);toast("Withdrawal approved");adminPanel()
+}
+function adsAdmin(){
+ return `<div class="card"><div class="section">Place Ads Categories & Prices</div>${cfg.ads.map((a,i)=>`<div class="price-chip"><div><b>${esc(a.icon)} ${esc(a.app)}</b><div class="muted">${esc(a.category)}</div></div><b>${money(a.price)}</b></div>`).join("")}</div>
+ <div class="card"><h3 style="margin-top:0">Add Custom Category</h3><div class="fieldlabel">App</div><input id="newApp" class="input" placeholder="Facebook / WhatsApp / YouTube"><div class="fieldlabel">Category</div><input id="newCat" class="input" placeholder="e.g. WhatsApp Group Join"><div class="fieldlabel">Price</div><input id="newPrice" class="input" type="number" placeholder="100"><button class="btn" onclick="addAdCategory()">＋ Add Category</button></div>`;
+}
+function addAdCategory(){
+ const app=document.getElementById("newApp").value.trim(),cat=document.getElementById("newCat").value.trim(),price=Number(document.getElementById("newPrice").value);
+ if(!app||!cat||price<=0)return toast("Complete app, category and price");
+ cfg.ads.push({id:"ad_"+Date.now(),app,category:cat,price,icon:app==="WhatsApp"?"🟢":app==="Facebook"?"🔵":app==="YouTube"?"🔴":"📱"});save("palazo_config",cfg);toast("Ad category added");adminPanel()
+}
+function settingsAdmin(){
+ return `<div class="card"><div class="section">Referral</div><div class="fieldlabel">Reward per successful referral</div><input id="setRef" class="input" type="number" value="${cfg.referralReward}"><p class="muted" style="font-size:11px">No activation payment is required.</p></div>
+ <div class="card"><div class="section">Deposits</div><div class="fieldlabel">Minimum deposit</div><input id="setMinDep" class="input" type="number" value="${cfg.minDeposit}"><div class="fieldlabel">Deposit presets (comma separated)</div><input id="setPresets" class="input" value="${(cfg.depositPresets||[]).join(",")}"></div>
+ <div class="card"><div class="section">Payment Details</div><div class="fieldlabel">Bank Name</div><input id="setBank" class="input" value="${esc(cfg.paymentBank)}"><div class="fieldlabel">Account Number</div><input id="setAcc" class="input" value="${esc(cfg.paymentAccount)}"><div class="fieldlabel">Account Name</div><input id="setName" class="input" value="${esc(cfg.paymentName)}"></div>
+ <div class="card"><div class="section">Site</div><div class="fieldlabel">Site Name</div><input id="setSite" class="input" value="${esc(cfg.siteName)}"></div>
+ <button class="btn" onclick="saveAdminSettings()">Save Settings</button>`;
+}
+function saveAdminSettings(){
+ cfg.referralReward=Number(document.getElementById("setRef").value)||40;
+ cfg.minDeposit=Number(document.getElementById("setMinDep").value)||500;
+ cfg.depositPresets=document.getElementById("setPresets").value.split(",").map(Number).filter(Boolean);
+ cfg.paymentBank=document.getElementById("setBank").value.trim();
+ cfg.paymentAccount=document.getElementById("setAcc").value.trim();
+ cfg.paymentName=document.getElementById("setName").value.trim();
+ cfg.siteName=document.getElementById("setSite").value.trim()||"Palazo Cash";
+ save("palazo_config",cfg);toast("Admin settings saved");adminPanel()
+}
+
+// Touch feedback: every interactive control gets a small visual ripple.
+document.addEventListener("pointerdown",e=>{
+ const el=e.target.closest("button,.action,.circle,.nav-btn,.admin-tab");
+ if(!el)return;const r=document.createElement("span");r.className="ripple";r.style.left=e.clientX+"px";r.style.top=e.clientY+"px";document.body.appendChild(r);setTimeout(()=>r.remove(),500);
+});
+document.getElementById("modal").addEventListener("click",e=>{if(e.target.id==="modal")closeModal()});
+render();
+</script>
+</body>
+</html>

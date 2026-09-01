@@ -411,7 +411,7 @@ function watchPage(u){
  if(u.adHourKey!==hourKey){u.adHourKey=hourKey;u.adHourCount=0;persistUser(u)}
  const hourLeft=Math.max(0,Number(cfg.adHourlyLimit||10)-Number(u.adHourCount||0));
  const adTotal=(u.transactions||[]).filter(t=>t.type==='Ad reward').reduce((a,t)=>a+Number(t.amount||0),0);
- return `<h2 class="title">Watch Ads</h2>
+ return `<h2 class="title">Watch And Earn</h2>
  <div class="card ad-profile">
   <div class="ad-profile-head"><div><div class="section">Ads Profile</div><h2 style="margin:3px 0 0;font-size:19px">Watch & Earn</h2></div><div class="ad-badge">AD</div></div>
   <div class="watch-stat-grid">
@@ -422,7 +422,7 @@ function watchPage(u){
   </div>
  </div>
  <div class="card watch-launch">
-  <div class="watch-play">▶</div><h2>Watch Ads & Earn</h2>
+  <div class="watch-play">⏮️</div><h2>Watch Ads & Earn</h2>
   <p class="muted">Watch the full ad to receive ${money(cfg.adReward||10)} in your Task Balance.</p>
   <button class="btn" onclick="watchAd()">WATCH ADS</button>
  </div>`;
@@ -550,11 +550,11 @@ function profilePage(u){
   <div class="profile-stats"><div class="profile-stat"><small>Member Since</small><b>${esc(u.created||'Aug 2026')}</b></div><div class="profile-stat"><small>Total Earnings</small><b>${money(totalEarn)}</b></div><div class="profile-stat"><small>Tasks Completed</small><b>${completed}</b></div><div class="profile-stat"><small>Account Status</small><b style="color:#15945f">Active</b></div></div>
  </div>
  <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:9px"><h2 style="margin:0;font-size:20px">My Wallets</h2><button class="btn secondary" style="width:auto;padding:7px 10px;font-size:10px" onclick="showHistory()">Wallet History ›</button></div>
-  <div class="wallet-list"><div class="wallet-row"><div class="wallet-icon purple">TASK</div><div><b>Task Wallet</b><small>Earnings from tasks</small></div><div class="wallet-amt">${money(u.earning)}</div></div>
-   <div class="wallet-row"><div class="wallet-icon green">INC</div><div><b>Income Wallet</b><small>Earnings from daily income</small></div><div class="wallet-amt">${money(u.income||0)}</div></div>
-   <div class="wallet-row"><div class="wallet-icon blue">REF</div><div><b>Affiliate Wallet</b><small>Earnings from referrals</small></div><div class="wallet-amt">${money(u.affiliate)}</div></div>
-   <div class="wallet-row"><div class="wallet-icon orange">DEP</div><div><b>Deposit Wallet</b><small>Total deposits</small></div><div class="wallet-amt">${money(u.deposit)}</div></div>
-   <div class="wallet-row"><div class="wallet-icon cyan">AST</div><div><b>Asset Wallet</b><small>Investment & asset funds</small></div><div class="wallet-amt">${money(u.assetBalance||0)}</div></div>
+  <div class="wallet-list"><div class="wallet-row"><div class="wallet-icon purple">🗒️</div><div><b>Task Wallet</b><small>Earnings from tasks</small></div><div class="wallet-amt">${money(u.earning)}</div></div>
+   <div class="wallet-row"><div class="wallet-icon green">🪙</div><div><b>Income Wallet</b><small>Earnings from daily income</small></div><div class="wallet-amt">${money(u.income||0)}</div></div>
+   <div class="wallet-row"><div class="wallet-icon blue">🫂</div><div><b>Affiliate Wallet</b><small>Earnings from referrals</small></div><div class="wallet-amt">${money(u.affiliate)}</div></div>
+   <div class="wallet-row"><div class="wallet-icon orange">🏧</div><div><b>Deposit Wallet</b><small>Total deposits</small></div><div class="wallet-amt">${money(u.deposit)}</div></div>
+   <div class="wallet-row"><div class="wallet-icon cyan">🏦</div><div><b>Asset Wallet</b><small>Investment & asset funds</small></div><div class="wallet-amt">${money(u.assetBalance||0)}</div></div>
   </div>
  </div>
  <div class="grid2"><button class="action" onclick="withdrawModal()"><div class="ico blue">OUT</div><b>Withdraw</b><small>Request withdrawal</small></button><button class="action" onclick="depositModal()"><div class="ico green">IN</div><b>Deposit</b><small>Make a deposit</small></button><button class="action" onclick="logout()"><div class="ico red">EXIT</div><b>Logout</b><small>Sign out of account</small></button><button class="action" onclick="addBankModal()"><div class="ico cyan">BANK</div><b>Bank Details</b><small>Manage withdrawal bank</small></button></div>

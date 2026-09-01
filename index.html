@@ -354,7 +354,7 @@ function header(){
  </header>`;
 }
 function bottom(){
- const items=[["home","⌂","Home"],["tasks","☷","Tasks"],["watch","▶","Watch Ads"],["assets","◆","Assets"],["refer","♧","Refer"],["profile","●","Profile"]];
+ const items=[["home","⌂","Home"],["tasks","☷","Tasks"],["watch","▶","Watch Ads"],["assets","🪙","Assets"],["refer","🫂","Refer"],["profile","🗒️","Profile"]];
  return `<div class="bottom"><nav class="nav">${items.map(([id,ico,t])=>`<button class="nav-btn ${currentTab===id?"active":""}" onclick="go('${id}')"><span>${ico}</span>${t}${currentTab===id?'<i class="nav-dot"></i>':''}</button>`).join("")}</nav></div>`;
 }
 function go(t){currentTab=t;renderApp();window.scrollTo({top:0,behavior:"smooth"});if(t==="home")setTimeout(showCommunityPopup,120)}
